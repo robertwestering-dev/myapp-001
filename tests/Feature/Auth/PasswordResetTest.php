@@ -25,6 +25,28 @@ test('reset password link can be requested', function () {
     Notification::assertSentTo($user, ResetPassword::class);
 });
 
+test('reset password mail uses hermes results branding', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+
+    $this->post(route('password.request'), ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
+        $mail = $notification->toMail($user);
+        $renderedMail = (string) $mail->render();
+
+        expect(config('app.name'))->toBe('Hermes Results');
+        expect(config('mail.from.name'))->toBe('Hermes Results');
+        expect($renderedMail)
+            ->toContain('Hermes Results')
+            ->not->toContain('notification-logo-v2.1.png')
+            ->not->toContain('>Laravel<');
+
+        return true;
+    });
+});
+
 test('reset password screen can be rendered', function () {
     Notification::fake();
 

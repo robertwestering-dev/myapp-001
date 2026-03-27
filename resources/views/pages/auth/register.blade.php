@@ -256,6 +256,7 @@
             font-size: 0.95rem;
         }
 
+        input[type="text"],
         input[type="email"],
         input[type="password"] {
             width: 100%;
@@ -349,6 +350,19 @@
                 @csrf
 
                 <label>
+                    <span>Naam</span>
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ old('name') }}"
+                        autocomplete="name"
+                        placeholder="Uw naam"
+                        required
+                        autofocus
+                    >
+                </label>
+
+                <label>
                     <span>Email address</span>
                     <input
                         type="email"
@@ -357,7 +371,6 @@
                         autocomplete="email"
                         placeholder="email@example.com"
                         required
-                        autofocus
                     >
                 </label>
 
