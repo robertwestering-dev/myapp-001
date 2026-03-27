@@ -7,7 +7,9 @@ test('home page can be rendered', function () {
 
     $response->assertOk()
         ->assertDontSee('U bent niet ingelogd')
-        ->assertSee('We verbinden mensen, leren en technologie voor tastbare groei.');
+        ->assertSee('We verbinden mensen, leren en technologie voor tastbare groei.')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
 test('guests can see the login link on the home page', function () {

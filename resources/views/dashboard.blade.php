@@ -24,6 +24,8 @@
         body {
             margin: 0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             font-family: "Georgia", "Times New Roman", serif;
             color: var(--ink);
             background:
@@ -32,14 +34,15 @@
                 linear-gradient(180deg, #f8f2e8 0%, #f2ece2 48%, #ebe3d8 100%);
         }
 
-        .topbar,
+        .topbar__inner,
+        .site-footer__inner,
         .welcome {
             width: min(1180px, calc(100% - 32px));
             margin: 0 auto;
         }
 
-        .topbar {
-            padding: 24px 0 0;
+        .topbar__inner {
+            min-height: 80px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -47,61 +50,33 @@
             flex-wrap: wrap;
         }
 
-        .brand {
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(16px);
+            background: rgba(244, 239, 230, 0.78);
+            border-bottom: 1px solid rgba(22, 33, 29, 0.08);
+        }
+
+        .topbar__actions {
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
-        .brand__mark {
-            width: 52px;
-            height: 52px;
-            border-radius: 18px;
-            position: relative;
-            background: linear-gradient(135deg, var(--forest) 0%, var(--forest-soft) 100%);
-            box-shadow: var(--shadow);
-            flex-shrink: 0;
-        }
-
-        .brand__mark::before,
-        .brand__mark::after {
-            content: "";
-            position: absolute;
-            inset: 50% auto auto 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .brand__mark::before {
-            width: 24px;
-            height: 24px;
-        }
-
-        .brand__mark::after {
-            width: 8px;
-            height: 8px;
-            background: var(--accent);
-            box-shadow: 0 -12px 0 -2px rgba(255, 255, 255, 0.78), 12px 0 0 -2px rgba(255, 255, 255, 0.78);
-        }
-
-        .brand__copy {
+        .brand {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
-            line-height: 1.05;
+            align-items: center;
         }
 
-        .brand__title {
-            font-size: 1.08rem;
-            letter-spacing: 0.02em;
-        }
-
-        .brand__subtitle {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.62rem;
-            letter-spacing: 0.06em;
-            color: var(--muted);
+        .brand__logo {
+            display: block;
+            width: auto;
+            height: 60px;
+            max-width: 100%;
+            border-radius: 12px;
         }
 
         .pill {
@@ -120,7 +95,24 @@
         }
 
         .welcome {
+            flex: 1;
             padding: 48px 0 64px;
+        }
+
+        .site-footer__inner {
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+
+        .site-footer {
+            background: rgba(244, 239, 230, 0.78);
+            border-top: 1px solid rgba(22, 33, 29, 0.08);
         }
 
         .welcome__card {
@@ -144,6 +136,10 @@
         }
 
         @media (max-width: 720px) {
+            .brand__logo {
+                height: 60px;
+            }
+
             .welcome__card {
                 padding: 28px;
             }
@@ -151,20 +147,12 @@
     </style>
 </head>
 <body>
-    <header class="topbar">
-        <div class="brand">
-            <span class="brand__mark" aria-hidden="true"></span>
-            <span class="brand__copy">
-                <span class="brand__title">Hermes Results</span>
-                <span class="brand__subtitle">Oplossingen die werken</span>
-            </span>
-        </div>
-
+    <x-hermes-header>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="pill">Logout</button>
         </form>
-    </header>
+    </x-hermes-header>
 
     <main class="welcome">
         <section class="welcome__card">
@@ -172,5 +160,7 @@
             <p>U bent ingelogd.</p>
         </section>
     </main>
+
+    <x-hermes-footer />
 </body>
 </html>

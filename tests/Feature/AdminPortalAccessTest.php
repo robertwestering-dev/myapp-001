@@ -16,7 +16,9 @@ test('admins can visit the admin portal', function () {
     $response->assertOk()
         ->assertSee('Admin-portal')
         ->assertSee($admin->email)
-        ->assertSee('Beheer');
+        ->assertSee('Welkom terug, beheerder.')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
 test('non admins cannot visit the admin portal', function () {

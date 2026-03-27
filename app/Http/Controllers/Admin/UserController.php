@@ -70,6 +70,13 @@ class UserController extends Controller
             ->with('status', 'Gebruiker succesvol bijgewerkt.');
     }
 
+    public function confirmDestroy(User $user): View
+    {
+        return view('admin.users.confirm-delete', [
+            'user' => $user,
+        ]);
+    }
+
     public function destroy(User $user): RedirectResponse
     {
         $user->delete();

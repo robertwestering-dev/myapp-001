@@ -12,7 +12,12 @@ beforeEach(function () {
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('Hermes Results')
+        ->assertSee('Create Access')
+        ->assertSee('Create account')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
 test('new users can register', function () {

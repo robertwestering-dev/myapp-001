@@ -12,7 +12,12 @@ beforeEach(function () {
 test('reset password link screen can be rendered', function () {
     $response = $this->get(route('password.request'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('Hermes Results')
+        ->assertSee('Password Recovery')
+        ->assertSee('Forgot password')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
 test('reset password link can be requested', function () {
@@ -57,7 +62,12 @@ test('reset password screen can be rendered', function () {
     Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
         $response = $this->get(route('password.reset', $notification->token));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('Hermes Results')
+            ->assertSee('New Password')
+            ->assertSee('Reset password')
+            ->assertSee('/images/hermes-results-logo.png')
+            ->assertSee('(c) Copyright 2026 by Hermes Results');
 
         return true;
     });

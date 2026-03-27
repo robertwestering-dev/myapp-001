@@ -13,6 +13,8 @@ test('admins can view the users list', function () {
         ->assertSee('Gebruikersoverzicht')
         ->assertSee($users[0]->email)
         ->assertSee('Export CSV')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results')
         ->assertSee('aria-label="Wijzig', false)
         ->assertSee('aria-label="Verwijder', false);
 });
@@ -24,7 +26,26 @@ test('admins can view the create user page', function () {
 
     $response->assertOk()
         ->assertSee('Nieuwe gebruiker')
-        ->assertSee('Gebruiker toevoegen');
+        ->assertSee('Gebruiker toevoegen')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
+});
+
+test('admins must confirm before deleting a user', function () {
+    $admin = User::factory()->admin()->create();
+    $user = User::factory()->create([
+        'name' => 'Te Verwijderen',
+        'email' => 'delete-me@example.com',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.users.confirm-delete', $user));
+
+    $response->assertOk()
+        ->assertSee('Wilt u deze gebruiker echt verwijderen?')
+        ->assertSee('Te Verwijderen')
+        ->assertSee('delete-me@example.com')
+        ->assertSee('JA, verwijderen')
+        ->assertSee('NEE, annuleren');
 });
 
 test('admins can create a new user', function () {
@@ -182,6 +203,10 @@ test('non admins cannot create update or delete users', function () {
 
     $this->actingAs($user)
         ->get(route('admin.users.edit', $otherUser))
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->get(route('admin.users.confirm-delete', $otherUser))
         ->assertForbidden();
 
     $this->actingAs($user)

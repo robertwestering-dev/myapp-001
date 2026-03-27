@@ -3,18 +3,23 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route(auth()->user()->isAdmin() ? 'admin.portal' : 'dashboard');
+Route::get('/', function (Request $request) {
+    $user = $request->user();
+
+    if ($user !== null) {
+        return redirect()->route($user->isAdmin() ? 'admin.portal' : 'dashboard');
     }
 
     return view('home');
 })->name('home');
 
-Route::get('/dashboard', function () {
-    if (auth()->user()->isAdmin()) {
+Route::get('/dashboard', function (Request $request) {
+    $user = $request->user();
+
+    if ($user !== null && $user->isAdmin()) {
         return redirect()->route('admin.portal');
     }
 
@@ -46,6 +51,10 @@ Route::post('/admin-portal/users', [UserController::class, 'store'])
 Route::get('/admin-portal/users/{user}/edit', [UserController::class, 'edit'])
     ->middleware(['auth', EnsureUserIsAdmin::class])
     ->name('admin.users.edit');
+
+Route::get('/admin-portal/users/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])
+    ->middleware(['auth', EnsureUserIsAdmin::class])
+    ->name('admin.users.confirm-delete');
 
 Route::put('/admin-portal/users/{user}', [UserController::class, 'update'])
     ->middleware(['auth', EnsureUserIsAdmin::class])

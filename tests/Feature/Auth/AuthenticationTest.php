@@ -6,7 +6,12 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('Hermes Results')
+        ->assertSee('Secure Access')
+        ->assertSee('Log in')
+        ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
 test('users can authenticate using the login screen', function () {
