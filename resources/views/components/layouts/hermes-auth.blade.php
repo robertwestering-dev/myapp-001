@@ -121,6 +121,12 @@
             cursor: pointer;
         }
 
+        .pill--booking {
+            background: linear-gradient(180deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97));
+            color: #fff;
+            border-color: transparent;
+        }
+
         .page-shell {
             flex: 1;
             padding: 36px 0 64px;

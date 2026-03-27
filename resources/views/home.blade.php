@@ -122,6 +122,12 @@
             border-color: transparent;
         }
 
+        .pill--booking {
+            background: linear-gradient(180deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97));
+            color: #fff;
+            border-color: transparent;
+        }
+
         main {
             flex: 1;
             padding: 34px 0 60px;

@@ -99,6 +99,7 @@
         }
 
         .pill,
+        .pill--neutral,
         .ghost-pill,
         .danger-pill {
             display: inline-flex;
@@ -117,6 +118,18 @@
 
         .pill {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .pill--neutral {
+            background: linear-gradient(135deg, #8a8f97 0%, #666c74 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .pill--booking {
+            background: linear-gradient(180deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97));
             color: #fff;
             border-color: transparent;
         }
@@ -372,7 +385,7 @@
     <x-hermes-header>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="pill">Logout</button>
+            <button type="submit" class="pill pill--neutral">Logout</button>
         </form>
     </x-hermes-header>
 

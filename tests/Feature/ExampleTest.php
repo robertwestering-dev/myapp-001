@@ -9,6 +9,7 @@ test('home page can be rendered', function () {
         ->assertDontSee('U bent niet ingelogd')
         ->assertSee('We verbinden mensen, leren en technologie voor tastbare groei.')
         ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('https://calendly.com/robertwestering/30min')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 

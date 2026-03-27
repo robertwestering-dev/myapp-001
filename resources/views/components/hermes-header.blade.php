@@ -6,10 +6,19 @@
     <div class="topbar__inner">
         <x-hermes-brand :href="$href" />
 
-        @if (trim((string) $slot) !== '')
-            <div class="topbar__actions">
+        <div class="topbar__actions">
+            <a
+                class="pill pill--booking"
+                href="https://calendly.com/robertwestering/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Maak een afspraak
+            </a>
+
+            @if (trim((string) $slot) !== '')
                 {{ $slot }}
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 </header>

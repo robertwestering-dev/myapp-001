@@ -18,6 +18,7 @@ test('admins can visit the admin portal', function () {
         ->assertSee($admin->email)
         ->assertSee('Welkom terug, beheerder.')
         ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee('https://calendly.com/robertwestering/30min')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
