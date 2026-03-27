@@ -6,18 +6,18 @@
     menu-active="portal"
 >
     <x-slot:heroFacts>
-        <div class="fact">
-            <strong>{{ auth()->user()->role }}</strong>
-            <span>Actieve rol in deze sessie</span>
-        </div>
-        <div class="fact">
-            <strong>Beveiligd</strong>
-            <span>Toegang uitsluitend voor admins</span>
-        </div>
-        <div class="fact">
-            <strong>Gereed</strong>
-            <span>Startpunt voor verdere modules</span>
-        </div>
+        <x-hermes-fact
+            :title="auth()->user()->role"
+            description="Actieve rol in deze sessie"
+        />
+        <x-hermes-fact
+            title="Beveiligd"
+            description="Toegang uitsluitend voor admins"
+        />
+        <x-hermes-fact
+            title="Gereed"
+            description="Startpunt voor verdere modules"
+        />
     </x-slot:heroFacts>
 
 </x-layouts.hermes-admin>

@@ -32,40 +32,24 @@ Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.public');
 
-Route::view('/admin-portal', 'admin-portal')
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.portal');
+Route::middleware(['auth', EnsureUserIsAdmin::class])
+    ->prefix('admin-portal')
+    ->name('admin.')
+    ->group(function (): void {
+        Route::view('/', 'admin-portal')->name('portal');
 
-Route::get('/admin-portal/users', [UserController::class, 'index'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.index');
-
-Route::get('/admin-portal/users/create', [UserController::class, 'create'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.create');
-
-Route::post('/admin-portal/users', [UserController::class, 'store'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.store');
-
-Route::get('/admin-portal/users/{user}/edit', [UserController::class, 'edit'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.edit');
-
-Route::get('/admin-portal/users/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.confirm-delete');
-
-Route::put('/admin-portal/users/{user}', [UserController::class, 'update'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.update');
-
-Route::delete('/admin-portal/users/{user}', [UserController::class, 'destroy'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.destroy');
-
-Route::get('/admin-portal/users/export', [UserController::class, 'export'])
-    ->middleware(['auth', EnsureUserIsAdmin::class])
-    ->name('admin.users.export');
+        Route::prefix('users')
+            ->name('users.')
+            ->group(function (): void {
+                Route::get('/', [UserController::class, 'index'])->name('index');
+                Route::get('/create', [UserController::class, 'create'])->name('create');
+                Route::post('/', [UserController::class, 'store'])->name('store');
+                Route::get('/export', [UserController::class, 'export'])->name('export');
+                Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+                Route::get('/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])->name('confirm-delete');
+                Route::put('/{user}', [UserController::class, 'update'])->name('update');
+                Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+            });
+    });
 
 require __DIR__.'/settings.php';

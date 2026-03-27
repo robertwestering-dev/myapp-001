@@ -38,13 +38,11 @@
         }
     </style>
 
-    <div class="section-head">
-        <div>
-            <div class="tagline">Bewerken</div>
-            <h2>Werk veilig en consistent met gebruikersgegevens</h2>
-        </div>
-        <p>Dit formulier gebruikt nu dezelfde bladstructuur als de homepage en de admin-overzichtspagina’s, zodat alle beheerschermen herkenbaar aanvoelen.</p>
-    </div>
+    <x-hermes-section-header
+        tagline="Bewerken"
+        heading="Werk veilig en consistent met gebruikersgegevens"
+        description="Dit formulier gebruikt nu dezelfde bladstructuur als de homepage en de admin-overzichtspagina’s, zodat alle beheerschermen herkenbaar aanvoelen."
+    />
 
     <section class="content-panel">
         @if ($errors->any())

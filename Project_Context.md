@@ -10,6 +10,38 @@ Gebruik dit document om snel te begrijpen:
 - welke UI- en flowafspraken al bestaan
 - waar rekening mee gehouden moet worden bij vervolgontwikkeling
 
+## Korte Baseline Samenvatting
+
+De applicatie staat nu op een stevige Laravel 13-basis met werkende authenticatie, rollen en een eerste admin-omgeving. Niet-ingelogde bezoekers landen op een publieke homepage in Hermes-stijl; gewone gebruikers gaan na login naar hun dashboard en admins naar de admin-portal.
+
+Wat nu werkt:
+- login, registratie, logout, forgot-password, reset-password en e-mailverificatie werken end-to-end
+- nieuwe accounts krijgen standaard de rol `User`; admins hebben een aparte beveiligde portal
+- de admin-module voor gebruikersbeheer is aanwezig:
+  - gebruikerslijst
+  - zoeken
+  - paginatie
+  - CSV-export
+  - gebruiker toevoegen
+  - gebruiker wijzigen
+  - gebruiker verwijderen met extra bevestigingsstap
+- mail wordt via echte SMTP verstuurd met Hermes Results-branding
+
+UI en structuur:
+- header, footer en branding zijn inmiddels grotendeels gestandaardiseerd via herbruikbare Blade-componenten
+- het Hermes-logo wordt overal consistent gebruikt
+- de header is op alle custom pagina's sticky
+- de admin-portal en admin users-pagina's zijn visueel gelijkgetrokken met de homepage en gebruiken nu een meer centrale layout-structuur
+
+Huidige focus voor vervolg:
+- dashboard verder uitbouwen naar een echte ingelogde app-omgeving
+- admin-portal verder modulair uitbreiden
+- overige losse styling verder centraliseren waar nog nodig
+- later gericht Livewire/Flux inzetten voor rijkere beheerinteracties
+
+Kort samengevat:
+We hebben nu geen los prototype meer, maar een werkende basisapp met consistente branding, stabiele auth-flow, rolgebaseerde routing en een eerste beheermodule waarop we veilig kunnen doorbouwen.
+
 ## Huidige Applicatiestatus
 
 De applicatie is een Laravel 13-project met MySQL als database en Fortify voor authenticatie. Pest wordt gebruikt voor feature tests en Pint voor formatting. Livewire en Flux zijn aanwezig in de stack, maar de belangrijkste publieke, auth- en admin-pagina's zijn momenteel grotendeels als zelfstandige Blade-views opgebouwd met handmatige styling.

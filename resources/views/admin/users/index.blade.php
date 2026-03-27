@@ -7,18 +7,18 @@
     :show-secondary-menu-items="false"
 >
     <x-slot:heroFacts>
-        <div class="fact">
-            <strong>{{ $users->total() }}</strong>
-            <span>Totaal aantal gebruikers</span>
-        </div>
-        <div class="fact">
-            <strong>{{ $users->count() }}</strong>
-            <span>Resultaten op deze pagina</span>
-        </div>
-        <div class="fact">
-            <strong>CSV</strong>
-            <span>Export direct beschikbaar voor de huidige selectie</span>
-        </div>
+        <x-hermes-fact
+            :title="$users->total()"
+            description="Totaal aantal gebruikers"
+        />
+        <x-hermes-fact
+            :title="$users->count()"
+            description="Resultaten op deze pagina"
+        />
+        <x-hermes-fact
+            title="CSV"
+            description="Export direct beschikbaar voor de huidige selectie"
+        />
     </x-slot:heroFacts>
 
     <style>

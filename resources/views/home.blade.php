@@ -457,18 +457,18 @@
                 </div>
 
                 <div class="hero__facts">
-                    <div class="fact">
-                        <strong>AI</strong>
-                        <span>Ondersteuning voor slimmer leren, onboarding en adoptie.</span>
-                    </div>
-                    <div class="fact">
-                        <strong>Data</strong>
-                        <span>Inzicht via dashboards, voortgang en concrete actiepunten.</span>
-                    </div>
-                    <div class="fact">
-                        <strong>Impact</strong>
-                        <span>Een platform gericht op gebruik, groei en meetbaar resultaat.</span>
-                    </div>
+                    <x-hermes-fact
+                        title="AI"
+                        description="Ondersteuning voor slimmer leren, onboarding en adoptie."
+                    />
+                    <x-hermes-fact
+                        title="Data"
+                        description="Inzicht via dashboards, voortgang en concrete actiepunten."
+                    />
+                    <x-hermes-fact
+                        title="Impact"
+                        description="Een platform gericht op gebruik, groei en meetbaar resultaat."
+                    />
                 </div>
             </div>
 
@@ -489,15 +489,11 @@
         </section>
 
         <section class="services">
-            <div class="section-head">
-                <div>
-                    <div class="tagline">Diensten</div>
-                    <h2>Wat deze omgeving ondersteunt</h2>
-                </div>
-                <p>
-                    De secties hieronder volgen de structuur van de referentiepagina: eerst oriëntatie, dan implementatie, daarna inzicht en resultaat.
-                </p>
-            </div>
+            <x-hermes-section-header
+                tagline="Diensten"
+                heading="Wat deze omgeving ondersteunt"
+                description="De secties hieronder volgen de structuur van de referentiepagina: eerst oriëntatie, dan implementatie, daarna inzicht en resultaat."
+            />
 
             <div class="service-grid">
                 <article class="service-card">
@@ -533,13 +529,11 @@
         </section>
 
         <section class="approach">
-            <div class="section-head">
-                <div>
-                    <div class="tagline">Aanpak</div>
-                    <h2>Een flow in vier stappen</h2>
-                </div>
-                <p>Ook dit volgt de referentie-opbouw: ontdekken, bewijzen, uitrollen en structureel verbeteren.</p>
-            </div>
+            <x-hermes-section-header
+                tagline="Aanpak"
+                heading="Een flow in vier stappen"
+                description="Ook dit volgt de referentie-opbouw: ontdekken, bewijzen, uitrollen en structureel verbeteren."
+            />
 
             <div class="step-list">
                 <article class="step">
@@ -569,13 +563,11 @@
         </section>
 
         <section class="impact">
-            <div class="section-head">
-                <div>
-                    <div class="tagline">Impact</div>
-                    <h2>Ontworpen om resultaat zichtbaar te maken</h2>
-                </div>
-                <p>De getallen hieronder zijn positioneringsblokken om dezelfde zakelijke ritmiek als de referentiepagina neer te zetten.</p>
-            </div>
+            <x-hermes-section-header
+                tagline="Impact"
+                heading="Ontworpen om resultaat zichtbaar te maken"
+                description="De getallen hieronder zijn positioneringsblokken om dezelfde zakelijke ritmiek als de referentiepagina neer te zetten."
+            />
 
             <div class="impact__grid">
                 <article class="impact__card">
