@@ -3,16 +3,15 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $trainings = \App\Models\Training::latest()->get();
-    return view('home', compact('trainings'));
-});
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
 
-Route::post('/training', function () {
-    session()->push('trainings', request('titel'));
-    return redirect('/');
-});
+    return view('home');
+})->name('home');
 
-Route::delete('/training/{id}', function ($id) {
-    \App\Models\Training::find($id)?->delete();
-    return redirect('/');
-});
+Route::view('/dashboard', 'dashboard')
+    ->middleware(['auth'])
+    ->name('dashboard');
+
+require __DIR__.'/settings.php';

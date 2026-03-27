@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -14,7 +15,6 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post(route('register.store'), [
-        'name' => 'John Doe',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
@@ -24,4 +24,34 @@ test('new users can register', function () {
         ->assertRedirect(route('dashboard', absolute: false));
 
     $this->assertAuthenticated();
+});
+
+test('new users must register with a unique email address', function () {
+    User::factory()->create([
+        'email' => 'test@example.com',
+    ]);
+
+    $response = $this->from(route('register'))->post(route('register.store'), [
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertRedirect(route('register'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+});
+
+test('new users must register with a valid email address', function () {
+    $response = $this->from(route('register'))->post(route('register.store'), [
+        'email' => 'geen-geldig-emailadres',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertRedirect(route('register'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
 });
