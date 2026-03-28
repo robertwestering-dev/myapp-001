@@ -1,8 +1,17 @@
 <?php
 
+use App\Http\Controllers\Admin\OrganizationController;
+use App\Http\Controllers\Admin\OrganizationQuestionnaireController;
+use App\Http\Controllers\Admin\QuestionnaireCategoryController;
+use App\Http\Controllers\Admin\QuestionnaireController;
+use App\Http\Controllers\Admin\QuestionnaireQuestionController;
+use App\Http\Controllers\Admin\QuestionnaireResponseReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\QuestionnaireResponseController;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Models\OrganizationQuestionnaire;
+use App\Models\QuestionnaireResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -10,7 +19,7 @@ Route::get('/', function (Request $request) {
     $user = $request->user();
 
     if ($user !== null) {
-        return redirect()->route($user->isAdmin() ? 'admin.portal' : 'dashboard');
+        return redirect()->route($user->canAccessAdminPortal() ? 'admin.portal' : 'dashboard');
     }
 
     return view('home');
@@ -19,14 +28,42 @@ Route::get('/', function (Request $request) {
 Route::get('/dashboard', function (Request $request) {
     $user = $request->user();
 
-    if ($user !== null && $user->isAdmin()) {
+    if ($user !== null && $user->canAccessAdminPortal()) {
         return redirect()->route('admin.portal');
     }
 
-    return view('dashboard');
+    $availableQuestionnaires = OrganizationQuestionnaire::query()
+        ->with('questionnaire')
+        ->where('org_id', $user?->org_id)
+        ->where('is_active', true)
+        ->get()
+        ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->isAvailable())
+        ->map(function (OrganizationQuestionnaire $organizationQuestionnaire) use ($user): OrganizationQuestionnaire {
+            $organizationQuestionnaire->setRelation(
+                'currentResponse',
+                QuestionnaireResponse::query()
+                    ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
+                    ->where('user_id', $user?->id)
+                    ->first(),
+            );
+
+            return $organizationQuestionnaire;
+        });
+
+    return view('dashboard', [
+        'availableQuestionnaires' => $availableQuestionnaires,
+    ]);
 })
     ->middleware(['auth'])
     ->name('dashboard');
+
+Route::middleware(['auth'])
+    ->prefix('questionnaires')
+    ->name('questionnaire-responses.')
+    ->group(function (): void {
+        Route::get('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'show'])->name('show');
+        Route::post('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'store'])->name('store');
+    });
 
 Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
     ->middleware(['signed', 'throttle:6,1'])
@@ -49,6 +86,58 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                 Route::get('/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])->name('confirm-delete');
                 Route::put('/{user}', [UserController::class, 'update'])->name('update');
                 Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::prefix('organizations')
+            ->name('organizations.')
+            ->group(function (): void {
+                Route::get('/', [OrganizationController::class, 'index'])->name('index');
+                Route::get('/create', [OrganizationController::class, 'create'])->name('create');
+                Route::post('/', [OrganizationController::class, 'store'])->name('store');
+                Route::get('/{organization}/edit', [OrganizationController::class, 'edit'])->name('edit');
+                Route::get('/{organization}/confirm-delete', [OrganizationController::class, 'confirmDestroy'])->name('confirm-delete');
+                Route::put('/{organization}', [OrganizationController::class, 'update'])->name('update');
+                Route::delete('/{organization}', [OrganizationController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::prefix('questionnaires')
+            ->name('questionnaires.')
+            ->group(function (): void {
+                Route::get('/', [QuestionnaireController::class, 'index'])->name('index');
+                Route::get('/create', [QuestionnaireController::class, 'create'])->name('create');
+                Route::post('/', [QuestionnaireController::class, 'store'])->name('store');
+                Route::get('/{questionnaire}/edit', [QuestionnaireController::class, 'edit'])->name('edit');
+                Route::put('/{questionnaire}', [QuestionnaireController::class, 'update'])->name('update');
+                Route::delete('/{questionnaire}', [QuestionnaireController::class, 'destroy'])->name('destroy');
+
+                Route::get('/{questionnaire}/categories/create', [QuestionnaireCategoryController::class, 'create'])->name('categories.create');
+                Route::post('/{questionnaire}/categories', [QuestionnaireCategoryController::class, 'store'])->name('categories.store');
+                Route::get('/{questionnaire}/categories/{category}/edit', [QuestionnaireCategoryController::class, 'edit'])->name('categories.edit');
+                Route::put('/{questionnaire}/categories/{category}', [QuestionnaireCategoryController::class, 'update'])->name('categories.update');
+                Route::delete('/{questionnaire}/categories/{category}', [QuestionnaireCategoryController::class, 'destroy'])->name('categories.destroy');
+
+                Route::get('/{questionnaire}/questions/create', [QuestionnaireQuestionController::class, 'create'])->name('questions.create');
+                Route::post('/{questionnaire}/questions', [QuestionnaireQuestionController::class, 'store'])->name('questions.store');
+                Route::get('/{questionnaire}/questions/{question}/edit', [QuestionnaireQuestionController::class, 'edit'])->name('questions.edit');
+                Route::put('/{questionnaire}/questions/{question}', [QuestionnaireQuestionController::class, 'update'])->name('questions.update');
+                Route::delete('/{questionnaire}/questions/{question}', [QuestionnaireQuestionController::class, 'destroy'])->name('questions.destroy');
+
+                Route::get('/{questionnaire}/availability/create', [OrganizationQuestionnaireController::class, 'create'])->name('availability.create');
+                Route::post('/{questionnaire}/availability', [OrganizationQuestionnaireController::class, 'store'])->name('availability.store');
+                Route::get('/{questionnaire}/availability/{organizationQuestionnaire}/edit', [OrganizationQuestionnaireController::class, 'edit'])->name('availability.edit');
+                Route::put('/{questionnaire}/availability/{organizationQuestionnaire}', [OrganizationQuestionnaireController::class, 'update'])->name('availability.update');
+                Route::delete('/{questionnaire}/availability/{organizationQuestionnaire}', [OrganizationQuestionnaireController::class, 'destroy'])->name('availability.destroy');
+            });
+
+        Route::prefix('questionnaire-responses')
+            ->name('questionnaire-responses.')
+            ->group(function (): void {
+                Route::get('/', [QuestionnaireResponseReportController::class, 'index'])->name('index');
+                Route::get('/stats', [QuestionnaireResponseReportController::class, 'stats'])->name('stats');
+                Route::get('/export', [QuestionnaireResponseReportController::class, 'export'])->name('export');
+                Route::get('/export-summary', [QuestionnaireResponseReportController::class, 'exportSummary'])->name('export-summary');
+                Route::get('/export-stats', [QuestionnaireResponseReportController::class, 'exportStats'])->name('export-stats');
+                Route::get('/{response}', [QuestionnaireResponseReportController::class, 'show'])->name('show');
             });
     });
 

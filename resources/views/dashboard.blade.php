@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard</title>
+    <x-favicon-links />
     <style>
         :root {
             --ink: #16211d;
@@ -151,6 +152,28 @@
             font-size: 1.1rem;
         }
 
+        .questionnaire-list {
+            display: grid;
+            gap: 18px;
+            margin-top: 28px;
+        }
+
+        .questionnaire-card {
+            display: grid;
+            gap: 10px;
+            padding: 22px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.58);
+            border: 1px solid var(--line);
+        }
+
+        .questionnaire-card__actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
         @media (max-width: 720px) {
             .brand__logo {
                 height: 60px;
@@ -174,6 +197,30 @@
         <section class="welcome__card">
             <h1>Welkom: {{ auth()->user()->email }}</h1>
             <p>U bent ingelogd.</p>
+
+            <div class="questionnaire-list">
+                @forelse ($availableQuestionnaires as $availableQuestionnaire)
+                    <article class="questionnaire-card">
+                        <div>
+                            <strong>{{ $availableQuestionnaire->questionnaire->title }}</strong>
+                        </div>
+                        <div>{{ $availableQuestionnaire->questionnaire->description ?: 'Deze questionnaire heeft nog geen beschrijving.' }}</div>
+                        <div class="questionnaire-card__actions">
+                            <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">Open questionnaire</a>
+                            @if ($availableQuestionnaire->currentResponse?->submitted_at)
+                                <span>Laatst ingevuld op {{ $availableQuestionnaire->currentResponse->submitted_at->format('d-m-Y H:i') }}</span>
+                            @else
+                                <span>Nog niet ingevuld</span>
+                            @endif
+                        </div>
+                    </article>
+                @empty
+                    <article class="questionnaire-card">
+                        <strong>Er zijn momenteel geen questionnaires beschikbaar.</strong>
+                        <div>Neem contact op met uw beheerder als u hier een questionnaire verwacht.</div>
+                    </article>
+                @endforelse
+            </div>
         </section>
     </main>
 

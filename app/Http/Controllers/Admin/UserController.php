@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,19 +17,32 @@ class UserController extends Controller
 {
     public function create(): View
     {
+        /** @var User $actor */
+        $actor = request()->user();
+
         return view('admin.users.form', [
             'title' => 'Nieuwe gebruiker',
             'intro' => 'Voeg een nieuwe gebruiker toe aan de applicatie vanuit de admin-omgeving.',
             'submitLabel' => 'Gebruiker toevoegen',
             'user' => new User(['role' => User::ROLE_USER]),
             'isEditing' => false,
-            'roles' => [User::ROLE_USER, User::ROLE_ADMIN],
+            'organizations' => $this->organizationOptions($actor),
+            'roles' => $this->roleOptions($actor),
         ]);
     }
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        User::create($request->validated());
+        /** @var User $actor */
+        $actor = $request->user();
+
+        $attributes = $request->validated();
+
+        if (! $actor->isAdmin()) {
+            $attributes['org_id'] = $actor->org_id;
+        }
+
+        User::create($attributes);
 
         return redirect()
             ->route('admin.users.index')
@@ -38,8 +52,10 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->trim()->value();
+        /** @var User $actor */
+        $actor = $request->user();
 
-        $users = $this->usersQuery($search)
+        $users = $this->usersQuery($actor, $search)
             ->paginate(15)
             ->withQueryString();
 
@@ -51,19 +67,36 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        /** @var User $actor */
+        $actor = request()->user();
+
+        abort_unless($actor->canManageOrganization($user->org_id), 403);
+
         return view('admin.users.form', [
             'title' => 'Gebruiker wijzigen',
             'intro' => 'Werk de gegevens en rol van deze gebruiker bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'user' => $user,
             'isEditing' => true,
-            'roles' => [User::ROLE_USER, User::ROLE_ADMIN],
+            'organizations' => $this->organizationOptions($actor),
+            'roles' => $this->roleOptions($actor),
         ]);
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $user->update($request->validated());
+        /** @var User $actor */
+        $actor = $request->user();
+
+        abort_unless($actor->canManageOrganization($user->org_id), 403);
+
+        $attributes = $request->validated();
+
+        if (! $actor->isAdmin()) {
+            $attributes['org_id'] = $actor->org_id;
+        }
+
+        $user->update($attributes);
 
         return redirect()
             ->route('admin.users.index')
@@ -72,6 +105,11 @@ class UserController extends Controller
 
     public function confirmDestroy(User $user): View
     {
+        /** @var User $actor */
+        $actor = request()->user();
+
+        abort_unless($actor->canManageOrganization($user->org_id), 403);
+
         return view('admin.users.confirm-delete', [
             'user' => $user,
         ]);
@@ -79,6 +117,11 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        /** @var User $actor */
+        $actor = request()->user();
+
+        abort_unless($actor->canManageOrganization($user->org_id), 403);
+
         $user->delete();
 
         return redirect()
@@ -90,8 +133,10 @@ class UserController extends Controller
     {
         $search = $request->string('search')->trim()->value();
         $fileName = 'users.csv';
+        /** @var User $actor */
+        $actor = $request->user();
 
-        return response()->streamDownload(function () use ($search): void {
+        return response()->streamDownload(function () use ($actor, $search): void {
             $handle = fopen('php://output', 'w');
 
             if ($handle === false) {
@@ -100,7 +145,7 @@ class UserController extends Controller
 
             fputcsv($handle, ['Naam', 'Emailadres', 'Rol', 'Email verified']);
 
-            $this->usersQuery($search)
+            $this->usersQuery($actor, $search)
                 ->cursor()
                 ->each(function (User $user) use ($handle): void {
                     fputcsv($handle, [
@@ -117,10 +162,13 @@ class UserController extends Controller
         ]);
     }
 
-    protected function usersQuery(string $search): Builder
+    protected function usersQuery(User $actor, string $search): Builder
     {
         return User::query()
-            ->select(['id', 'name', 'email', 'role', 'email_verified_at'])
+            ->select(['id', 'name', 'email', 'role', 'org_id', 'email_verified_at'])
+            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
+                $query->where('org_id', $actor->org_id);
+            })
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query
@@ -129,5 +177,31 @@ class UserController extends Controller
                 });
             })
             ->orderBy('name');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function organizationOptions(User $actor): array
+    {
+        return Organization::query()
+            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
+                $query->where('org_id', $actor->org_id);
+            })
+            ->orderBy('naam')
+            ->pluck('naam', 'org_id')
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function roleOptions(User $actor): array
+    {
+        if ($actor->isAdmin()) {
+            return [User::ROLE_USER, User::ROLE_MANAGER, User::ROLE_ADMIN];
+        }
+
+        return [User::ROLE_USER, User::ROLE_MANAGER];
     }
 }

@@ -28,7 +28,7 @@ class EmailVerificationController extends Controller
 
         Auth::login($user);
 
-        $redirectUrl = $user->isAdmin()
+        $redirectUrl = $user->canAccessAdminPortal()
             ? route('admin.portal', absolute: false)
             : route('dashboard', absolute: false);
 

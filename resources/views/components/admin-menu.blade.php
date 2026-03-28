@@ -8,6 +8,18 @@
         Gebruikers
     </a>
 
+    <a href="{{ route('admin.organizations.index') }}" @class(['admin-menu__item', 'admin-menu__item--active' => $active === 'organizations'])>
+        Organisaties
+    </a>
+
+    <a href="{{ route('admin.questionnaires.index') }}" @class(['admin-menu__item', 'admin-menu__item--active' => $active === 'questionnaires'])>
+        Questionnaires
+    </a>
+
+    <a href="{{ route('admin.questionnaire-responses.index') }}" @class(['admin-menu__item', 'admin-menu__item--active' => $active === 'questionnaire-responses'])>
+        Responses
+    </a>
+
     @if ($showSecondaryItems && $active !== 'portal')
         <a href="{{ route('admin.portal') }}" class="admin-menu__item">
             Admin-portal

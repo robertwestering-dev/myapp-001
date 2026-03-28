@@ -78,6 +78,15 @@
                 </select>
             </label>
 
+            <label>
+                <span>Organisatie</span>
+                <select name="org_id" required>
+                    @foreach ($organizations as $organizationId => $organizationName)
+                        <option value="{{ $organizationId }}" @selected((string) old('org_id', $user->org_id) === (string) $organizationId)>{{ $organizationName }}</option>
+                    @endforeach
+                </select>
+            </label>
+
             @unless ($isEditing)
                 <label>
                     <span>Wachtwoord</span>

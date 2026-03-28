@@ -22,6 +22,16 @@ test('admins can visit the admin portal', function () {
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
+test('managers can visit the admin portal', function () {
+    $manager = User::factory()->manager()->create();
+
+    $response = $this->actingAs($manager)->get(route('admin.portal'));
+
+    $response->assertOk()
+        ->assertSee('Admin-portal')
+        ->assertSee($manager->email);
+});
+
 test('non admins cannot visit the admin portal', function () {
     $user = User::factory()->create();
 

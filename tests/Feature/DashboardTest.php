@@ -18,3 +18,26 @@ test('authenticated users can visit the dashboard', function () {
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
+
+test('home page uses the hermes favicon instead of the laravel default icons', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk()
+        ->assertSee('rel="icon"', false)
+        ->assertSee('/favicon.ico?v=', false)
+        ->assertSee('rel="shortcut icon"', false)
+        ->assertDontSee('/favicon.svg', false);
+});
+
+test('dashboard uses the hermes favicon instead of the laravel default icons', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('dashboard'));
+
+    $response->assertOk()
+        ->assertSee('rel="icon"', false)
+        ->assertSee('/favicon.ico?v=', false)
+        ->assertSee('rel="shortcut icon"', false)
+        ->assertDontSee('/favicon.svg', false);
+});

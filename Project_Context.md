@@ -2,247 +2,189 @@
 
 ## Doel Van Dit Bestand
 
-Dit bestand beschrijft de actuele status van de applicatie en dient als vast referentiepunt voor toekomstig werk. Het is bedoeld als startdocument voor nieuwe modules, uitbreidingen, refactors en samenwerking met ontwikkelaars of AI-agents.
+Dit document beschrijft de actuele status van het project en dient als baseline voor toekomstig werk. Het is bedoeld als snel startpunt voor nieuwe features, refactors en verdere uitbouw van het questionnaire-platform.
 
-Gebruik dit document om snel te begrijpen:
-- wat de applicatie nu doet
-- welke technische keuzes al zijn gemaakt
-- welke UI- en flowafspraken al bestaan
-- waar rekening mee gehouden moet worden bij vervolgontwikkeling
+Gebruik dit document om direct te begrijpen:
+- welke functionele basis er nu staat
+- hoe rollen en organisatie-scope werken
+- welke admin-modules al bestaan
+- welke technische en productafspraken al gelden
 
 ## Korte Baseline Samenvatting
 
-De applicatie staat nu op een stevige Laravel 13-basis met werkende authenticatie, rollen en een eerste admin-omgeving. Niet-ingelogde bezoekers landen op een publieke homepage in Hermes-stijl; gewone gebruikers gaan na login naar hun dashboard en admins naar de admin-portal.
+De applicatie is nu een werkende Laravel 13-basisapp met:
+- Fortify-authenticatie
+- e-mailverificatie en password reset
+- een dashboard voor gewone gebruikers
+- een admin-portal voor beheerdersrollen
+- organisatiebeheer
+- gebruikersbeheer
+- rol- en organisatiegebaseerde datascope
 
-Wat nu werkt:
-- login, registratie, logout, forgot-password, reset-password en e-mailverificatie werken end-to-end
-- nieuwe accounts krijgen standaard de rol `User`; admins hebben een aparte beveiligde portal
-- de admin-module voor gebruikersbeheer is aanwezig:
-  - gebruikerslijst
-  - zoeken
-  - paginatie
-  - CSV-export
-  - gebruiker toevoegen
-  - gebruiker wijzigen
-  - gebruiker verwijderen met extra bevestigingsstap
-- mail wordt via echte SMTP verstuurd met Hermes Results-branding
-
-UI en structuur:
-- header, footer en branding zijn inmiddels grotendeels gestandaardiseerd via herbruikbare Blade-componenten
-- het Hermes-logo wordt overal consistent gebruikt
-- de header is op alle custom pagina's sticky
-- de admin-portal en admin users-pagina's zijn visueel gelijkgetrokken met de homepage en gebruiken nu een meer centrale layout-structuur
-
-Huidige focus voor vervolg:
-- dashboard verder uitbouwen naar een echte ingelogde app-omgeving
-- admin-portal verder modulair uitbreiden
-- overige losse styling verder centraliseren waar nog nodig
-- later gericht Livewire/Flux inzetten voor rijkere beheerinteracties
+De belangrijkste huidige bedrijfslogica:
+- elke user hoort bij exact één organisatie via `users.org_id`
+- organisaties staan in `organizations`
+- `Hermes Results` is de standaardorganisatie
+- er zijn nu drie rollen: `User`, `Admin` en `Beheerder`
+- `Admin` ziet alle organisaties en alle users
+- `Beheerder` ziet in het admin-portal alleen data van de eigen organisatie
 
 Kort samengevat:
-We hebben nu geen los prototype meer, maar een werkende basisapp met consistente branding, stabiele auth-flow, rolgebaseerde routing en een eerste beheermodule waarop we veilig kunnen doorbouwen.
+we hebben nu niet alleen auth en branding staan, maar ook een eerste multitenant-achtige beheerstructuur op basis van `org_id`, waarop de questionnaire-modules veilig kunnen voortbouwen.
 
 ## Huidige Applicatiestatus
 
-De applicatie is een Laravel 13-project met MySQL als database en Fortify voor authenticatie. Pest wordt gebruikt voor feature tests en Pint voor formatting. Livewire en Flux zijn aanwezig in de stack, maar de belangrijkste publieke, auth- en admin-pagina's zijn momenteel grotendeels als zelfstandige Blade-views opgebouwd met handmatige styling.
+De applicatie draait op:
+- Laravel 13
+- PHP 8.5
+- MySQL
+- Laravel Fortify voor auth
+- Pest voor tests
+- Pint voor formatting
 
-De huidige versie van de applicatie biedt nu een stevigere basis dan voorheen:
-- een publieke homepage voor niet-ingelogde bezoekers
-- een werkende login-, registratie-, logout- en forgot-password flow
-- een werkende reset-password flow
-- een werkende e-mailverificatieflow
-- een dashboard voor gewone ingelogde gebruikers
-- een admin-portal voor gebruikers met de rol `Admin`
-- een eerste admin-module voor gebruikersbeheer
+De UI bestaat op dit moment grotendeels uit Blade-views met handmatige styling in Hermes Results-stijl. Livewire en Flux zitten in de stack, maar zijn nog niet de drijvende kracht achter de huidige admin-modules.
 
 ## Huidige Gebruikersflow
 
-### Voor Niet-Ingelogde Bezoekers
+### Niet-Ingelogde Bezoekers
 
-Niet-ingelogde bezoekers zien op `/` een publieke homepage in marketing/landingpage-stijl. Deze pagina is visueel geinspireerd op de stijl van `hermesresults.com`.
+Niet-ingelogde bezoekers landen op `/` en zien een publieke homepage in Hermes-stijl.
 
-De homepage bevat:
-- branding in Hermes-stijl
-- een marketinggerichte hero-sectie
-- ondersteunende contentblokken
-- een login-knop
+### Gewone Gebruikers
 
-### Voor Gewone Ingelogde Gebruikers
+Een ingelogde gebruiker met rol `User` wordt vanaf `/` doorgestuurd naar `/dashboard`.
 
-Als een gebruiker met de rol `User` is ingelogd en `/` bezoekt, wordt deze direct doorgestuurd naar `/dashboard`.
+### Admin En Beheerder
 
-De dashboardpagina toont momenteel:
-- een welkomsttekst met het e-mailadres van de ingelogde gebruiker
-- een logout-knop
-- dezelfde visuele merkstijl als de publieke pagina's
+Gebruikers met rol `Admin` of `Beheerder` worden vanaf `/` doorgestuurd naar `/admin-portal`.
 
-### Voor Ingelogde Admins
-
-Als een gebruiker met de rol `Admin` is ingelogd en `/` bezoekt, wordt deze direct doorgestuurd naar `/admin-portal`.
-
-De admin-portal:
-- is uitsluitend toegankelijk voor ingelogde users met de rol `Admin`
-- gebruikt dezelfde Hermes-stijl als de rest van de applicatie
-- bevat een menu aan de linkerkant
-- bevat nu een gebruikersmodule voor beheer
+Belangrijk verschil:
+- `Admin` heeft volledig overzicht over alle organisaties en alle users
+- `Beheerder` werkt alleen binnen de eigen organisatie
 
 ## Rollen En Autorisatie
 
-De `users`-tabel is uitgebreid met een rolveld:
-- standaardrol voor nieuwe accounts: `User`
-- aanvullende rol: `Admin`
+Er zijn nu drie rollen:
+- `User`
+- `Admin`
+- `Beheerder`
 
-Belangrijke afspraken:
-- nieuwe accounts krijgen altijd automatisch de rol `User`
-- admins worden na login automatisch doorgestuurd naar de admin-portal
-- gewone users blijven in de standaard dashboardflow
-- admin-routes zijn beschermd met `auth` en aanvullende admin-controle
+Gedrag per rol:
+- `User`
+  Geen toegang tot het admin-portal.
+- `Admin`
+  Ziet en beheert alle organisaties en alle users.
+- `Beheerder`
+  Heeft toegang tot het admin-portal, maar alleen voor records met dezelfde `org_id` als de eigen user.
+
+Belangrijke huidige scope-regels:
+- userlijsten voor `Beheerder` tonen alleen users uit de eigen organisatie
+- organisatieoverzicht voor `Beheerder` toont alleen de eigen organisatie
+- een `Beheerder` kan geen `Admin`-rol toekennen
+- een `Beheerder` kan users niet aan een andere organisatie koppelen
+- een `Beheerder` kan geen nieuwe organisaties aanmaken of organisaties verwijderen
+- een `Beheerder` kan wel de eigen organisatie wijzigen
 
 Belangrijke implementatie:
 - [app/Models/User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
 - [app/Http/Middleware/EnsureUserIsAdmin.php](/Users/robert/Desktop/MyApp-001/app/Http/Middleware/EnsureUserIsAdmin.php)
 - [app/Actions/Fortify/LoginResponse.php](/Users/robert/Desktop/MyApp-001/app/Actions/Fortify/LoginResponse.php)
 
-## Routes En Structuur
+## Organisatie-Model En Datamodel
 
-De belangrijkste routes zijn momenteel:
+### Tabel `organizations`
 
+De applicatie bevat nu een organisatiestructuur in `organizations` met:
+- `org_id`
+- `naam`
+- `adres`
+- `postcode`
+- `plaats`
+- `land`
+- `telefoon`
+- `contact_id`
+- timestamps
+
+`contact_id` verwijst naar `users.id`.
+
+### Tabel `users`
+
+De `users`-tabel bevat nu aanvullend:
+- `role`
+- `org_id`
+
+`org_id` verwijst naar `organizations.org_id`.
+
+Belangrijke afspraken:
+- elke user hoort bij één organisatie
+- standaard wordt `Hermes Results` gebruikt als organisatie-default
+- bestaande users zijn ook aan `Hermes Results` gekoppeld
+
+Belangrijke implementatie:
+- [database/migrations/2026_03_28_073541_create_organizations_table.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_28_073541_create_organizations_table.php)
+- [database/migrations/2026_03_28_074008_add_org_id_to_users_table.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_28_074008_add_org_id_to_users_table.php)
+- [app/Models/Organization.php](/Users/robert/Desktop/MyApp-001/app/Models/Organization.php)
+- [app/Models/User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
+
+## Routes En Navigatie
+
+Belangrijkste routes:
 - `/`
-  Publieke homepage voor gasten. Ingelogde users worden rolafhankelijk doorgestuurd naar `/dashboard` of `/admin-portal`.
-
+  Publieke homepage of rolafhankelijke redirect
 - `/dashboard`
-  Alleen toegankelijk voor ingelogde gebruikers in de gewone userflow.
-
+  Dashboard voor `User`
 - `/admin-portal`
-  Alleen toegankelijk voor ingelogde admins.
-
+  Portal voor `Admin` en `Beheerder`
 - `/admin-portal/users`
-  Gebruikersoverzicht voor admins.
-
-- `/admin-portal/users/create`
-  Nieuwe gebruiker toevoegen vanuit admin.
-
-- `/admin-portal/users/{user}/edit`
-  Bestaande gebruiker wijzigen vanuit admin.
-
-- Fortify-auth-routes
-  Onder meer:
-  - `/login`
-  - `/register`
-  - `/forgot-password`
-  - reset-password routes
-  - logout
-  - verify-email notice route
-
-- publieke signed verificatieroute
-  Een eigen publieke route verwerkt de link uit de verificatiemail zonder dat de gebruiker eerst ingelogd hoeft te zijn.
+  Users-overzicht
+- `/admin-portal/organizations`
+  Organisaties-overzicht
 
 De hoofdroute-definitie staat in:
 - [routes/web.php](/Users/robert/Desktop/MyApp-001/routes/web.php)
 
+Het admin-menu bevat nu:
+- `Gebruikers`
+- `Organisaties`
+
 ## Authenticatie
 
-Authenticatie is gebaseerd op Laravel Fortify.
-
 Wat nu werkt:
-- gebruikers kunnen een account aanmaken
-- registratie vraagt nu om naam, e-mailadres en wachtwoord
-- gebruikers kunnen inloggen
-- gebruikers kunnen uitloggen
-- gebruikers kunnen een reset-link aanvragen voor hun wachtwoord
-- gebruikers kunnen hun wachtwoord resetten
-- gebruikers ontvangen een verificatiemail bij registratie
-- gebruikers kunnen hun e-mailadres verifiëren via de link uit de mail
+- registratie
+- login
+- logout
+- forgot-password
+- reset-password
+- e-mailverificatie
 
-Validatieregels:
-- naam is verplicht bij registratie
-- gebruikersnaam is een e-mailadres
-- het e-mailadres moet geldig zijn
-- het e-mailadres moet uniek zijn
-- het wachtwoord wordt veilig gehasht opgeslagen
+Belangrijke auth-afspraken:
+- nieuwe accounts krijgen standaard rol `User`
+- nieuwe accounts krijgen standaard `org_id` van `Hermes Results`
+- `Admin` en `Beheerder` gaan na login naar het admin-portal
+- `User` blijft in de dashboardflow
 
 Belangrijke implementatie:
 - [app/Actions/Fortify/CreateNewUser.php](/Users/robert/Desktop/MyApp-001/app/Actions/Fortify/CreateNewUser.php)
-- [app/Models/User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
+- [app/Actions/Fortify/LoginResponse.php](/Users/robert/Desktop/MyApp-001/app/Actions/Fortify/LoginResponse.php)
 - [app/Http/Controllers/Auth/EmailVerificationController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Auth/EmailVerificationController.php)
-- [app/Providers/AppServiceProvider.php](/Users/robert/Desktop/MyApp-001/app/Providers/AppServiceProvider.php)
-
-## E-Mail En Mailverzending
-
-Mail wordt niet langer alleen gelogd, maar via echte SMTP verstuurd.
-
-Actuele mailstatus:
-- mailer: `smtp`
-- host: `smtp.hostnet.nl`
-- poort: `587`
-- transport voor STARTTLS via standaard SMTP-configuratie
-- afzenderadres: `support@hermesresults.com`
-- afzendernaam: `Hermes Results`
-
-Wat nu via echte mail werkt:
-- forgot-password mail
-- e-mailverificatie na registratie
-
-Branding van verstuurde mails:
-- afzendernaam is `Hermes Results`
-- de standaard Laravel-afbeelding bovenaan wordt niet meer getoond
-- de footer toont `Hermes Results` in plaats van `Laravel`
-
-Belangrijke bestanden:
-- [.env](/Users/robert/Desktop/MyApp-001/.env)
-- [resources/views/vendor/mail/html/header.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/vendor/mail/html/header.blade.php)
-- [resources/views/vendor/mail/html/message.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/vendor/mail/html/message.blade.php)
-
-## Wachtwoord Reset Status
-
-De forgot-password functionaliteit werkt technisch en functioneel:
-- de resetmail wordt echt verzonden
-- de reset-link opent de juiste reset-password pagina
-- het wachtwoord kan succesvol worden gewijzigd
-
-De reset-password pagina is inmiddels ook visueel gelijkgetrokken met de andere auth-pagina's.
-
-Belangrijke view:
-- [resources/views/pages/auth/reset-password.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/pages/auth/reset-password.blade.php)
-
-## Database Status
-
-De applicatie gebruikt MySQL.
-
-Bevestigd:
-- de databaseverbinding werkt
-- migraties zijn uitgevoerd
-- de `users`-tabel bestaat
-- authenticatie gebruikt de database correct
-- de `users`-tabel bevat nu ook een `role`-kolom
-
-Belangrijke database-informatie:
-- connectie: `mysql`
-- database: `myapp001`
-
-Belangrijke migraties:
-- [database/migrations/2026_03_27_134457_add_role_to_users_table.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_27_134457_add_role_to_users_table.php)
-- [database/migrations/2026_03_27_134638_promote_existing_user_to_admin.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_27_134638_promote_existing_user_to_admin.php)
 
 ## Admin-Module: Gebruikersbeheer
 
-De admin-portal bevat nu een eerste beheermodule voor gebruikers.
+De users-module bevat nu:
+- overzichtslijst
+- zoeken op naam of e-mail
+- paginatie
+- CSV-export
+- user aanmaken
+- user wijzigen
+- user verwijderen met bevestigingsstap
+- organisatiekeuze in het user-form
 
-Wat deze module nu kan:
-- lijst van gebruikers tonen
-- zoeken op naam of e-mailadres
-- sorteren op kolom naam
-- paginatie met 15 gebruikers per pagina
-- CSV-export van de lijst
-- nieuwe gebruiker toevoegen
-- bestaande gebruiker wijzigen
-- bestaande gebruiker verwijderen
-
-De lijst toont:
-- naam
-- e-mailadres
-- rol
-- datum e-mailverificatie
+Huidige beheerregels:
+- `Admin` kan alle users zien en beheren
+- `Beheerder` ziet alleen users met hetzelfde `org_id`
+- `Beheerder` kan geen users buiten de eigen organisatie beheren
+- `Beheerder` kan geen `Admin` als rol kiezen in het user-form
 
 Belangrijke implementatie:
 - [app/Http/Controllers/Admin/UserController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/UserController.php)
@@ -251,192 +193,87 @@ Belangrijke implementatie:
 - [resources/views/admin/users/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/users/index.blade.php)
 - [resources/views/admin/users/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/users/form.blade.php)
 
+## Admin-Module: Organisaties
+
+De organisatiesmodule bevat nu:
+- overzichtslijst
+- organisatie aanmaken
+- organisatie wijzigen
+- organisatie verwijderen met bevestigingsstap
+
+Huidige beheerregels:
+- `Admin` ziet en beheert alle organisaties
+- `Beheerder` ziet alleen de eigen organisatie
+- `Beheerder` kan de eigen organisatie wijzigen
+- `Beheerder` kan geen nieuwe organisaties aanmaken
+- `Beheerder` kan geen organisaties verwijderen
+- `Hermes Results` kan niet verwijderd worden
+- organisaties met gekoppelde users kunnen niet verwijderd worden
+
+Belangrijke implementatie:
+- [app/Http/Controllers/Admin/OrganizationController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/OrganizationController.php)
+- [app/Http/Requests/Admin/StoreOrganizationRequest.php](/Users/robert/Desktop/MyApp-001/app/Http/Requests/Admin/StoreOrganizationRequest.php)
+- [app/Http/Requests/Admin/UpdateOrganizationRequest.php](/Users/robert/Desktop/MyApp-001/app/Http/Requests/Admin/UpdateOrganizationRequest.php)
+- [resources/views/admin/organizations/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/organizations/index.blade.php)
+- [resources/views/admin/organizations/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/organizations/form.blade.php)
+
 ## UI En Branding
 
-De huidige UI van homepage, login, register, forgot-password, reset-password, dashboard, admin-portal en admin-gebruikerspagina's is handmatig in Blade opgebouwd en gebruikt inline CSS.
+De belangrijkste publieke, auth- en admin-pagina's gebruiken momenteel:
+- Blade-views
+- inline CSS
+- Hermes Results-branding
+- een gedeelde admin-layout
 
-De visuele richting is:
-- warm en premium kleurenpalet
-- rustige zakelijke uitstraling
-- glasachtige panelen
-- Hermes-geinspireerde branding
+Visuele kenmerken:
+- warm premium kleurenpalet
+- zakelijke uitstraling
+- sticky topbar
+- consistente Hermes-logo-integratie
+- herbruikbare componenten voor layout, facts, sections en admin-menu
 
-De huidige merkweergave gebruikt:
-- `Hermes Results`
-- `Oplossingen die werken`
+Belangrijke layout-bestanden:
+- [resources/views/components/layouts/hermes-admin.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/layouts/hermes-admin.blade.php)
+- [resources/views/components/admin-menu.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/admin-menu.blade.php)
 
-De oude groene `HR`-badge is vervangen door een gestileerde Hermes-achtige wordmark-lockup.
+## Mail En Infrastructuur
 
-Belangrijke viewbestanden:
-- [resources/views/home.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/home.blade.php)
-- [resources/views/dashboard.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/dashboard.blade.php)
-- [resources/views/pages/auth/login.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/pages/auth/login.blade.php)
-- [resources/views/pages/auth/register.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/pages/auth/register.blade.php)
-- [resources/views/pages/auth/forgot-password.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/pages/auth/forgot-password.blade.php)
-- [resources/views/pages/auth/reset-password.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/pages/auth/reset-password.blade.php)
-- [resources/views/admin-portal.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin-portal.blade.php)
-- [resources/views/admin/users/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/users/index.blade.php)
+Mail wordt via SMTP verstuurd met Hermes Results-branding.
 
-## Tests En Stabiliteit
+Relevante punten:
+- forgot-password mails werken
+- verificatiemails werken
+- `.env` bevat actieve SMTP-configuratie
 
-De belangrijkste flows zijn getest en functioneel bevestigd:
-- homepage rendering
-- login
-- logout
-- registratie
-- verplichte naam bij registratie
-- dashboardtoegang
-- admin-portal toegang
-- admin gebruikersbeheer
-- forgot-password flow
-- reset-password flow
-- e-mailverificatieflow
-- branding van reset- en verificatiemails
-- verificatielink vanuit mail zonder voorafgaande login
+## Teststatus
 
-De projectaanpak tot nu toe volgt:
-- wijzigingen testen met gerichte Pest feature tests
-- PHP-bestanden formatteren met Pint
+Het project gebruikt Pest-featuretests als primaire veiligheidslaag.
 
-Belangrijke tests:
-- [tests/Feature/Auth/RegistrationTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/Auth/RegistrationTest.php)
-- [tests/Feature/Auth/AuthenticationTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/Auth/AuthenticationTest.php)
-- [tests/Feature/Auth/PasswordResetTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/Auth/PasswordResetTest.php)
-- [tests/Feature/Auth/EmailVerificationTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/Auth/EmailVerificationTest.php)
-- [tests/Feature/AdminPortalAccessTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/AdminPortalAccessTest.php)
-- [tests/Feature/AdminUserManagementTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/AdminUserManagementTest.php)
+Belangrijk:
+- users-beheer is getest
+- organisaties-beheer is getest
+- auth-redirects en portaltoegang zijn getest
+- rol- en org-scope voor `Beheerder` zijn getest
 
-## Belangrijke Technische Afspraken Voor Nieuwe Modules
+Typische verificatie in deze codebase:
+- `php artisan test --compact ...`
+- `vendor/bin/pint --dirty --format agent`
 
-Nieuwe modules moeten aansluiten op de bestaande basis.
+## Belangrijkste Open Richting Voor Vervolg
 
-### Functionele Richtlijnen
+De volgende logische uitbreidingen bouwen direct voort op de huidige basis:
+- questionnaire-domein modelleren met meerdere gerelateerde tabellen
+- admin-portal uitbreiden met scoped datasets per organisatie
+- bepalen welke questionnaire-acties `Admin` versus `Beheerder` mogen uitvoeren
+- later eventueel delen van het admin-portal migreren naar Livewire/Flux voor rijkere interactie
 
-- Bepaal altijd eerst of een nieuwe module publiek, user-only of admin-only is.
-- Publieke pagina's moeten passen bij de bestaande homepage-stijl.
-- Gewone ingelogde flows moeten logisch aansluiten op `/dashboard`.
-- Adminflows moeten logisch aansluiten op `/admin-portal`.
-- Auth-functionaliteit moet blijven aansluiten op Fortify.
+## Aandachtspunten Voor Toekomstig Werk
 
-### UI Richtlijnen
-
-- Houd de bestaande visuele stijl vast tenzij er bewust gekozen wordt voor een redesign.
-- Gebruik dezelfde branding, kleurwereld en typografische richting.
-- Wees voorzichtig met het toevoegen van een tweede, afwijkende designrichting.
-
-### Architectuur Richtlijnen
-
-- Volg bestaande Laravel-conventies.
-- Houd routes overzichtelijk.
-- Voeg tests toe voor nieuwe functionaliteit.
-- Gebruik bestaande auth-, mail- en userstructuren waar mogelijk opnieuw.
-- Gebruik rolgebaseerde toegang als een module admin-only is.
-
-## Bekende Verbeterkansen
-
-De applicatie werkt, maar er zijn nog duidelijke verbeterpunten voor de toekomst:
-
-- inline CSS centraliseren in herbruikbare layout/componentstructuren
-- branding-element herbruikbaar maken als Blade-component
-- auth-pagina's delen nog steeds veel visuele code en kunnen verder worden samengebracht
-- dashboard uitbouwen naar een echte ingelogde app-omgeving
-- admin-portal verder modulair opbouwen
-- eventueel later Livewire/Flux doelgericht inzetten voor rijkere beheerinteracties
-
-## Aanbevolen Gebruik In De Toekomst
-
-Gebruik dit document bij elk nieuw verzoek als eerste contextbron.
-
-Beste werkwijze:
-- lees dit bestand voordat je een nieuwe module ontwerpt
-- bepaal of de uitbreiding publiek, user-only of admin-only is
-- controleer of de nieuwe functionaliteit de bestaande flow verandert
-- gebruik dit bestand als baseline voordat je nieuwe routes, modellen, tabellen of pagina's toevoegt
-
-## Aanbevolen Volgende Stap
-
-Als de applicatie verder groeit, zijn logische vervolgstappen:
-
-1. een herbruikbare layout- of componentlaag maken voor branding en pagina-opbouw
-2. het onderscheid tussen publieke marketingpagina's, user-pagina's en admin-pagina's verder structureren
-3. nieuwe modules bouwen vanuit de bestaande dashboard- of admin-shell in plaats van losse pagina's toe te voegen
-
-## Laatst Bekende Baseline
-
-Deze context weerspiegelt de status van de applicatie na:
-- het opzetten van auth met e-mail en wachtwoord
-- het toevoegen van verplichte naam bij registratie
-- het bouwen van een publieke homepage
-- het opzetten van dashboard + logout
-- het restylen van login, register, forgot-password en reset-password
-- het uniform maken van branding en typografie
-- het toevoegen van rolgebaseerde toegang met `User` en `Admin`
-- het bouwen van een admin-portal
-- het bouwen van een admin gebruikersmodule
-- het configureren van echte SMTP-mailverzending
-- het oplossen van verificatielinks vanuit e-mail zonder 403
-
-## Module Checklist
-
-Gebruik deze checklist als vaste leidraad bij het ontwerpen en bouwen van nieuwe modules.
-
-### 1. Doel En Toegang
-
-- Wat is het doel van de module?
-- Is de module publiek toegankelijk, alleen voor gewone ingelogde users, of alleen voor admins?
-- Moet de module zichtbaar zijn vanaf de homepage, dashboard, admin-portal of meerdere plekken?
-
-### 2. Gebruikersflow
-
-- Hoe komt de gebruiker in deze module terecht?
-- Waar gaat de gebruiker heen na een succesvolle actie?
-- Past de flow logisch binnen de bestaande homepage -> login -> dashboard/admin-portal structuur?
-
-### 3. Routes
-
-- Welke routes zijn nodig?
-- Moeten routes beschermd zijn met `auth`, admin-middleware of signed/throttle middleware?
-- Past de naamgeving binnen de bestaande Laravel-conventies?
-
-### 4. Data En Database
-
-- Is een nieuwe tabel nodig?
-- Is een nieuw model nodig?
-- Zijn extra validatieregels nodig?
-- Zijn er unieke velden, relaties of indexen nodig?
-
-### 5. UI En Stijl
-
-- Past de module visueel binnen de bestaande Hermes-geinspireerde stijl?
-- Moet branding bovenaan zichtbaar zijn?
-- Is de pagina publiek-marketingachtig, user-functioneel of admin-functioneel?
-
-### 6. Hergebruik
-
-- Kan bestaande auth-, admin-, branding- of paginacode worden hergebruikt?
-- Moet een nieuw stuk UI eigenlijk een component worden?
-- Voorkomt deze aanpak duplicatie?
-
-### 7. Beveiliging
-
-- Is validatie aanwezig?
-- Is toegang goed afgeschermd?
-- Worden gevoelige gegevens veilig verwerkt en opgeslagen?
-
-### 8. E-mail Of Notificaties
-
-- Verstuurt de module e-mails of meldingen?
-- Moeten die echt verzonden worden of alleen lokaal gecontroleerd?
-- Past de mailbranding bij `Hermes Results`?
-
-### 9. Testen
-
-- Welke feature tests zijn nodig?
-- Welke bestaande tests moeten worden bijgewerkt?
-- Is het minimale functionele pad volledig getest?
-
-### 10. Afronding
-
-- Zijn routes, views, validatie, mails en databasewijzigingen op elkaar afgestemd?
-- Is de code geformatteerd?
-- Is de module in lijn met dit contextdocument gebouwd?
+- Houd altijd rekening met `org_id`-scope.
+- Nieuwe admin-modules moeten expliciet onderscheid maken tussen `Admin` en `Beheerder`.
+- Als een feature records toont of wijzigt, moet worden vastgesteld:
+  - ziet `Admin` alles?
+  - ziet `Beheerder` alleen eigen organisatie-data?
+  - mag `Beheerder` records alleen bekijken, of ook wijzigen?
+- `Hermes Results` is op dit moment een systeemkritische default-organisatie.
+- Nieuwe user-creatie en user-beheer moeten compatibel blijven met de bestaande rol- en org-logica.

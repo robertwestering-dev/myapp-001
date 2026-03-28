@@ -44,6 +44,21 @@ test('admins are redirected to the admin portal after login', function () {
     $this->assertAuthenticated();
 });
 
+test('managers are redirected to the admin portal after login', function () {
+    $manager = User::factory()->manager()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $manager->email,
+        'password' => 'password',
+    ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.portal', absolute: false));
+
+    $this->assertAuthenticated();
+});
+
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 

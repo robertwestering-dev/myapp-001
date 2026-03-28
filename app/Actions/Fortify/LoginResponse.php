@@ -15,7 +15,7 @@ class LoginResponse implements LoginResponseContract
         $user = $request->user();
 
         return redirect()->intended(
-            $user?->isAdmin()
+            $user?->canAccessAdminPortal()
                 ? route('admin.portal', absolute: false)
                 : route('dashboard', absolute: false)
         );

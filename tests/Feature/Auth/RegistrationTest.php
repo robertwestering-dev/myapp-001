@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
@@ -23,6 +24,10 @@ test('registration screen can be rendered', function () {
 test('new users can register', function () {
     Notification::fake();
 
+    $hermesOrganizationId = DB::table('organizations')
+        ->where('naam', 'Hermes Results')
+        ->value('org_id');
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test Gebruiker',
         'email' => 'test@example.com',
@@ -36,6 +41,7 @@ test('new users can register', function () {
     $this->assertAuthenticated();
     expect(User::first()?->name)->toBe('Test Gebruiker');
     expect(User::first()?->role)->toBe(User::ROLE_USER);
+    expect(User::first()?->org_id)->toBe($hermesOrganizationId);
     Notification::assertSentTo(User::first(), VerifyEmail::class);
 });
 

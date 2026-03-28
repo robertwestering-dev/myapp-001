@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -21,12 +22,18 @@ test('admins can view the users list', function () {
 
 test('admins can view the create user page', function () {
     $admin = User::factory()->admin()->create();
+    $organization = Organization::factory()->create([
+        'naam' => 'Atlas BV',
+    ]);
 
     $response = $this->actingAs($admin)->get(route('admin.users.create'));
 
     $response->assertOk()
         ->assertSee('Nieuwe gebruiker')
         ->assertSee('Gebruiker toevoegen')
+        ->assertSee('Organisatie')
+        ->assertSee(User::ROLE_MANAGER)
+        ->assertSee($organization->naam)
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
@@ -50,11 +57,15 @@ test('admins must confirm before deleting a user', function () {
 
 test('admins can create a new user', function () {
     $admin = User::factory()->admin()->create();
+    $organization = Organization::factory()->create([
+        'naam' => 'Nova Org',
+    ]);
 
     $response = $this->actingAs($admin)->post(route('admin.users.store'), [
         'name' => 'Nieuwe Gebruiker',
         'email' => 'nieuwe@example.com',
         'role' => User::ROLE_USER,
+        'org_id' => $organization->org_id,
         'password' => 'password123',
         'password_confirmation' => 'password123',
     ]);
@@ -65,11 +76,15 @@ test('admins can create a new user', function () {
         'name' => 'Nieuwe Gebruiker',
         'email' => 'nieuwe@example.com',
         'role' => User::ROLE_USER,
+        'org_id' => $organization->org_id,
     ]);
 });
 
 test('admins can update a user', function () {
     $admin = User::factory()->admin()->create();
+    $organization = Organization::factory()->create([
+        'naam' => 'Gewijzigde Organisatie',
+    ]);
     $user = User::factory()->create([
         'name' => 'Oude Naam',
         'email' => 'oude@example.com',
@@ -80,6 +95,7 @@ test('admins can update a user', function () {
         'name' => 'Nieuwe Naam',
         'email' => 'nieuwe@example.com',
         'role' => User::ROLE_ADMIN,
+        'org_id' => $organization->org_id,
     ]);
 
     $response->assertRedirect(route('admin.users.index'));
@@ -89,6 +105,7 @@ test('admins can update a user', function () {
         'name' => 'Nieuwe Naam',
         'email' => 'nieuwe@example.com',
         'role' => User::ROLE_ADMIN,
+        'org_id' => $organization->org_id,
     ]);
 });
 
@@ -196,6 +213,7 @@ test('non admins cannot create update or delete users', function () {
             'name' => 'Verboden',
             'email' => 'verboden@example.com',
             'role' => User::ROLE_USER,
+            'org_id' => Organization::query()->value('org_id'),
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ])
@@ -214,6 +232,7 @@ test('non admins cannot create update or delete users', function () {
             'name' => 'Verboden Update',
             'email' => 'verboden-update@example.com',
             'role' => User::ROLE_ADMIN,
+            'org_id' => Organization::query()->value('org_id'),
         ])
         ->assertForbidden();
 
@@ -226,4 +245,78 @@ test('guests are redirected to login for the users list', function () {
     $response = $this->get(route('admin.users.index'));
 
     $response->assertRedirect(route('login'));
+});
+
+test('managers only see users from their own organization', function () {
+    $organization = Organization::factory()->create([
+        'naam' => 'Eigen Org',
+    ]);
+    $otherOrganization = Organization::factory()->create([
+        'naam' => 'Andere Org',
+    ]);
+    $manager = User::factory()->manager()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $ownUser = User::factory()->create([
+        'name' => 'Eigen Gebruiker',
+        'email' => 'eigen@example.com',
+        'org_id' => $organization->org_id,
+    ]);
+    $otherUser = User::factory()->create([
+        'name' => 'Andere Gebruiker',
+        'email' => 'ander@example.com',
+        'org_id' => $otherOrganization->org_id,
+    ]);
+
+    $response = $this->actingAs($manager)->get(route('admin.users.index'));
+
+    $response->assertOk()
+        ->assertSee($ownUser->email)
+        ->assertDontSee($otherUser->email);
+});
+
+test('managers cannot edit users from another organization', function () {
+    $organization = Organization::factory()->create();
+    $otherOrganization = Organization::factory()->create();
+    $manager = User::factory()->manager()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $otherUser = User::factory()->create([
+        'org_id' => $otherOrganization->org_id,
+    ]);
+
+    $this->actingAs($manager)
+        ->get(route('admin.users.edit', $otherUser))
+        ->assertForbidden();
+});
+
+test('managers can only assign users inside their own organization', function () {
+    $organization = Organization::factory()->create([
+        'naam' => 'Eigen Org',
+    ]);
+    $otherOrganization = Organization::factory()->create([
+        'naam' => 'Andere Org',
+    ]);
+    $manager = User::factory()->manager()->create([
+        'org_id' => $organization->org_id,
+    ]);
+
+    $response = $this->actingAs($manager)->get(route('admin.users.create'));
+
+    $response->assertOk()
+        ->assertSee('Eigen Org')
+        ->assertDontSee('Andere Org')
+        ->assertSee('<option value="Beheerder"', false)
+        ->assertDontSee('<option value="Admin"', false);
+
+    $this->actingAs($manager)
+        ->post(route('admin.users.store'), [
+            'name' => 'Scoped User',
+            'email' => 'scoped@example.com',
+            'role' => User::ROLE_USER,
+            'org_id' => $otherOrganization->org_id,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])
+        ->assertSessionHasErrors('org_id');
 });
