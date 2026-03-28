@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminPortalController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationQuestionnaireController;
 use App\Http\Controllers\Admin\QuestionnaireCategoryController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Admin\QuestionnaireQuestionController;
 use App\Http\Controllers\Admin\QuestionnaireResponseReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\ContactRequestController;
 use App\Http\Controllers\QuestionnaireResponseController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Models\OrganizationQuestionnaire;
@@ -24,6 +26,8 @@ Route::get('/', function (Request $request) {
 
     return view('home');
 })->name('home');
+
+Route::post('/contact', [ContactRequestController::class, 'store'])->name('contact.store');
 
 Route::get('/dashboard', function (Request $request) {
     $user = $request->user();
@@ -73,7 +77,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
     ->prefix('admin-portal')
     ->name('admin.')
     ->group(function (): void {
-        Route::view('/', 'admin-portal')->name('portal');
+        Route::get('/', [AdminPortalController::class, 'index'])->name('portal');
 
         Route::prefix('users')
             ->name('users.')

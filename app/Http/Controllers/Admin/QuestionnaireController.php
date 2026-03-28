@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
+use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQuestionnaireRequest;
 use App\Http\Requests\Admin\UpdateQuestionnaireRequest;
@@ -10,6 +12,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class QuestionnaireController extends Controller
 {
@@ -35,6 +38,7 @@ class QuestionnaireController extends Controller
         return view('admin.questionnaires.index', [
             'canManageLibrary' => $actor->isAdmin(),
             'questionnaires' => $questionnaires,
+            'spotlightQuestionnaires' => $this->spotlightQuestionnaires($actor),
         ]);
     }
 
@@ -105,5 +109,36 @@ class QuestionnaireController extends Controller
         return redirect()
             ->route('admin.questionnaires.index')
             ->with('status', 'Questionnaire succesvol verwijderd.');
+    }
+
+    /**
+     * @return Collection<int, Questionnaire>
+     */
+    protected function spotlightQuestionnaires(User $actor): Collection
+    {
+        $spotlightTitles = [
+            SyncAdaptabilityAceQuestionnaire::TITLE,
+            SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
+        ];
+
+        $questionnaires = Questionnaire::query()
+            ->whereIn('title', $spotlightTitles)
+            ->withCount(['categories', 'questions', 'organizationQuestionnaires'])
+            ->with([
+                'organizationQuestionnaires' => function ($query) use ($actor): void {
+                    $query->with('organization:org_id,naam');
+
+                    if (! $actor->isAdmin()) {
+                        $query->where('org_id', $actor->org_id);
+                    }
+                },
+            ])
+            ->orderBy('title')
+            ->get();
+
+        return collect($spotlightTitles)
+            ->map(fn (string $title): ?Questionnaire => $questionnaires->firstWhere('title', $title))
+            ->filter()
+            ->values();
     }
 }

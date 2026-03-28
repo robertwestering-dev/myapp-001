@@ -23,6 +23,8 @@
 
     <style>
         .filters,
+        .spotlight-grid,
+        .filters,
         .meta {
             display: flex;
             gap: 12px;
@@ -50,6 +52,26 @@
             background: rgba(255, 255, 255, 0.76);
             color: var(--ink);
             font: inherit;
+        }
+
+        .spotlight-grid {
+            margin: 0 0 24px;
+        }
+
+        .spotlight-card {
+            flex: 1 1 320px;
+            padding: 22px;
+            border-radius: 24px;
+            border: 1px solid rgba(22, 33, 29, 0.08);
+            background: rgba(255, 255, 255, 0.56);
+            display: grid;
+            gap: 14px;
+        }
+
+        .spotlight-card__actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .table-wrap {
@@ -194,6 +216,31 @@
                 Export statistiek CSV
             </a>
         </form>
+
+        <div class="spotlight-grid">
+            @foreach ($spotlightQuestionnaires as $spotlightQuestionnaire)
+                <article class="spotlight-card">
+                    <div>
+                        <span class="eyebrow">Uitgelicht</span>
+                    </div>
+                    <div>
+                        <strong>{{ $spotlightQuestionnaire->title }}</strong>
+                        <div class="muted">{{ $spotlightQuestionnaire->description }}</div>
+                    </div>
+                    <div class="spotlight-card__actions">
+                        <a href="{{ route('admin.questionnaire-responses.index', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
+                            Filter responses
+                        </a>
+                        <a href="{{ route('admin.questionnaire-responses.stats', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
+                            Open statistieken
+                        </a>
+                        <a href="{{ route('admin.questionnaire-responses.export-summary', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
+                            Export samenvatting
+                        </a>
+                    </div>
+                </article>
+            @endforeach
+        </div>
 
         <div class="table-wrap">
             <table>

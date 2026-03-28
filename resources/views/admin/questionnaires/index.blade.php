@@ -22,6 +22,7 @@
     </x-slot:heroFacts>
 
     <style>
+        .spotlight-grid,
         .toolbar,
         .actions,
         .meta,
@@ -39,6 +40,26 @@
 
         .toolbar {
             margin: 28px 0 24px;
+        }
+
+        .spotlight-grid {
+            margin: 0 0 24px;
+        }
+
+        .spotlight-card {
+            flex: 1 1 320px;
+            padding: 22px;
+            border-radius: 24px;
+            border: 1px solid rgba(22, 33, 29, 0.08);
+            background: rgba(255, 255, 255, 0.56);
+            display: grid;
+            gap: 14px;
+        }
+
+        .spotlight-card__actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .table-wrap {
@@ -153,6 +174,46 @@
                     <a href="{{ route('admin.questionnaires.create') }}" class="pill">Nieuwe questionnaire</a>
                 </div>
             @endif
+        </div>
+
+        <div class="spotlight-grid">
+            @foreach ($spotlightQuestionnaires as $spotlightQuestionnaire)
+                @php($spotlightAvailability = $spotlightQuestionnaire->organizationQuestionnaires->first())
+                <article class="spotlight-card">
+                    <div>
+                        <span class="eyebrow">Uitgelicht</span>
+                    </div>
+                    <div>
+                        <strong>{{ $spotlightQuestionnaire->title }}</strong>
+                        <div class="muted">{{ $spotlightQuestionnaire->description }}</div>
+                    </div>
+                    <div class="muted">
+                        {{ $spotlightQuestionnaire->categories_count }} categorieen · {{ $spotlightQuestionnaire->questions_count }} vragen ·
+                        {{ $spotlightQuestionnaire->organization_questionnaires_count }} organisatiekoppelingen
+                    </div>
+                    <div class="spotlight-card__actions">
+                        @if ($spotlightAvailability)
+                            <a href="{{ route('admin.questionnaires.availability.edit', [$spotlightQuestionnaire, $spotlightAvailability]) }}" class="ghost-pill">
+                                Beschikbaarheid
+                            </a>
+                        @else
+                            <a href="{{ route('admin.questionnaires.availability.create', $spotlightQuestionnaire) }}" class="ghost-pill">
+                                Beschikbaar stellen
+                            </a>
+                        @endif
+
+                        <a href="{{ route('admin.questionnaire-responses.index', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
+                            Bekijk responses
+                        </a>
+
+                        @if ($canManageLibrary)
+                            <a href="{{ route('admin.questionnaires.edit', $spotlightQuestionnaire) }}" class="pill">Open questionnaire</a>
+                        @else
+                            <a href="{{ route('admin.questionnaires.index') }}" class="pill">In bibliotheek</a>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
         </div>
 
         <div class="table-wrap">

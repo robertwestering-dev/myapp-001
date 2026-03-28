@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
+use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
 use App\Models\User;
 
 test('guests are redirected to the login page for the admin portal', function () {
@@ -17,6 +19,9 @@ test('admins can visit the admin portal', function () {
         ->assertSee('Admin-portal')
         ->assertSee($admin->email)
         ->assertSee('Welkom terug, beheerder.')
+        ->assertSee(SyncAdaptabilityAceQuestionnaire::TITLE)
+        ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
+        ->assertSee('Baseline assessments')
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('https://calendly.com/robertwestering/30min')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
@@ -29,7 +34,8 @@ test('managers can visit the admin portal', function () {
 
     $response->assertOk()
         ->assertSee('Admin-portal')
-        ->assertSee($manager->email);
+        ->assertSee($manager->email)
+        ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE);
 });
 
 test('non admins cannot visit the admin portal', function () {

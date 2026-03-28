@@ -2,35 +2,38 @@
 
 ## Doel Van Dit Bestand
 
-Dit document beschrijft de actuele status van het project en dient als baseline voor toekomstig werk. Het is bedoeld als snel startpunt voor nieuwe features, refactors en verdere uitbouw van het questionnaire-platform.
+Dit document beschrijft de actuele status van het project en dient als baseline voor vervolgwerk. Het is bedoeld als snel startpunt voor nieuwe features, refactors en verdere uitbouw van het Hermes Results-platform.
 
 Gebruik dit document om direct te begrijpen:
 - welke functionele basis er nu staat
 - hoe rollen en organisatie-scope werken
-- welke admin-modules al bestaan
-- welke technische en productafspraken al gelden
+- hoe de questionnaire-modules zijn opgebouwd
+- welke UI- en technische patronen nu leidend zijn
 
 ## Korte Baseline Samenvatting
 
-De applicatie is nu een werkende Laravel 13-basisapp met:
+De applicatie is nu een werkende Laravel 13-app met:
 - Fortify-authenticatie
 - e-mailverificatie en password reset
+- een publieke homepage in Hermes Results-stijl
 - een dashboard voor gewone gebruikers
-- een admin-portal voor beheerdersrollen
+- een admin-portal voor `Admin` en `Beheerder`
 - organisatiebeheer
 - gebruikersbeheer
-- rol- en organisatiegebaseerde datascope
+- een volledige questionnaire-bibliotheek
+- user-invulflows voor questionnaires
+- rapportage, statistiek en CSV-exports voor responses
 
-De belangrijkste huidige bedrijfslogica:
+De kern van de huidige bedrijfslogica:
 - elke user hoort bij exact één organisatie via `users.org_id`
-- organisaties staan in `organizations`
-- `Hermes Results` is de standaardorganisatie
-- er zijn nu drie rollen: `User`, `Admin` en `Beheerder`
-- `Admin` ziet alle organisaties en alle users
-- `Beheerder` ziet in het admin-portal alleen data van de eigen organisatie
+- data is functioneel gescopeerd op organisatie
+- `Admin` beheert alles over alle organisaties heen
+- `Beheerder` werkt alleen binnen de eigen organisatie
+- questionnaires worden inhoudelijk beheerd door `Admin`
+- beschikbaarheid van standaard-questionnaires per organisatie kan door `Admin` en `Beheerder` worden ingesteld binnen hun toegestane scope
 
 Kort samengevat:
-we hebben nu niet alleen auth en branding staan, maar ook een eerste multitenant-achtige beheerstructuur op basis van `org_id`, waarop de questionnaire-modules veilig kunnen voortbouwen.
+de app is niet meer alleen auth + admin-basis, maar een werkend questionnaire-platform met organisatie-scope, invullen door users en rapportage in het admin-portal.
 
 ## Huidige Applicatiestatus
 
@@ -38,11 +41,11 @@ De applicatie draait op:
 - Laravel 13
 - PHP 8.5
 - MySQL
-- Laravel Fortify voor auth
+- Laravel Fortify voor authenticatie
 - Pest voor tests
 - Pint voor formatting
 
-De UI bestaat op dit moment grotendeels uit Blade-views met handmatige styling in Hermes Results-stijl. Livewire en Flux zitten in de stack, maar zijn nog niet de drijvende kracht achter de huidige admin-modules.
+De UI bestaat grotendeels uit Blade-views met Hermes Results-branding. Livewire en Flux zitten in de stack, maar de huidige admin- en questionnaire-modules zijn vooral klassiek opgebouwd met controllers, form requests en Blade.
 
 ## Huidige Gebruikersflow
 
@@ -54,13 +57,19 @@ Niet-ingelogde bezoekers landen op `/` en zien een publieke homepage in Hermes-s
 
 Een ingelogde gebruiker met rol `User` wordt vanaf `/` doorgestuurd naar `/dashboard`.
 
+Op het dashboard ziet de user:
+- eigen accountcontext
+- beschikbare questionnaires voor de eigen organisatie
+- per questionnaire een link naar het invulscherm
+- eventuele reeds opgeslagen response-status
+
 ### Admin En Beheerder
 
 Gebruikers met rol `Admin` of `Beheerder` worden vanaf `/` doorgestuurd naar `/admin-portal`.
 
 Belangrijk verschil:
-- `Admin` heeft volledig overzicht over alle organisaties en alle users
-- `Beheerder` werkt alleen binnen de eigen organisatie
+- `Admin` heeft volledig overzicht over alle organisaties, users, questionnaires en responses
+- `Beheerder` werkt in het admin-portal alleen binnen de eigen organisatie-scope
 
 ## Rollen En Autorisatie
 
@@ -73,7 +82,7 @@ Gedrag per rol:
 - `User`
   Geen toegang tot het admin-portal.
 - `Admin`
-  Ziet en beheert alle organisaties en alle users.
+  Ziet en beheert alle organisaties, users, questionnaires, beschikbaarheid en responses.
 - `Beheerder`
   Heeft toegang tot het admin-portal, maar alleen voor records met dezelfde `org_id` als de eigen user.
 
@@ -82,8 +91,11 @@ Belangrijke huidige scope-regels:
 - organisatieoverzicht voor `Beheerder` toont alleen de eigen organisatie
 - een `Beheerder` kan geen `Admin`-rol toekennen
 - een `Beheerder` kan users niet aan een andere organisatie koppelen
-- een `Beheerder` kan geen nieuwe organisaties aanmaken of organisaties verwijderen
+- een `Beheerder` kan geen nieuwe organisaties aanmaken of verwijderen
 - een `Beheerder` kan wel de eigen organisatie wijzigen
+- een `Beheerder` kan questionnaire-inhoud niet wijzigen
+- een `Beheerder` kan wel een bestaande questionnaire beschikbaar stellen voor de eigen organisatie
+- responses en statistieken voor `Beheerder` zijn beperkt tot de eigen organisatie
 
 Belangrijke implementatie:
 - [app/Models/User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
@@ -94,7 +106,7 @@ Belangrijke implementatie:
 
 ### Tabel `organizations`
 
-De applicatie bevat nu een organisatiestructuur in `organizations` met:
+De applicatie bevat een organisatiestructuur in `organizations` met onder andere:
 - `org_id`
 - `naam`
 - `adres`
@@ -109,7 +121,7 @@ De applicatie bevat nu een organisatiestructuur in `organizations` met:
 
 ### Tabel `users`
 
-De `users`-tabel bevat nu aanvullend:
+De `users`-tabel bevat aanvullend:
 - `role`
 - `org_id`
 
@@ -118,13 +130,91 @@ De `users`-tabel bevat nu aanvullend:
 Belangrijke afspraken:
 - elke user hoort bij één organisatie
 - standaard wordt `Hermes Results` gebruikt als organisatie-default
-- bestaande users zijn ook aan `Hermes Results` gekoppeld
+- bestaande en nieuwe standaard-users worden hieraan gekoppeld als geen andere organisatie wordt gekozen
 
 Belangrijke implementatie:
 - [database/migrations/2026_03_28_073541_create_organizations_table.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_28_073541_create_organizations_table.php)
 - [database/migrations/2026_03_28_074008_add_org_id_to_users_table.php](/Users/robert/Desktop/MyApp-001/database/migrations/2026_03_28_074008_add_org_id_to_users_table.php)
 - [app/Models/Organization.php](/Users/robert/Desktop/MyApp-001/app/Models/Organization.php)
 - [app/Models/User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
+
+## Questionnaire-Domein
+
+De questionnaire-module bestaat uit vier lagen:
+- questionnaire-bibliotheek
+- categorieën en vragen
+- beschikbaarheid per organisatie
+- user-responses en antwoorden
+
+### Inhoudelijke Bibliotheek
+
+Een questionnaire bestaat uit:
+- een questionnaire-record
+- meerdere categorieën
+- meerdere vragen per categorie
+
+Ondersteunde vraagtypes:
+- korte tekst
+- lange tekst
+- enkele keuze
+- meerdere keuzes
+- getal
+- ja / nee
+- datum
+
+Alle inhoudelijke opbouw van questionnaires ligt bij `Admin`. Een `Beheerder` kan categorieën en vragen niet zelf aanpassen.
+
+Belangrijke tabellen:
+- `questionnaires`
+- `questionnaire_categories`
+- `questionnaire_questions`
+
+Belangrijke implementatie:
+- [app/Models/Questionnaire.php](/Users/robert/Desktop/MyApp-001/app/Models/Questionnaire.php)
+- [app/Models/QuestionnaireCategory.php](/Users/robert/Desktop/MyApp-001/app/Models/QuestionnaireCategory.php)
+- [app/Models/QuestionnaireQuestion.php](/Users/robert/Desktop/MyApp-001/app/Models/QuestionnaireQuestion.php)
+- [app/Http/Controllers/Admin/QuestionnaireController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireController.php)
+- [app/Http/Controllers/Admin/QuestionnaireCategoryController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireCategoryController.php)
+- [app/Http/Controllers/Admin/QuestionnaireQuestionController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireQuestionController.php)
+
+### Beschikbaarheid Per Organisatie
+
+Een questionnaire wordt pas bruikbaar voor users nadat deze beschikbaar is gesteld voor een organisatie via `organization_questionnaires`.
+
+Deze laag bepaalt onder meer:
+- voor welke organisatie een questionnaire beschikbaar is
+- of de questionnaire actief is
+- eventuele beschikbaarheidsperiode
+
+Regels:
+- `Admin` kan beschikbaarheid voor alle organisaties beheren
+- `Beheerder` kan beschikbaarheid voor de eigen organisatie beheren
+- `User` kan alleen questionnaires zien die voor de eigen organisatie actief en beschikbaar zijn
+
+Belangrijke implementatie:
+- [app/Models/OrganizationQuestionnaire.php](/Users/robert/Desktop/MyApp-001/app/Models/OrganizationQuestionnaire.php)
+- [app/Http/Controllers/Admin/OrganizationQuestionnaireController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/OrganizationQuestionnaireController.php)
+
+### Responses En Antwoorden
+
+Wanneer een user een questionnaire invult, wordt één response per user per organisatie-questionnaire opgeslagen, met losse antwoordregels per vraag.
+
+Belangrijke tabellen:
+- `questionnaire_responses`
+- `questionnaire_response_answers`
+
+Belangrijke afspraken:
+- responses zijn gekoppeld aan `organization_questionnaire_id`
+- responses zijn gekoppeld aan `user_id`
+- per user is er effectief één actuele response per beschikbare questionnaire
+- bij opnieuw invullen wordt de bestaande response bijgewerkt
+- validatie gebeurt server-side op basis van het vraagtype
+
+Belangrijke implementatie:
+- [app/Models/QuestionnaireResponse.php](/Users/robert/Desktop/MyApp-001/app/Models/QuestionnaireResponse.php)
+- [app/Models/QuestionnaireResponseAnswer.php](/Users/robert/Desktop/MyApp-001/app/Models/QuestionnaireResponseAnswer.php)
+- [app/Http/Controllers/QuestionnaireResponseController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/QuestionnaireResponseController.php)
+- [app/Http/Requests/SubmitQuestionnaireResponseRequest.php](/Users/robert/Desktop/MyApp-001/app/Http/Requests/SubmitQuestionnaireResponseRequest.php)
 
 ## Routes En Navigatie
 
@@ -133,12 +223,20 @@ Belangrijkste routes:
   Publieke homepage of rolafhankelijke redirect
 - `/dashboard`
   Dashboard voor `User`
+- `/questionnaires/{organizationQuestionnaire}`
+  Invulscherm voor een beschikbare questionnaire
 - `/admin-portal`
   Portal voor `Admin` en `Beheerder`
 - `/admin-portal/users`
   Users-overzicht
 - `/admin-portal/organizations`
   Organisaties-overzicht
+- `/admin-portal/questionnaires`
+  Questionnaire-bibliotheek
+- `/admin-portal/questionnaire-responses`
+  Response-overzicht
+- `/admin-portal/questionnaire-responses/stats`
+  Visuele statistiekpagina
 
 De hoofdroute-definitie staat in:
 - [routes/web.php](/Users/robert/Desktop/MyApp-001/routes/web.php)
@@ -146,6 +244,8 @@ De hoofdroute-definitie staat in:
 Het admin-menu bevat nu:
 - `Gebruikers`
 - `Organisaties`
+- `Questionnaires`
+- `Responses`
 
 ## Authenticatie
 
@@ -217,24 +317,90 @@ Belangrijke implementatie:
 - [resources/views/admin/organizations/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/organizations/index.blade.php)
 - [resources/views/admin/organizations/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/organizations/form.blade.php)
 
-## UI En Branding
+## Admin-Module: Questionnairebeheer
 
-De belangrijkste publieke, auth- en admin-pagina's gebruiken momenteel:
+De questionnaire-module bevat nu:
+- questionnaire-overzicht
+- questionnaire aanmaken, wijzigen en verwijderen
+- categorie CRUD binnen questionnaires
+- vraag CRUD binnen categorieën
+- beschikbaarheid CRUD per organisatie
+
+Belangrijke beheerregels:
+- alleen `Admin` kan questionnaires, categorieën en vragen inhoudelijk wijzigen
+- `Admin` en `Beheerder` kunnen availability beheren binnen hun scope
+- organisatie-scope wordt overal gerespecteerd
+
+Belangrijke implementatie:
+- [resources/views/admin/questionnaires/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaires/index.blade.php)
+- [resources/views/admin/questionnaires/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaires/form.blade.php)
+- [resources/views/admin/questionnaire-categories/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaire-categories/form.blade.php)
+- [resources/views/admin/questionnaire-questions/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaire-questions/form.blade.php)
+- [resources/views/admin/organization-questionnaires/form.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/organization-questionnaires/form.blade.php)
+
+## User-Module: Questionnaire Invullen
+
+Users kunnen questionnaires invullen via:
+- het dashboard
+- een directe URL naar een beschikbare `organization_questionnaire`
+
+Gedrag:
+- alleen questionnaires van de eigen organisatie zijn toegankelijk
+- alleen actieve en beschikbare questionnaires zijn zichtbaar
+- bestaande antwoorden worden teruggeladen
+- antwoorden worden opnieuw opgeslagen bij herinzending
+
+Belangrijke implementatie:
+- [resources/views/dashboard.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/dashboard.blade.php)
+- [resources/views/questionnaires/show.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/questionnaires/show.blade.php)
+
+## Admin-Module: Responses, Rapportage En Export
+
+De responses-module bevat nu:
+- een overzichtspagina met filters op questionnaire, organisatie en gebruiker
+- een detailpagina per response
+- een visuele statistiekpagina
+- CSV-export per antwoordregel
+- CSV-export met één rij per user-response
+- CSV-export met statistiek per vraag en keuze-optie
+
+Rapportageregels:
+- `Admin` ziet responses over alle organisaties
+- `Beheerder` ziet alleen responses van de eigen organisatie
+- statistieken en exports respecteren dezelfde scope
+- voor open vragen toont de visuele statistiekpagina recente antwoorden
+- voor keuzevragen toont de visuele statistiekpagina aantallen en percentages per optie
+
+Belangrijke implementatie:
+- [app/Http/Controllers/Admin/QuestionnaireResponseReportController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireResponseReportController.php)
+- [resources/views/admin/questionnaire-responses/index.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaire-responses/index.blade.php)
+- [resources/views/admin/questionnaire-responses/show.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaire-responses/show.blade.php)
+- [resources/views/admin/questionnaire-responses/stats.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/admin/questionnaire-responses/stats.blade.php)
+
+## UI, Branding En Componenten
+
+De belangrijkste publieke, auth-, dashboard-, questionnaire- en admin-pagina's gebruiken momenteel:
 - Blade-views
-- inline CSS
+- inline CSS per pagina/layout
 - Hermes Results-branding
-- een gedeelde admin-layout
+- gedeelde Hermes-layouts en componenten
 
 Visuele kenmerken:
 - warm premium kleurenpalet
 - zakelijke uitstraling
 - sticky topbar
 - consistente Hermes-logo-integratie
-- herbruikbare componenten voor layout, facts, sections en admin-menu
+- gedeelde header/footer op belangrijke Hermes-pagina's
+- favicon en app-icon verwijzen nu centraal naar Hermes Results
 
-Belangrijke layout-bestanden:
+Belangrijke componenten en layouts:
 - [resources/views/components/layouts/hermes-admin.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/layouts/hermes-admin.blade.php)
+- [resources/views/components/layouts/hermes-auth.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/layouts/hermes-auth.blade.php)
+- [resources/views/components/hermes-header.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/hermes-header.blade.php)
+- [resources/views/components/hermes-footer.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/hermes-footer.blade.php)
 - [resources/views/components/admin-menu.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/admin-menu.blade.php)
+- [resources/views/components/hermes-fact.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/hermes-fact.blade.php)
+- [resources/views/components/favicon-links.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/components/favicon-links.blade.php)
 
 ## Mail En Infrastructuur
 
@@ -250,30 +416,39 @@ Relevante punten:
 Het project gebruikt Pest-featuretests als primaire veiligheidslaag.
 
 Belangrijk:
+- auth-redirects en portaltoegang zijn getest
 - users-beheer is getest
 - organisaties-beheer is getest
-- auth-redirects en portaltoegang zijn getest
-- rol- en org-scope voor `Beheerder` zijn getest
+- questionnaire-beheer is getest
+- availability per organisatie is getest
+- questionnaire-invulflow is getest
+- response-rapportage en exports zijn getest
+- favicon-head-output is getest
+
+Belangrijke testbestanden:
+- [tests/Feature/DashboardTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/DashboardTest.php)
+- [tests/Feature/AdminUserManagementTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/AdminUserManagementTest.php)
+- [tests/Feature/OrganizationManagementTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/OrganizationManagementTest.php)
+- [tests/Feature/QuestionnaireManagementTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/QuestionnaireManagementTest.php)
+- [tests/Feature/OrganizationQuestionnaireAvailabilityTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/OrganizationQuestionnaireAvailabilityTest.php)
+- [tests/Feature/QuestionnaireResponseFlowTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/QuestionnaireResponseFlowTest.php)
+- [tests/Feature/QuestionnaireResponseReportTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/QuestionnaireResponseReportTest.php)
 
 Typische verificatie in deze codebase:
 - `php artisan test --compact ...`
 - `vendor/bin/pint --dirty --format agent`
 
-## Belangrijkste Open Richting Voor Vervolg
+## Praktische Baseline Voor Vervolgwerk
 
-De volgende logische uitbreidingen bouwen direct voort op de huidige basis:
-- questionnaire-domein modelleren met meerdere gerelateerde tabellen
-- admin-portal uitbreiden met scoped datasets per organisatie
-- bepalen welke questionnaire-acties `Admin` versus `Beheerder` mogen uitvoeren
-- later eventueel delen van het admin-portal migreren naar Livewire/Flux voor rijkere interactie
+Als vervolgwerk op deze baseline ligt het voor de hand om voort te bouwen op:
+- verdere analyse of dashboards op questionnaire-responses
+- extra vraagtypes of conditional logic
+- response-versiegeschiedenis in plaats van één actuele response per user
+- exports of rapportage per organisatie of periode
+- verdere componentisering van Hermes Blade-views
 
-## Aandachtspunten Voor Toekomstig Werk
-
-- Houd altijd rekening met `org_id`-scope.
-- Nieuwe admin-modules moeten expliciet onderscheid maken tussen `Admin` en `Beheerder`.
-- Als een feature records toont of wijzigt, moet worden vastgesteld:
-  - ziet `Admin` alles?
-  - ziet `Beheerder` alleen eigen organisatie-data?
-  - mag `Beheerder` records alleen bekijken, of ook wijzigen?
-- `Hermes Results` is op dit moment een systeemkritische default-organisatie.
-- Nieuwe user-creatie en user-beheer moeten compatibel blijven met de bestaande rol- en org-logica.
+Belangrijke bestaande conventies:
+- volg organisatie-scope consequent via `org_id`
+- gebruik bestaande admin-portal patronen met controllers + form requests + Blade
+- voeg nieuwe wijzigingen altijd toe met tests
+- behoud Hermes Results-visuele stijl tenzij expliciet anders gevraagd

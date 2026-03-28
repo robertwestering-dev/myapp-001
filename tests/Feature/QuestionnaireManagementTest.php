@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
+use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireCategory;
 use App\Models\QuestionnaireQuestion;
@@ -16,6 +18,8 @@ test('admins can view the questionnaire list and create page', function () {
         ->assertOk()
         ->assertSee('Questionnaire-overzicht')
         ->assertSee('Werkdrukmeting')
+        ->assertSee(SyncAdaptabilityAceQuestionnaire::TITLE)
+        ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
         ->assertSee('Nieuwe questionnaire');
 
     $this->actingAs($admin)

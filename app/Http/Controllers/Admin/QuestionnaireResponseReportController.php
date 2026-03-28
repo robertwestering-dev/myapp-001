@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
+use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\Questionnaire;
@@ -413,6 +415,7 @@ class QuestionnaireResponseReportController extends Controller
      *     questionnaireId: int,
      *     questionnaires: array<int, string>,
      *     selectedUserId: int,
+     *     spotlightQuestionnaires: Collection<int, Questionnaire>,
      *     users: array<int, string>
      * }
      */
@@ -428,6 +431,7 @@ class QuestionnaireResponseReportController extends Controller
             'questionnaireId' => $questionnaireId,
             'questionnaires' => $this->questionnaireOptions(),
             'selectedUserId' => $userId,
+            'spotlightQuestionnaires' => $this->spotlightQuestionnaires(),
             'users' => $this->userOptions($actor),
         ];
     }
@@ -527,6 +531,26 @@ class QuestionnaireResponseReportController extends Controller
             ->orderBy('title')
             ->pluck('title', 'id')
             ->all();
+    }
+
+    /**
+     * @return Collection<int, Questionnaire>
+     */
+    protected function spotlightQuestionnaires(): Collection
+    {
+        $spotlightTitles = [
+            SyncAdaptabilityAceQuestionnaire::TITLE,
+            SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
+        ];
+
+        $questionnaires = Questionnaire::query()
+            ->whereIn('title', $spotlightTitles)
+            ->get(['id', 'title', 'description']);
+
+        return collect($spotlightTitles)
+            ->map(fn (string $title): ?Questionnaire => $questionnaires->firstWhere('title', $title))
+            ->filter()
+            ->values();
     }
 
     /**

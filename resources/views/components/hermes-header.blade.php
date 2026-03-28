@@ -5,7 +5,17 @@
 
 <header class="topbar">
     <div class="topbar__inner">
-        <x-hermes-brand :href="$href" />
+        <div class="topbar__left">
+            <x-hermes-brand :href="$href" />
+
+            @isset($menu)
+                @if (trim((string) $menu) !== '')
+                    <nav class="topbar__menu" aria-label="Hoofdmenu">
+                        {{ $menu }}
+                    </nav>
+                @endif
+            @endisset
+        </div>
 
         <div class="topbar__actions">
             @if ($showBooking)

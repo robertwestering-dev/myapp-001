@@ -24,9 +24,12 @@ test('home page uses the hermes favicon instead of the laravel default icons', f
 
     $response->assertOk()
         ->assertSee('rel="icon"', false)
+        ->assertSee('/favicon.png?v=', false)
+        ->assertSee('type="image/png"', false)
+        ->assertSee('rel="alternate icon"', false)
         ->assertSee('/favicon.ico?v=', false)
         ->assertSee('rel="shortcut icon"', false)
-        ->assertDontSee('/favicon.svg', false);
+        ->assertSee('/apple-touch-icon.png?v=', false);
 });
 
 test('dashboard uses the hermes favicon instead of the laravel default icons', function () {
@@ -37,7 +40,10 @@ test('dashboard uses the hermes favicon instead of the laravel default icons', f
 
     $response->assertOk()
         ->assertSee('rel="icon"', false)
+        ->assertSee('/favicon.png?v=', false)
+        ->assertSee('type="image/png"', false)
+        ->assertSee('rel="alternate icon"', false)
         ->assertSee('/favicon.ico?v=', false)
         ->assertSee('rel="shortcut icon"', false)
-        ->assertDontSee('/favicon.svg', false);
+        ->assertSee('/apple-touch-icon.png?v=', false);
 });
