@@ -3,7 +3,9 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
+use App\Mail\NewAccountRegistered;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -25,11 +27,21 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'role' => User::ROLE_USER,
             'password' => $input['password'],
         ]);
+
+        Mail::to(
+            config('contact.new_account_recipient_address'),
+            config('contact.new_account_recipient_name'),
+        )->send(new NewAccountRegistered(
+            name: $user->name,
+            email: $user->email,
+        ));
+
+        return $user;
     }
 }

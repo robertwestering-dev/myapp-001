@@ -21,6 +21,7 @@ class QuestionnaireResponseController extends Controller
         $this->ensureAccessible($organizationQuestionnaire, $user);
 
         $organizationQuestionnaire->load([
+            'questionnaire.categories' => fn ($query) => $query->orderBy('sort_order'),
             'questionnaire.categories.questions' => fn ($query) => $query->orderBy('sort_order'),
         ]);
 

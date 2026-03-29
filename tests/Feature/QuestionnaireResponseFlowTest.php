@@ -68,7 +68,9 @@ test('users can submit and revisit questionnaire responses', function () {
         ->get(route('questionnaire-responses.show', $availability))
         ->assertOk()
         ->assertSee('Hoe ervaart u uw werkweek?')
-        ->assertSee('Hoeveel energie heeft u meestal?');
+        ->assertSee('Hoeveel energie heeft u meestal?')
+        ->assertSee('Invulinstructie')
+        ->assertSee('Stap 1 van 1');
 
     $this->actingAs($user)
         ->post(route('questionnaire-responses.store', $availability), [
@@ -99,6 +101,69 @@ test('users can submit and revisit questionnaire responses', function () {
         ->assertOk()
         ->assertSee('Druk maar goed te doen.')
         ->assertSee('Laatst opgeslagen op');
+});
+
+test('questionnaire categories are shown as paginated steps', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Digitale samenwerking',
+    ]);
+    $firstCategory = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Start',
+        'sort_order' => 1,
+    ]);
+    $secondCategory = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Vervolg',
+        'sort_order' => 2,
+    ]);
+    $thirdCategory = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Afronding',
+        'sort_order' => 3,
+    ]);
+
+    QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $firstCategory->id,
+        'prompt' => 'Vraag uit start',
+        'sort_order' => 1,
+    ]);
+    QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $secondCategory->id,
+        'prompt' => 'Vraag uit vervolg',
+        'sort_order' => 1,
+    ]);
+    QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $thirdCategory->id,
+        'prompt' => 'Vraag uit afronding',
+        'sort_order' => 1,
+    ]);
+
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('questionnaire-responses.show', $availability))
+        ->assertOk()
+        ->assertSeeInOrder([
+            'Invulinstructie',
+            'Stap 1 van 3',
+            'Start',
+        ])
+        ->assertSee('Vorige stap')
+        ->assertSee('Volgende stap')
+        ->assertSee('Antwoorden opslaan')
+        ->assertSee('data-questionnaire-step')
+        ->assertSee('data-step-total="3"', false);
 });
 
 test('users cannot access questionnaires from another organization or unavailable questionnaires', function () {
@@ -168,5 +233,50 @@ test('required questionnaire questions must be answered with valid values', func
         ->assertSessionHasErrors([
             "answers.{$requiredChoice->id}",
             "answers.{$requiredNumber->id}",
+        ]);
+});
+
+test('required questions on earlier questionnaire pages must still be completed before submission', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create();
+    $firstCategory = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'sort_order' => 1,
+    ]);
+    $secondCategory = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'sort_order' => 2,
+    ]);
+    $requiredFirstQuestion = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $firstCategory->id,
+        'prompt' => 'Eerste verplichte vraag',
+        'is_required' => true,
+    ]);
+    $requiredSecondQuestion = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $secondCategory->id,
+        'prompt' => 'Tweede verplichte vraag',
+        'is_required' => true,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('questionnaire-responses.show', $availability))
+        ->post(route('questionnaire-responses.store', $availability), [
+            'answers' => [
+                $requiredSecondQuestion->id => 'Antwoord op de tweede pagina',
+            ],
+        ])
+        ->assertRedirect(route('questionnaire-responses.show', $availability))
+        ->assertSessionHasErrors([
+            "answers.{$requiredFirstQuestion->id}",
         ]);
 });

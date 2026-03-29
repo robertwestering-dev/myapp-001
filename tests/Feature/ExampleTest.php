@@ -51,7 +51,7 @@ test('guests can submit the contact form', function () {
         ->assertRedirect(route('home').'#contact')
         ->assertSessionHas('status', 'Bedankt voor uw bericht. We nemen zo snel mogelijk contact met u op.');
 
-    Mail::assertSent(ContactFormSubmitted::class, 'robert.vanwestering@proton.me');
+    Mail::assertSent(ContactFormSubmitted::class, 'robert.van.westering@outlook.com');
 
     /** @var ContactFormSubmitted $mail */
     $mail = Mail::sent(ContactFormSubmitted::class)->first();
