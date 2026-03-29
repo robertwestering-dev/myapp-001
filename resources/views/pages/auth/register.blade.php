@@ -3,10 +3,10 @@
     :back-href="route('login')"
     back-label="Terug naar login"
     eyebrow="Create Access"
-    heading="Maak een account aan in dezelfde visuele wereld."
-    lead="De registerpagina volgt nu exact dezelfde stijl als de loginpagina: hetzelfde warme kleurenpalet, dezelfde premium panelen en dezelfde rustige, zakelijke compositie."
+    heading="Gratis account aanmaken"
+    lead="Op deze pagina kun je een account aanmaken. Jouw persoonlijke account geeft je toegang tot de Quick scans, de Academy, en meer. Organisaties kunnen een zakelijk account aanmaken (plan daarvoor een afspraak)."
     form-title="Create account"
-    helper="Vul hieronder je gegevens in om een nieuw account aan te maken."
+    helper="Vul hieronder je gegevens in om een account aan te maken."
     :points="[
         'Registreer met een geldig e-mailadres',
         'Kies een veilig wachtwoord voor je account',
@@ -78,6 +78,6 @@
     </x-slot:secondary>
 
     <x-slot:sideNote>
-        De registratie blijft gebruikmaken van dezelfde Laravel Fortify-flow en validatie als voorheen.
+        
     </x-slot:sideNote>
 </x-layouts.hermes-auth>

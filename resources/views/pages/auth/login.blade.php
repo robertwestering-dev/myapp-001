@@ -3,20 +3,16 @@
     :back-href="route('home')"
     back-label="Terug naar home"
     eyebrow="Secure Access"
-    heading="Log in binnen dezelfde sfeer als de homepage."
-    lead="De loginpagina gebruikt nu exact dezelfde kleurwereld, typografie en premium panelstijl als de homepage, zodat de overgang van bezoeker naar gebruiker visueel logisch voelt."
+    heading="Toegang tot jouw portal"
+    lead="Na inloggen heb je gratis toegang tot de Quick scans, de Academy en meer. Organisaties kunnen een zakelijk account aanmaken (plan daarvoor een afspraak)."
     form-title="Log in"
-    helper="Gebruik je e-mailadres en wachtwoord om verder te gaan."
-    :points="[
-        'Hetzelfde warme kleurenpalet als de landing page',
-        'Rustige premium compositie met glass panels',
-        'Een direct en veilig loginformulier',
-    ]"
+    helper=""
+    :points="['Een nieuw account aanmaken is gratis','Je ontvangt een bericht om je emailadres te verifiëren','Via je account heb je toegang tot de portal']"
 >
     <x-slot:heroActions>
         <a class="pill pill--strong" href="{{ route('home') }}">Terug naar homepage</a>
         @if (Route::has('register'))
-            <a class="pill" href="{{ route('register') }}">Nieuw account</a>
+            <a class="pill" href="{{ route('register') }}">Nieuw account aanmaken</a>
         @endif
     </x-slot:heroActions>
 
@@ -69,6 +65,6 @@
     @endif
 
     <x-slot:sideNote>
-        Na inloggen word je doorgestuurd naar je persoonlijke welkomstpagina met je e-mailadres en de logout-knop.
+        
     </x-slot:sideNote>
 </x-layouts.hermes-auth>

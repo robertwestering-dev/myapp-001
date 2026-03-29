@@ -3,13 +3,13 @@
     :back-href="route('login')"
     back-label="Terug naar login"
     eyebrow="Password Recovery"
-    heading="Vraag een nieuwe toegang aan in dezelfde stijl."
-    lead="Deze pagina sluit nu visueel aan op de login- en homepage: hetzelfde warme palette, dezelfde premium panelopbouw en dezelfde rustige, zakelijke uitstraling."
+    heading="Wachtwoord vergeten?"
+    lead="Voer hiernaast je emailadres in. Als dat bestaat in onze database, dan ontvang je een resetlink voor het instellen van een nieuw wachtwoord."
     form-title="Forgot password"
     helper="Vul je e-mailadres in en we sturen je een link om je wachtwoord opnieuw in te stellen."
     :points="[
         'Voer het e-mailadres van je account in',
-        'Ontvang een resetlink via de bestaande Laravel-flow',
+        'Ontvang een resetlink',
         'Kies daarna een nieuw wachtwoord en log opnieuw in',
     ]"
 >
@@ -39,11 +39,10 @@
     </form>
 
     <x-slot:secondary>
-        Of ga terug naar
-        <a href="{{ route('login') }}">inloggen</a>
+        Of ga terug naar <a href="{{ route('login') }}">inloggen</a>
     </x-slot:secondary>
 
     <x-slot:sideNote>
-        De onderliggende resetfunctionaliteit blijft dezelfde Laravel Fortify-flow gebruiken.
+        
     </x-slot:sideNote>
 </x-layouts.hermes-auth>

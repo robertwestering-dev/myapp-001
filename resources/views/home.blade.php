@@ -657,10 +657,10 @@
         <section class="hero">
             <div class="hero__panel">
                 <span class="eyebrow">Hermes Results</span>
-                <h1>Maak digitale transformatie begrijpelijk, meetbaar en menselijk.</h1>
+                <h1>Maak digitale transformatie begrijpelijk, meetbaar en menselijk</h1>
                 <p class="hero__intro">
-                    U hoeft niet te raden waarom verandering stokt. Hermes Results helpt u eerst scherp te zien waar adaptability en digitale weerbaarheid
-                    van medewerkers nu staan, en gebruikt die inzichten vervolgens als startpunt voor doelgerichte consultancy in verandermanagement.
+                    Hermes Results helpt u om snel scherp te krijgen waar adaptability en digitale weerbaarheid
+                    van medewerkers nu staan, en gebruikt die inzichten vervolgens als startpunt voor een doelgerichte aanpak.
                 </p>
 
                 <div class="hero__actions">
@@ -672,15 +672,15 @@
 
                 <div class="hero__proof">
                     <article>
-                        <strong>Quick scans die richting geven</strong>
+                        <strong>Quick scans</strong>
                         <span>Korte, concrete assessments die zichtbaar maken waar gedrag, mindset en context verandering helpen of blokkeren.</span>
                     </article>
                     <article>
-                        <strong>Consultancy met echte input</strong>
+                        <strong>Stappenplan</strong>
                         <span>Geen veranderplan op gevoel, maar begeleiding op basis van data uit uw teams en organisatie.</span>
                     </article>
                     <article>
-                        <strong>Van inzicht naar actie</strong>
+                        <strong>Inzicht & overzicht</strong>
                         <span>Heldere rapportage, prioriteiten en een werkbare veranderroute voor digitale transformatie.</span>
                     </article>
                 </div>
@@ -690,7 +690,7 @@
                 <span class="eyebrow eyebrow--light">Focus op mensen</span>
                 <h2>Uw team wil vooruit, maar onzichtbare frictie vertraagt verandering.</h2>
                 <p>
-                    Nieuwe systemen, veranderende processen en hogere digitale verwachtingen vragen niet alleen om technologie, maar om medewerkers die mee kunnen bewegen.
+                    Nieuwe systemen, veranderende processen en hoge (digitale) verwachtingen vragen niet alleen om technologie, maar om medewerkers die mee kunnen bewegen.
                     Wanneer adaptability laag is of digitale weerbaarheid onder druk staat, blijven adoptie, eigenaarschap en voortgang achter.
                 </p>
 
@@ -701,7 +701,7 @@
                 </ul>
 
                 <div class="sidebar-box">
-                    De eerste quick scan in dit platform is de <strong>Adaptability Scan volgens het A.C.E.-model</strong>, opgebouwd rond Ability, Character en Environment.
+                    De eerste quick scan in dit platform is de <strong>Adaptability Scan</strong>, opgebouwd rond Ability, Character en Environment.
                 </div>
             </aside>
         </section>
@@ -709,7 +709,7 @@
         <section class="problem">
             <x-hermes-section-header
                 tagline="Waarom dit telt"
-                heading="Verandering mislukt zelden op strategie alleen"
+                heading="Verandering is moeilijk maar onvermijdelijk"
             />
 
             <div class="problem__grid">
@@ -847,7 +847,7 @@
             <div class="bridge__panel">
                 <div>
                     <span class="eyebrow eyebrow--light">Van questionnaire naar consultancy</span>
-                    <h2>De scans zijn geen eindproduct, maar het startpunt van beter verandermanagement.</h2>
+                    <h2>De scans zijn het startpunt van beter verandermanagement.</h2>
                     <p>
                         De questionnaires in dit platform leveren gestructureerde input op voor gesprekken, besluitvorming en interventies. Daardoor wordt consultancy minder abstract
                         en veel beter afgestemd op wat medewerkers werkelijk ervaren in verandering.
@@ -881,7 +881,7 @@
             <div class="closing__panel">
                 <div>
                     <div class="tagline">Call to action</div>
-                    <h2>Wilt u eerst begrijpen waar verandering vastloopt?</h2>
+                    <h2>Wilt u oplossingen die echt werken?</h2>
                     <p>
                         Plan een kennismaking voor de Quick scan adaptability van medewerkers, bespreek de roadmap voor de Quick scan digitale weerbaarheid
                         of stuur direct een bericht. We reageren op basis van uw vraag en kijken welke quick scan of consultancyvorm het beste past.
