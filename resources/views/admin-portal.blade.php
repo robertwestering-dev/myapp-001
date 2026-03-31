@@ -1,22 +1,22 @@
 <x-layouts.hermes-admin
-    title="Admin-portal"
-    eyebrow="Admin-portal"
-    heading="Welkom terug, beheerder."
+    :title="__('hermes.admin_portal.title')"
+    :eyebrow="__('hermes.admin_portal.eyebrow')"
+    :heading="__('hermes.admin_portal.heading')"
     :lead="$lead"
     menu-active="portal"
 >
     <x-slot:heroFacts>
         <x-hermes-fact
             :title="$actor->role"
-            description="Actieve rol in deze sessie"
+            :description="__('hermes.admin_portal.role')"
         />
         <x-hermes-fact
             :title="$questionnaireCount"
-            description="Questionnaires in de bibliotheek"
+            :description="__('hermes.admin_portal.library_count')"
         />
         <x-hermes-fact
             :title="$scopedAvailabilityCount"
-            description="Beschikbaarheid binnen uw scope"
+            :description="__('hermes.admin_portal.availability_count')"
         />
     </x-slot:heroFacts>
 
@@ -65,22 +65,38 @@
     <section class="content-panel">
         <div class="portal-grid">
             <article class="portal-card">
-                <h2>Questionnairebibliotheek</h2>
-                <p>Beheer de centrale bibliotheek en stel assessments beschikbaar voor organisaties binnen de juiste scope.</p>
-                <a href="{{ route('admin.questionnaires.index') }}" class="pill">Open questionnaires</a>
+                <h2>{{ __('hermes.admin_portal.library_title') }}</h2>
+                <p>{{ __('hermes.admin_portal.library_text') }}</p>
+                <a href="{{ route('admin.questionnaires.index') }}" class="pill">{{ __('hermes.admin_portal.library_action') }}</a>
             </article>
 
+            @if ($canManageLibrary)
+                <article class="portal-card">
+                    <h2>{{ __('hermes.admin_portal.academy_title') }}</h2>
+                    <p>{{ __('hermes.admin_portal.academy_text') }}</p>
+                    <div class="spotlight-meta">{{ __('hermes.admin_portal.academy_count', ['count' => $academyCourseCount]) }}</div>
+                    <a href="{{ route('admin.academy-courses.index') }}" class="pill">{{ __('hermes.admin_portal.academy_action') }}</a>
+                </article>
+
+                <article class="portal-card">
+                    <h2>{{ __('hermes.admin_portal.translations_title') }}</h2>
+                    <p>{{ __('hermes.admin_portal.translations_text') }}</p>
+                    <div class="spotlight-meta">{{ __('hermes.admin_portal.translations_count', ['count' => $translationCount]) }}</div>
+                    <a href="{{ route('admin.translations.index') }}" class="pill">{{ __('hermes.admin_portal.translations_action') }}</a>
+                </article>
+            @endif
+
             <article class="portal-card">
-                <h2>Responses en rapportage</h2>
-                <p>Bekijk ingevulde assessments, filter op questionnaire of organisatie en open direct de statistiek- en exportroutes.</p>
-                <a href="{{ route('admin.questionnaire-responses.index') }}" class="pill">Open responses</a>
+                <h2>{{ __('hermes.admin_portal.reports_title') }}</h2>
+                <p>{{ __('hermes.admin_portal.reports_text') }}</p>
+                <a href="{{ route('admin.questionnaire-responses.index') }}" class="pill">{{ __('hermes.admin_portal.reports_action') }}</a>
             </article>
         </div>
 
         <section class="spotlight-section">
-            <span class="eyebrow">Baseline assessments</span>
-            <h2>Twee quick scans staan nu centraal in de portal</h2>
-            <p>Gebruik deze shortcuts om de A.C.E.-scan en de verdieping op digitale weerbaarheid direct te openen, beschikbaar te stellen of te analyseren.</p>
+            <span class="eyebrow">{{ __('hermes.admin_portal.spotlight_eyebrow') }}</span>
+            <h2>{{ __('hermes.admin_portal.spotlight_title') }}</h2>
+            <p>{{ __('hermes.admin_portal.spotlight_text') }}</p>
 
             <div class="spotlight-grid">
                 @foreach ($spotlightQuestionnaires as $questionnaire)
@@ -91,21 +107,24 @@
                         </div>
 
                         <div class="spotlight-meta">
-                            {{ $questionnaire->categories_count }} categorieen · {{ $questionnaire->questions_count }} vragen ·
-                            {{ $questionnaire->scoped_organization_questionnaires_count }} koppelingen in uw scope
+                            {{ __('hermes.admin_portal.scope_meta', [
+                                'categories' => $questionnaire->categories_count,
+                                'questions' => $questionnaire->questions_count,
+                                'links' => $questionnaire->scoped_organization_questionnaires_count,
+                            ]) }}
                         </div>
 
                         <div class="spotlight-actions">
                             <a href="{{ route('admin.questionnaire-responses.index', ['questionnaire_id' => $questionnaire->id]) }}" class="ghost-pill">
-                                Bekijk responses
+                                {{ __('hermes.admin_portal.view_responses') }}
                             </a>
                             <a href="{{ route('admin.questionnaire-responses.stats', ['questionnaire_id' => $questionnaire->id]) }}" class="ghost-pill">
-                                Bekijk statistieken
+                                {{ __('hermes.admin_portal.view_stats') }}
                             </a>
                             @if ($canManageLibrary)
-                                <a href="{{ route('admin.questionnaires.edit', $questionnaire) }}" class="pill">Open in bibliotheek</a>
+                                <a href="{{ route('admin.questionnaires.edit', $questionnaire) }}" class="pill">{{ __('hermes.admin_portal.open_library') }}</a>
                             @else
-                                <a href="{{ route('admin.questionnaires.index') }}" class="pill">Open in bibliotheek</a>
+                                <a href="{{ route('admin.questionnaires.index') }}" class="pill">{{ __('hermes.admin_portal.open_library') }}</a>
                             @endif
                         </div>
                     </article>

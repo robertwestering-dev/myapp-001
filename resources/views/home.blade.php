@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -112,6 +112,29 @@
 
         .topbar__menu a:hover {
             color: var(--clay-deep);
+        }
+
+        .locale-switcher {
+            display: inline-flex;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .locale-switcher__label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .locale-switcher__select {
+            min-width: 72px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
         }
 
         .brand__logo {
@@ -644,173 +667,158 @@
 <body>
     <x-hermes-header>
         <x-slot:menu>
-            <a href="#diensten">Diensten</a>
-            <a href="#contact">Contact</a>
+            <a href="#diensten">{{ __('hermes.nav.services') }}</a>
+            <a href="{{ route('academy.index') }}">{{ __('hermes.nav.academy') }}</a>
+            <a href="#contact">{{ __('hermes.nav.contact') }}</a>
         </x-slot:menu>
 
         <div class="nav-actions">
-            <a class="pill pill--strong" href="{{ route('login') }}">Inloggen</a>
+            <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.nav.login') }}</a>
         </div>
     </x-hermes-header>
 
     <main>
         <section class="hero">
             <div class="hero__panel">
-                <span class="eyebrow">Hermes Results</span>
-                <h1>Maak digitale transformatie begrijpelijk, meetbaar en menselijk</h1>
-                <p class="hero__intro">
-                    Hermes Results helpt u om snel scherp te krijgen waar adaptability en digitale weerbaarheid
-                    van medewerkers nu staan, en gebruikt die inzichten vervolgens als startpunt voor een doelgerichte aanpak.
-                </p>
+                <span class="eyebrow">{{ __('hermes.home.eyebrow') }}</span>
+                <h1>{{ __('hermes.home.hero_title') }}</h1>
+                <p class="hero__intro">{{ __('hermes.home.hero_intro') }}</p>
 
                 <div class="hero__actions">
                     <a class="pill pill--strong" href="https://calendly.com/robertwestering/30min" target="_blank" rel="noopener noreferrer">
-                        Plan een kennismaking
+                        {{ __('hermes.home.hero_primary') }}
                     </a>
-                    <a class="pill" href="#diensten">Bekijk de quick scans</a>
+                    <a class="pill" href="#diensten">{{ __('hermes.home.hero_secondary') }}</a>
                 </div>
 
                 <div class="hero__proof">
                     <article>
-                        <strong>Quick scans</strong>
-                        <span>Korte, concrete assessments die zichtbaar maken waar gedrag, mindset en context verandering helpen of blokkeren.</span>
+                        <strong>{{ __('hermes.home.proof_quick_scans_title') }}</strong>
+                        <span>{{ __('hermes.home.proof_quick_scans_text') }}</span>
                     </article>
                     <article>
-                        <strong>Stappenplan</strong>
-                        <span>Geen veranderplan op gevoel, maar begeleiding op basis van data uit uw teams en organisatie.</span>
+                        <strong>{{ __('hermes.home.proof_plan_title') }}</strong>
+                        <span>{{ __('hermes.home.proof_plan_text') }}</span>
                     </article>
                     <article>
-                        <strong>Inzicht & overzicht</strong>
-                        <span>Heldere rapportage, prioriteiten en een werkbare veranderroute voor digitale transformatie.</span>
+                        <strong>{{ __('hermes.home.proof_insight_title') }}</strong>
+                        <span>{{ __('hermes.home.proof_insight_text') }}</span>
                     </article>
                 </div>
             </div>
 
             <aside class="hero__sidebar">
-                <span class="eyebrow eyebrow--light">Focus op mensen</span>
-                <h2>Uw team wil vooruit, maar onzichtbare frictie vertraagt verandering.</h2>
-                <p>
-                    Nieuwe systemen, veranderende processen en hoge (digitale) verwachtingen vragen niet alleen om technologie, maar om medewerkers die mee kunnen bewegen.
-                    Wanneer adaptability laag is of digitale weerbaarheid onder druk staat, blijven adoptie, eigenaarschap en voortgang achter.
-                </p>
+                <span class="eyebrow eyebrow--light">{{ __('hermes.home.sidebar_eyebrow') }}</span>
+                <h2>{{ __('hermes.home.sidebar_title') }}</h2>
+                <p>{{ __('hermes.home.sidebar_text') }}</p>
 
                 <ul>
-                    <li>U ziet weerstand, maar mist nog scherpte over de werkelijke oorzaak.</li>
-                    <li>U wilt investeren in transformatie, maar eerst weten waar de grootste risico's zitten.</li>
-                    <li>U zoekt een gids die zowel meet als meebeweegt in de uitvoering.</li>
+                    <li>{{ __('hermes.home.sidebar_point_1') }}</li>
+                    <li>{{ __('hermes.home.sidebar_point_2') }}</li>
+                    <li>{{ __('hermes.home.sidebar_point_3') }}</li>
                 </ul>
 
-                <div class="sidebar-box">
-                    De eerste quick scan in dit platform is de <strong>Adaptability Scan</strong>, opgebouwd rond Ability, Character en Environment.
-                </div>
+                <div class="sidebar-box">{!! __('hermes.home.sidebar_box') !!}</div>
             </aside>
         </section>
 
         <section class="problem">
             <x-hermes-section-header
-                tagline="Waarom dit telt"
-                heading="Verandering is moeilijk maar onvermijdelijk"
+                :tagline="__('hermes.home.why_tagline')"
+                :heading="__('hermes.home.why_heading')"
             />
 
             <div class="problem__grid">
                 <article>
-                    <h3>Extern probleem</h3>
-                    <p>Digitale transformatie versnelt, terwijl teams tegelijk moeten leren, presteren en omgaan met steeds nieuwe tools, processen en verwachtingen.</p>
+                    <h3>{{ __('hermes.home.why_external_title') }}</h3>
+                    <p>{{ __('hermes.home.why_external_text') }}</p>
                 </article>
 
                 <article>
-                    <h3>Intern probleem</h3>
-                    <p>Veel organisaties voelen dat medewerkers meer ondersteuning nodig hebben, maar weten nog niet precies waar adaptability of digitale weerbaarheid tekortschiet.</p>
+                    <h3>{{ __('hermes.home.why_internal_title') }}</h3>
+                    <p>{{ __('hermes.home.why_internal_text') }}</p>
                 </article>
 
                 <article>
-                    <h3>Filosofisch probleem</h3>
-                    <p>Verandering hoort mensen niet te overvallen. Teams verdienen een aanpak die eerst begrijpt wat er speelt, voordat er nieuwe druk wordt toegevoegd.</p>
+                    <h3>{{ __('hermes.home.why_philosophical_title') }}</h3>
+                    <p>{{ __('hermes.home.why_philosophical_text') }}</p>
                 </article>
             </div>
         </section>
 
         <section class="offers" id="diensten">
             <x-hermes-section-header
-                tagline="Diensten"
-                heading="Drie proposities die elkaar logisch versterken"
+                :tagline="__('hermes.home.offers_tagline')"
+                :heading="__('hermes.home.offers_heading')"
             />
 
             <div class="offer-grid">
                 <article class="offer-card offer-card--featured">
                     <div class="offer-card__meta">
-                        <span class="offer-badge">Nu beschikbaar</span>
-                        <span>Inloggen met account</span>
+                        <span class="offer-badge">{{ __('hermes.home.available_now') }}</span>
+                        <span>{{ __('hermes.home.login_required') }}</span>
                     </div>
 
                     <div>
-                        <h3>Quick scan adaptability</h3>
-                        <p>
-                            Een compacte assessment die zichtbaar maakt hoe mensen omgaan met verandering, onzekerheid, leren en context.
-                        </p>
+                        <h3>{{ __('hermes.home.offer_1_title') }}</h3>
+                        <p>{{ __('hermes.home.offer_1_text') }}</p>
                     </div>
 
                     <ul>
-                        <li>Analyse van Ability, Character en Environment</li>
-                        <li>Praktische input voor teamgesprekken en prioriteiten</li>
-                        <li>Geschikt als startmeting voor trainingen en veranderingstrajecten</li>
+                        <li>{{ __('hermes.home.offer_1_point_1') }}</li>
+                        <li>{{ __('hermes.home.offer_1_point_2') }}</li>
+                        <li>{{ __('hermes.home.offer_1_point_3') }}</li>
                     </ul>
 
                     <div class="offer-card__footer">
-                        <span class="offer-note">Voor organisaties die eerst scherpte willen voordat ze gaan investeren.</span>
-                        <a class="pill pill--strong" href="\login" target="_blank" rel="noopener noreferrer">Doe de quick scan</a>
+                        <span class="offer-note">{{ __('hermes.home.offer_1_note') }}</span>
+                        <a class="pill pill--strong" href="\login" target="_blank" rel="noopener noreferrer">{{ __('hermes.home.offer_1_action') }}</a>
                     </div>
                 </article>
 
                 <article class="offer-card">
                     <div class="offer-card__meta">
-                        <span class="offer-badge">Nu beschikbaar</span>
-                        <span>Inloggen met account</span>
+                        <span class="offer-badge">{{ __('hermes.home.available_now') }}</span>
+                        <span>{{ __('hermes.home.login_required') }}</span>
                     </div>
 
                     <div>
-                        <h3>Quick scan digitale weerbaarheid</h3>
-                        <p>
-                            Deze scan helpt organisaties begrijpen in hoeverre medewerkers digitaal zelfredzaam, alert en stabiel blijven in een omgeving vol nieuwe tools,
-                            digitale druk en veranderende omstandigheden.
-                        </p>
+                        <h3>{{ __('hermes.home.offer_2_title') }}</h3>
+                        <p>{{ __('hermes.home.offer_2_text') }}</p>
                     </div>
 
                     <ul>
-                        <li>Gericht op gedrag, vertrouwen en praktische digitale veerkracht</li>
-                        <li>Sluit aan op de komende questionnaire voor digitale weerbaarheid</li>
-                        <li>Ontworpen als tweede diagnose naast adaptability</li>
+                        <li>{{ __('hermes.home.offer_2_point_1') }}</li>
+                        <li>{{ __('hermes.home.offer_2_point_2') }}</li>
+                        <li>{{ __('hermes.home.offer_2_point_3') }}</li>
                     </ul>
 
                     <div class="offer-card__footer">
-                        <span class="offer-note">Ideaal wanneer digitale verandering ook cognitieve en operationele druk verhoogt.</span>
-                        <a class="pill pill--strong" href="\login" target="_blank" rel="noopener noreferrer">Doe de quick scan</a>
+                        <span class="offer-note">{{ __('hermes.home.offer_2_note') }}</span>
+                        <a class="pill pill--strong" href="\login" target="_blank" rel="noopener noreferrer">{{ __('hermes.home.offer_2_action') }}</a>
                     </div>
                 </article>
 
                 <article class="offer-card">
                     <div class="offer-card__meta">
-                        <span class="offer-badge">Consultancy</span>
-                        <span>Van diagnose naar uitvoering</span>
+                        <span class="offer-badge">{{ __('hermes.home.consultancy') }}</span>
+                        <span>{{ __('hermes.home.from_diagnosis_to_execution') }}</span>
                     </div>
 
                     <div>
-                        <h3>Verandermanagement bij digitale transformatie</h3>
-                        <p>
-                            Consultancy die quick-scan-data vertaalt naar een realistisch veranderverhaal, concrete interventies en begeleiding van teams, leidinggevenden
-                            en besluitvorming tijdens digitale transformatie.
-                        </p>
+                        <h3>{{ __('hermes.home.offer_3_title') }}</h3>
+                        <p>{{ __('hermes.home.offer_3_text') }}</p>
                     </div>
 
                     <ul>
-                        <li>Veranderanalyse op basis van echte teaminput</li>
-                        <li>Heldere prioriteiten voor communicatie, adoptie en leiderschap</li>
-                        <li>Begeleiding bij implementatie en bijsturing</li>
+                        <li>{{ __('hermes.home.offer_3_point_1') }}</li>
+                        <li>{{ __('hermes.home.offer_3_point_2') }}</li>
+                        <li>{{ __('hermes.home.offer_3_point_3') }}</li>
                     </ul>
 
                     <div class="offer-card__footer">
-                        <span class="offer-note">Voor organisaties die niet alleen willen meten, maar ook duurzaam willen veranderen.</span>
-                        <a class="pill" href="https://calendly.com/robertwestering/30min" target="_blank" rel="noopener noreferrer">Start een gesprek</a>
+                        <span class="offer-note">{{ __('hermes.home.offer_3_note') }}</span>
+                        <a class="pill" href="https://calendly.com/robertwestering/30min" target="_blank" rel="noopener noreferrer">{{ __('hermes.home.offer_3_action') }}</a>
                     </div>
                 </article>
             </div>
@@ -818,27 +826,27 @@
 
         <section class="plan">
             <x-hermes-section-header
-                tagline="Eenvoudig plan"
-                heading="Zo werken we van eerste scan naar veranderresultaat"
+                :tagline="__('hermes.home.plan_tagline')"
+                :heading="__('hermes.home.plan_heading')"
             />
 
             <div class="plan__grid">
                 <article class="plan__step">
                     <div class="plan__number">1</div>
-                    <h3>Meet wat er echt speelt</h3>
-                    <p>We starten met een quick scan die zichtbaar maakt waar medewerkers sterk staan en waar verandering extra ondersteuning vraagt.</p>
+                    <h3>{{ __('hermes.home.plan_1_title') }}</h3>
+                    <p>{{ __('hermes.home.plan_1_text') }}</p>
                 </article>
 
                 <article class="plan__step">
                     <div class="plan__number">2</div>
-                    <h3>Vertaal data naar keuzes</h3>
-                    <p>De uitkomsten worden omgezet naar een duidelijke lezing van risico's, kansen en prioriteiten voor teams, leiderschap en uitvoering.</p>
+                    <h3>{{ __('hermes.home.plan_2_title') }}</h3>
+                    <p>{{ __('hermes.home.plan_2_text') }}</p>
                 </article>
 
                 <article class="plan__step">
                     <div class="plan__number">3</div>
-                    <h3>Begeleid de transformatie</h3>
-                    <p>Met consultancy ondersteunen we communicatie, adoptie en veranderaanpak zodat digitale transformatie ook in gedrag landt.</p>
+                    <h3>{{ __('hermes.home.plan_3_title') }}</h3>
+                    <p>{{ __('hermes.home.plan_3_text') }}</p>
                 </article>
             </div>
         </section>
@@ -846,32 +854,27 @@
         <section class="bridge">
             <div class="bridge__panel">
                 <div>
-                    <span class="eyebrow eyebrow--light">Van questionnaire naar consultancy</span>
-                    <h2>De scans zijn het startpunt van beter verandermanagement.</h2>
-                    <p>
-                        De questionnaires in dit platform leveren gestructureerde input op voor gesprekken, besluitvorming en interventies. Daardoor wordt consultancy minder abstract
-                        en veel beter afgestemd op wat medewerkers werkelijk ervaren in verandering.
-                    </p>
+                    <span class="eyebrow eyebrow--light">{{ __('hermes.home.bridge_eyebrow') }}</span>
+                    <h2>{{ __('hermes.home.bridge_title') }}</h2>
+                    <p>{{ __('hermes.home.bridge_text') }}</p>
 
-                    <div class="bridge__highlight">
-                        Eerst inzicht in adaptability. Daarna ook zicht op digitale weerbaarheid. Vervolgens een verandertraject dat niet om mensen heen werkt, maar met hen meebeweegt.
-                    </div>
+                    <div class="bridge__highlight">{{ __('hermes.home.bridge_highlight') }}</div>
                 </div>
 
                 <div class="bridge__list">
                     <article>
-                        <strong>Heldere startpositie</strong>
-                        <p>U ziet sneller waar weerstand, onzekerheid of overbelasting in de verandering ontstaat.</p>
+                        <strong>{{ __('hermes.home.bridge_point_1_title') }}</strong>
+                        <p>{{ __('hermes.home.bridge_point_1_text') }}</p>
                     </article>
 
                     <article>
-                        <strong>Betere interventies</strong>
-                        <p>Training, communicatie en leiderschap kunnen beter worden gericht op de echte knelpunten.</p>
+                        <strong>{{ __('hermes.home.bridge_point_2_title') }}</strong>
+                        <p>{{ __('hermes.home.bridge_point_2_text') }}</p>
                     </article>
 
                     <article>
-                        <strong>Sterker veranderverhaal</strong>
-                        <p>Uw transformatie krijgt een boodschap die medewerkers begrijpen, voelen en kunnen volgen.</p>
+                        <strong>{{ __('hermes.home.bridge_point_3_title') }}</strong>
+                        <p>{{ __('hermes.home.bridge_point_3_text') }}</p>
                     </article>
                 </div>
             </div>
@@ -880,16 +883,13 @@
         <section class="closing" id="contact">
             <div class="closing__panel">
                 <div>
-                    <div class="tagline">Call to action</div>
-                    <h2>Wilt u oplossingen die echt werken?</h2>
-                    <p>
-                        Plan een kennismaking voor de Quick scan adaptability van medewerkers, bespreek de roadmap voor de Quick scan digitale weerbaarheid
-                        of stuur direct een bericht. We reageren op basis van uw vraag en kijken welke quick scan of consultancyvorm het beste past.
-                    </p>
+                    <div class="tagline">{{ __('hermes.home.closing_tagline') }}</div>
+                    <h2>{{ __('hermes.home.closing_title') }}</h2>
+                    <p>{{ __('hermes.home.closing_text') }}</p>
 
                     <div class="nav-actions">
                         <a class="pill pill--strong" href="https://calendly.com/robertwestering/30min" target="_blank" rel="noopener noreferrer">
-                            Plan een kennismaking
+                            {{ __('hermes.home.hero_primary') }}
                         </a>
                     </div>
                 </div>
@@ -903,7 +903,7 @@
                         @csrf
 
                         <label for="contact-name">
-                            <span>Naam</span>
+                            <span>{{ __('hermes.home.contact_name') }}</span>
                             <input
                                 id="contact-name"
                                 type="text"
@@ -918,7 +918,7 @@
                         </label>
 
                         <label for="contact-email">
-                            <span>Emailadres</span>
+                            <span>{{ __('hermes.home.contact_email') }}</span>
                             <input
                                 id="contact-email"
                                 type="email"
@@ -933,7 +933,7 @@
                         </label>
 
                         <label for="contact-message">
-                            <span>Bericht</span>
+                            <span>{{ __('hermes.home.contact_message') }}</span>
                             <textarea
                                 id="contact-message"
                                 name="message"
@@ -954,7 +954,7 @@
                                     @checked(old('privacy_consent'))
                                     required
                                 >
-                                <span class="checkbox-field__text">Ik ga akkoord met verwerking van mijn gegevens om contact op te nemen.</span>
+                                <span class="checkbox-field__text">{{ __('hermes.home.contact_consent') }}</span>
                             </label>
                             @error('privacy_consent')
                                 <div class="field-error">{{ $message }}</div>
@@ -962,7 +962,7 @@
                         </div>
 
                         <div class="nav-actions">
-                            <button type="submit" class="pill pill--strong">Verstuur bericht</button>
+                            <button type="submit" class="pill pill--strong">{{ __('hermes.home.contact_submit') }}</button>
                         </div>
                     </form>
                 </div>

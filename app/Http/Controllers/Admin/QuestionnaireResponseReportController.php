@@ -114,14 +114,14 @@ class QuestionnaireResponseReportController extends Controller
             }
 
             fputcsv($handle, [
-                'Questionnaire',
-                'Organisatie',
-                'Gebruiker',
-                'Emailadres',
-                'Ingezonden op',
-                'Categorie',
-                'Vraag',
-                'Antwoord',
+                __('hermes.reports.csv.questionnaire'),
+                __('hermes.reports.csv.organization'),
+                __('hermes.reports.csv.user'),
+                __('hermes.reports.csv.email'),
+                __('hermes.reports.csv.submitted_at'),
+                __('hermes.reports.csv.category'),
+                __('hermes.reports.csv.question'),
+                __('hermes.reports.csv.answer'),
             ]);
 
             $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId)
@@ -202,11 +202,11 @@ class QuestionnaireResponseReportController extends Controller
             }
 
             $header = [
-                'Questionnaire',
-                'Organisatie',
-                'Gebruiker',
-                'Emailadres',
-                'Ingezonden op',
+                __('hermes.reports.csv.questionnaire'),
+                __('hermes.reports.csv.organization'),
+                __('hermes.reports.csv.user'),
+                __('hermes.reports.csv.email'),
+                __('hermes.reports.csv.submitted_at'),
             ];
 
             foreach ($questions as $question) {
@@ -282,13 +282,13 @@ class QuestionnaireResponseReportController extends Controller
             }
 
             fputcsv($handle, [
-                'Questionnaire',
-                'Categorie',
-                'Vraag',
-                'Vraagtype',
-                'Totaal ingevuld',
-                'Optie',
-                'Aantal',
+                __('hermes.reports.csv.questionnaire'),
+                __('hermes.reports.csv.category'),
+                __('hermes.reports.csv.question'),
+                __('hermes.reports.csv.question_type'),
+                __('hermes.reports.csv.answered_total'),
+                __('hermes.reports.csv.option'),
+                __('hermes.reports.csv.count'),
             ]);
 
             $statistics->each(function (array $categoryStats) use ($handle, $questionnaire): void {
@@ -476,7 +476,7 @@ class QuestionnaireResponseReportController extends Controller
         if ($questionnaireId <= 0) {
             return redirect()
                 ->route('admin.questionnaire-responses.index', $request->query())
-                ->withErrors(['questionnaire_id' => 'Kies eerst een questionnaire voordat u exporteert.']);
+                ->withErrors(['questionnaire_id' => __('hermes.reports.choose_questionnaire_first')]);
         }
 
         return Questionnaire::query()->findOrFail($questionnaireId);

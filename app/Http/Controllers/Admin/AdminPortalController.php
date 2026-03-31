@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
 use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
+use App\Actions\Translations\ManageHermesTranslations;
 use App\Http\Controllers\Controller;
+use App\Models\AcademyCourse;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\User;
@@ -15,7 +17,7 @@ use Illuminate\Support\Collection;
 
 class AdminPortalController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, ManageHermesTranslations $translations): View
     {
         /** @var User $actor */
         $actor = $request->user();
@@ -27,6 +29,8 @@ class AdminPortalController extends Controller
                 ? "U bent ingelogd als admin met het account {$actor->email}. Vanuit deze omgeving beheert u organisaties, questionnaires en rapportage over alle organisaties heen."
                 : "U bent ingelogd als beheerder met het account {$actor->email}. Vanuit deze omgeving beheert u uw eigen organisatie, stelt u questionnaires beschikbaar en bekijkt u responses binnen uw scope.",
             'questionnaireCount' => Questionnaire::query()->count(),
+            'academyCourseCount' => AcademyCourse::query()->count(),
+            'translationCount' => $translations->all()->count(),
             'scopedAvailabilityCount' => OrganizationQuestionnaire::query()
                 ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
                     $query->where('org_id', $actor->org_id);

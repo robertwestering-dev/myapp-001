@@ -88,7 +88,7 @@ class QuestionnaireResponseController extends Controller
 
         return redirect()
             ->route('questionnaire-responses.show', $organizationQuestionnaire)
-            ->with('status', 'Uw antwoorden zijn opgeslagen.');
+            ->with('status', __('hermes.questionnaire.saved_status'));
     }
 
     protected function ensureAccessible(OrganizationQuestionnaire $organizationQuestionnaire, User $user): void

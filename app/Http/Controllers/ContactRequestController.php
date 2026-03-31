@@ -27,6 +27,6 @@ class ContactRequestController extends Controller
 
         return redirect()
             ->to(route('home').'#contact')
-            ->with('status', 'Bedankt voor uw bericht. We nemen zo snel mogelijk contact met u op.');
+            ->with('status', __('hermes.home.contact_success'));
     }
 }

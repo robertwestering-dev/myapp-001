@@ -2,62 +2,29 @@
 
 ## Doel Van Dit Bestand
 
-Dit document is de actuele baseline van het Hermes Results-project. Het beschrijft wat er nu functioneel en technisch staat, hoe de live-omgeving is ingericht, en welke aandachtspunten belangrijk zijn voor vervolgwerk.
+Dit document is de actuele baseline van het Hermes Results-project. Gebruik dit bestand als startpunt voor vervolgwerk, onboarding, bugfixes, deploys en context-herstel na een pauze.
 
-Gebruik dit bestand als startpunt voor:
-- nieuwe features
-- bugfixes
-- vervolgdeploys
-- onboarding of context-herstel na een pauze
+De inhoud hieronder beschrijft de huidige functionele en technische status zoals die nu in de codebase aanwezig is.
 
 ## Korte Samenvatting
 
-Hermes Results is nu een werkende Laravel 13-applicatie voor organisatiegebonden vragenlijsten en rapportage.
+Hermes Results is een Laravel 13-applicatie voor organisatiegebonden questionnaires, response-opslag, rapportage, CSV-export en een afgeschermde Academy met e-learnings.
 
-De huidige basis omvat:
-- publieke homepage op `https://hermesresults.com`
-- Fortify-authenticatie met registratie, login, wachtwoordreset en e-mailverificatie
+De app bevat nu:
+- publieke branded homepage
+- contactformulier
+- Fortify-auth met registratie, login, wachtwoord reset en e-mailverificatie
 - dashboard voor gewone gebruikers
+- Academy-catalogus voor ingelogde gebruikers
 - admin-portal voor `Admin` en `Beheerder`
-- beheer van organisaties
-- beheer van gebruikers
-- questionnaire-bibliotheek
-- beschikbaarheid van questionnaires per organisatie
-- invulflow voor gebruikers
-- rapportage, statistiek en CSV-export van responses
-
-De applicatie staat live op Hostnet en werkt via het domein `hermesresults.com`.
-
-## Huidige Live Status
-
-De applicatie is live gedeployed en functioneert.
-
-Bekende live basis:
-- domein: `https://hermesresults.com`
-- hostingprovider: Hostnet
-- PHP: 8.4
-- database: MySQL
-- app draait succesvol in productie
-- admin-login werkt
-- de twee baseline-questionnaires zijn aanwezig op live via migrations
-
-Belangrijke live paden:
-- publieke webroot: `/webroots/sites/hermesresults.com`
-- Laravel app-map: `/webroots/sites/hermesresults.com/hermesresults-app`
-
-Belangrijke deploy-keuze:
-- de volledige Laravel-app staat binnen de webroot in een submap
-- de root-`index.php` van de site laadt vervolgens de app vanuit `hermesresults-app`
-- deze structuur is gekozen omdat Hostnet de eerdere variant buiten de webroot niet correct kon laden
-
-Er staat daarnaast nog een oudere app-kopie in:
-- `/home/cl1myceal_u/hermesresults-app`
-
-Die oude map is geen actieve live-map meer en kan later worden verwijderd zodra hij niet meer nodig is als extra backup.
+- questionnaire-bibliotheek en beschikbaarheid per organisatie
+- meerstaps invulflow voor questionnaires
+- response-overzicht, statistieken en export
+- meertalige interface in `nl`, `en`, `de` en `fr`
 
 ## Technische Stack
 
-- PHP 8.5 in projectconfiguratie, live draait op PHP 8.4
+- PHP 8.5 in projectconfiguratie
 - Laravel 13
 - Laravel Fortify
 - Livewire 4
@@ -67,10 +34,74 @@ Die oude map is geen actieve live-map meer en kan later worden verwijderd zodra 
 - Tailwind CSS 4
 - Pest
 - Pint
+- MySQL
 
 Belangrijke observatie:
-- Livewire en Flux zijn beschikbaar in de stack
-- de huidige kern van het admin- en questionnaire-gedeelte is vooral controller- en Blade-gedreven
+- de kern van de publieke site, auth, Academy en questionnaire-flow is momenteel vooral Blade- en controller-gedreven
+- Livewire en Flux zijn beschikbaar, maar nog niet de dominante aanpak in de hoofdflows
+
+## Live En Hosting
+
+Bekende productiecontext:
+- live domein: `https://hermesresults.com`
+- hostingprovider: Hostnet
+- database: MySQL
+- productie draait momenteel via Hostnet-structuur binnen de webroot
+
+Belangrijke live paden:
+- publieke webroot: `/webroots/sites/hermesresults.com`
+- Laravel app-map: `/webroots/sites/hermesresults.com/hermesresults-app`
+
+Historische noot:
+- er bestaat nog een oudere kopie in `/home/cl1myceal_u/hermesresults-app`
+- die map is niet de actieve live-map
+
+## Domeinen En Taalgedrag
+
+Doelbeelddomeinen:
+- `hermesresults.com`
+- `hermesresults.nl`
+- `hermesresults.eu`
+
+Actuele codebasis:
+- in [locales.php](/Users/robert/Desktop/MyApp-001/config/locales.php) zijn host-defaults opgenomen:
+- `.com` -> `en`
+- `.nl` -> `nl`
+- `.eu` -> `de`
+
+Belangrijke caveat:
+- deze host-gebaseerde taalkeuze werkt alleen echt wanneer `.com`, `.nl` en `.eu` direct naar dezelfde Laravel-app verwijzen
+- zolang `.nl` of `.eu` via een kale `301 redirect` naar `.com` gaan, ziet Laravel de oorspronkelijke host niet en werkt dit niet betrouwbaar
+
+## Meertaligheid
+
+De applicatie is nu voorbereid op vier talen:
+- Nederlands
+- Engels
+- Duits
+- Frans
+
+Huidige implementatie:
+- vertalingen via `lang/{locale}/hermes.php`
+- talen switchen via header-switcher
+- switcher toont compacte labels: `NL`, `EN`, `DE`, `FR`
+- gastvoorkeur wordt in sessie opgeslagen
+- ingelogde voorkeur wordt opgeslagen op `users.locale`
+- middleware [SetApplicationLocale.php](/Users/robert/Desktop/MyApp-001/app/Http/Middleware/SetApplicationLocale.php) bepaalt de taal in deze volgorde:
+- user voorkeur
+- sessievoorkeur
+- host-default
+- app-default
+
+Status van vertaalwerk:
+- homepage is meertalig gekoppeld
+- auth-schermen zijn meertalig gekoppeld
+- dashboard, Academy, admin-portal, questionnaire-flow en rapportages zijn meertalig gekoppeld
+- de belangrijkste Duitse en Franse ontbrekende teksten zijn toegevoegd
+
+Standaardinstelling:
+- `APP_LOCALE=nl`
+- `APP_FALLBACK_LOCALE=nl`
 
 ## Gebruikersrollen
 
@@ -81,21 +112,20 @@ Er zijn drie rollen:
 
 Rolgedrag:
 - `User`
-  Ziet geen admin-portal en werkt vanuit `/dashboard`.
+  gebruikt `/dashboard`, ziet de Academy en heeft geen admin-portaltoegang
 - `Beheerder`
-  Heeft toegang tot het admin-portal, maar alleen binnen de eigen organisatie-scope.
+  heeft admin-portaltoegang binnen de eigen organisatie-scope
 - `Admin`
-  Heeft volledige toegang over alle organisaties, gebruikers, questionnaires, beschikbaarheid en responses.
+  heeft volledige toegang over organisaties, users, questionnaires, beschikbaarheid, responses en Academy-beheer
 
 Technische basis:
 - rolwaarden staan in [User.php](/Users/robert/Desktop/MyApp-001/app/Models/User.php)
-- admin-toegang loopt via `canAccessAdminPortal()`
-- middleware [EnsureUserIsAdmin.php](/Users/robert/Desktop/MyApp-001/app/Http/Middleware/EnsureUserIsAdmin.php) laat zowel `Admin` als `Beheerder` toe
+- admin-portaltoegang loopt via `canAccessAdminPortal()`
+- middleware [EnsureUserIsAdmin.php](/Users/robert/Desktop/MyApp-001/app/Http/Middleware/EnsureUserIsAdmin.php) laat `Admin` en `Beheerder` toe
+- middleware [EnsureUserIsGlobalAdmin.php](/Users/robert/Desktop/MyApp-001/app/Http/Middleware/EnsureUserIsGlobalAdmin.php) begrenst Academy-beheer expliciet tot globale `Admin`
 
 Belangrijke afspraak:
 - nieuwe registraties krijgen standaard rol `User`
-- een nieuwe live omgeving bevat dus niet automatisch een admin-account
-- een gebruiker moet desnoods na registratie via Artisan/Tinker naar `Admin` worden gepromoveerd
 
 ## Gebruikersflow
 
@@ -103,119 +133,167 @@ Belangrijke afspraak:
 
 Niet-ingelogde bezoekers landen op `/` en zien de publieke homepage.
 
-Daarnaast is er een publiek contactformulier op:
-- `POST /contact`
+Publieke acties:
+- contactformulier via `POST /contact`
+- registratie
+- login
+- wachtwoord reset
 
 ### Gewone Gebruiker
 
 Een ingelogde `User` komt op `/dashboard`.
 
-Op het dashboard ziet de gebruiker:
+Daar ziet de gebruiker:
 - questionnaires die beschikbaar zijn voor de eigen organisatie
-- of een questionnaire actief en beschikbaar is
-- eventuele bestaande eigen response
-- een link naar het invulscherm
+- invulstatus per questionnaire
+- een link naar de invulflow
+- een Academy-blok met link naar de catalogus
+
+Via `/academy` ziet de gebruiker:
+- e-learningtegels met doelgroep, doel, samenvatting, leerdoelen, inhoud en gemiddelde duur
+- een link naar de gekoppelde web-export van de training
 
 ### Admin En Beheerder
 
-Gebruikers met toegang tot het admin-portal worden vanaf `/` of `/dashboard` doorgestuurd naar:
+Gebruikers met admin-portaltoegang worden vanaf `/` of `/dashboard` doorgestuurd naar:
 - `/admin-portal`
 
-Vanuit het admin-portal is toegang tot:
-- gebruikersbeheer
-- organisatiebeheer
-- questionnaire-bibliotheek
-- questionnaire-beschikbaarheid per organisatie
-- response-overzicht
+Van daaruit is toegang tot:
+- users
+- organisaties
+- questionnaires
+- availability
+- responses
 - statistieken
-- exportfunctionaliteit
+- exports
+
+Extra beperking:
+- alleen globale `Admin` ziet en beheert Academy-cursussen in de admin-portal
 
 ## Organisatie- En Scope-logica
 
 De applicatie is organisatiegebonden.
 
-Belangrijkste modelafspraak:
+Belangrijkste afspraak:
 - elke gebruiker hoort bij precies één organisatie via `users.org_id`
 
 Scope-regels:
-- `Admin` werkt over alle organisaties heen
-- `Beheerder` werkt alleen binnen de eigen `org_id`
+- `Admin` ziet alles
+- `Beheerder` werkt binnen de eigen organisatie-scope
 - `User` ziet alleen questionnaires die voor de eigen organisatie beschikbaar zijn
 
-Praktische gevolgen:
-- `Beheerder` ziet alleen relevante users en organisaties binnen eigen scope
-- `Beheerder` kan geen globale admin-acties uitvoeren
-- `Beheerder` kan geen questionnaire-inhoud beheren
-- `Beheerder` kan wel beschikbaarheid van questionnaires binnen de eigen organisatie beheren
+Academy-scope:
+- de Academy-catalogus is zichtbaar voor ingelogde gebruikers
+- het beheer van Academy-cursussen is niet organisatie-specifiek maar globaal
+- alleen `Admin` mag de tabel `academy_courses` zien en onderhouden
+
+## Academy
+
+De Academy-module is nu een apart domeindeel naast questionnaires.
+
+Functionele status:
+- catalogusroute: `/academy`
+- catalogus is alleen toegankelijk voor ingelogde gebruikers
+- dashboard van gewone gebruikers bevat een Academy-promoblok met link naar de catalogus
+- Academy-cursussen staan in MySQL in plaats van in configbestanden
+- startcursussen voor adaptability en digitale weerbaarheid zijn als seeddata aanwezig
+
+Datamodel:
+- `academy_courses`
+
+Belangrijke velden in `academy_courses`:
+- `slug`
+- `theme`
+- `path`
+- `estimated_minutes`
+- `sort_order`
+- `is_active`
+- meertalige JSON-velden voor `title`, `audience`, `goal`, `summary`, `learning_goals` en `contents`
+
+Belangrijke implementaties:
+- [AcademyCourse.php](/Users/robert/Desktop/MyApp-001/app/Models/AcademyCourse.php)
+- [AcademyController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/AcademyController.php)
+- [AcademyCourseController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/AcademyCourseController.php)
+- [AcademyCourseSeeder.php](/Users/robert/Desktop/MyApp-001/database/seeders/AcademyCourseSeeder.php)
+
+Belangrijke afspraak:
+- de Academy-catalogus wordt nu primair vanuit MySQL opgebouwd
+- de daadwerkelijke e-learningcontent blijft een web-export in een eigen publieke map, bijvoorbeeld onder `public/academy-courses/...`
 
 ## Questionnaires
 
-De questionnaire-module is nu een belangrijke kern van de applicatie.
+De questionnaire-module is een kernonderdeel van het product.
 
-Er zijn op dit moment twee baseline-questionnaires:
+Baseline-questionnaires in code:
 - `Adaptability Scan volgens het A.C.E.-model`
 - `Quick scan digitale weerbaarheid`
 
-Belangrijke implementatie:
+Belangrijke implementaties:
 - [SyncAdaptabilityAceQuestionnaire.php](/Users/robert/Desktop/MyApp-001/app/Actions/Questionnaires/SyncAdaptabilityAceQuestionnaire.php)
 - [SyncDigitalResilienceQuickScanQuestionnaire.php](/Users/robert/Desktop/MyApp-001/app/Actions/Questionnaires/SyncDigitalResilienceQuickScanQuestionnaire.php)
 
-Belangrijke eigenschap:
-- deze baseline-questionnaires worden vanuit de code aangemaakt
-- ze zijn dus reproduceerbaar via migrations
-- daardoor kwamen ze automatisch mee naar live tijdens `php artisan migrate --force`
-
-Dit is belangrijk voor vervolgwerk:
-- questionnaires die structureel onderdeel van het product zijn, moeten bij voorkeur in code blijven
-- niet alleen in een lokale ontwikkel-database
+Belangrijke afspraak:
+- product-brede baseline-questionnaires blijven bij voorkeur reproduceerbaar in code
 
 ## Questionnaire-structuur
 
-De inhoud is gelaagd opgebouwd:
+Datamodel:
 - `questionnaires`
 - `questionnaire_categories`
 - `questionnaire_questions`
-
-Beschikbaarheid per organisatie loopt via:
 - `organization_questionnaires`
-
-Responses lopen via:
 - `questionnaire_responses`
 - `questionnaire_response_answers`
 
-De huidige flow is:
-1. een questionnaire bestaat in de bibliotheek
-2. de questionnaire wordt beschikbaar gemaakt voor een organisatie
-3. een gebruiker uit die organisatie ziet de questionnaire op het dashboard
-4. de gebruiker vult de questionnaire in
-5. antwoorden en response worden opgeslagen
-6. admin-portal toont rapportage en exports
+Actuele invulflow:
+1. questionnaire bestaat in bibliotheek
+2. questionnaire wordt beschikbaar gemaakt voor een organisatie
+3. gebruiker ziet questionnaire op dashboard
+4. gebruiker vult questionnaire in
+5. response en answers worden opgeslagen
+6. admin-portal toont rapportage en export
+
+## Questionnaire UX-status
+
+De questionnaire-weergave op `/questionnaires/{organizationQuestionnaire}` is aangepast naar een meerstapsflow.
+
+Huidige status:
+- invulinstructie staat boven de questionnaire en gebruikt volle breedte
+- questionnaire gebruikt volle contentbreedte
+- elke categorie is een eigen stap
+- gebruiker kan terug naar vorige stap
+- gebruiker kan alleen door naar volgende stap wanneer verplichte vragen op de huidige stap zijn ingevuld
+- de tekst `Kies een antwoord` is verwijderd
+- header op de questionnairepagina is gelijkgetrokken met de homepage-header
+
+Belangrijke view:
+- [show.blade.php](/Users/robert/Desktop/MyApp-001/resources/views/questionnaires/show.blade.php)
 
 ## Routes
 
 Belangrijkste actuele routes:
 - `/`
 - `/dashboard`
+- `/academy`
 - `/questionnaires/{organizationQuestionnaire}`
 - `/admin-portal`
+- `/admin-portal/academy-courses`
 - `/admin-portal/users`
 - `/admin-portal/organizations`
 - `/admin-portal/questionnaires`
 - `/admin-portal/questionnaire-responses`
 - `/verify-email/{id}/{hash}`
+- `POST /contact`
+- `POST /locale`
 
-De routes staan in [web.php](/Users/robert/Desktop/MyApp-001/routes/web.php).
-
-Belangrijk routegedrag:
-- `/` stuurt ingelogde gebruikers rolafhankelijk door
-- `/dashboard` stuurt admin-achtige rollen ook door naar `/admin-portal`
-- questionnaire-invullen vereist auth
-- admin-portal vereist auth plus middleware voor admin-portaltoegang
+Routebasis:
+- [web.php](/Users/robert/Desktop/MyApp-001/routes/web.php)
 
 ## Belangrijkste Controllers En Domeindelen
 
 Admin:
 - [AdminPortalController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/AdminPortalController.php)
+- [AcademyCourseController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/AcademyCourseController.php)
 - [UserController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/UserController.php)
 - [OrganizationController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/OrganizationController.php)
 - [QuestionnaireController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireController.php)
@@ -225,7 +303,9 @@ Admin:
 - [QuestionnaireResponseReportController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireResponseReportController.php)
 
 Publiek en user:
+- [AcademyController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/AcademyController.php)
 - [ContactRequestController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/ContactRequestController.php)
+- [LocaleController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/LocaleController.php)
 - [QuestionnaireResponseController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/QuestionnaireResponseController.php)
 - [EmailVerificationController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Auth/EmailVerificationController.php)
 
@@ -238,101 +318,101 @@ Actieve onderdelen:
 - login
 - password reset
 - e-mailverificatie
-- two-factor-authenticatie
 
-Belangrijke implementatiepunten:
-- registratie maakt standaard een `User`
-- login stuurt gebruikers rolafhankelijk door
-- e-mailverificatie heeft een publieke verify-route
+Belangrijke actuele functionele keuzes:
+- minimum wachtwoordlengte bij registratie is `8`
+- overige wachtwoordeisen zijn behouden
+- nieuwe registraties sturen een melding naar `robert.van.westering@outlook.com`
 
-## UI-status
+Belangrijke registratie-implementatie:
+- [CreateNewUser.php](/Users/robert/Desktop/MyApp-001/app/Actions/Fortify/CreateNewUser.php)
+- [NewAccountRegistered.php](/Users/robert/Desktop/MyApp-001/app/Mail/NewAccountRegistered.php)
 
-De applicatie heeft een branded Blade-interface in Hermes Results-stijl.
+## Mail En Contact
 
-Belangrijke schermen:
-- publieke homepage
-- dashboard
-- admin-portal
-- CRUD-schermen voor users, organisaties en questionnaires
-- response-rapportages
+Contactformulier:
+- ontvanger staat op `robert.van.westering@outlook.com`
 
-Designstatus:
-- de app heeft een duidelijke branded basis
-- de structuur is functioneel werkend
-- de frontend is niet volledig Livewire-first opgebouwd
+Nieuwe accountregistratie:
+- verstuurt melding naar `robert.van.westering@outlook.com`
+- onderwerp: `Nieuw account Hermes Results`
 
-## Database-status
+Belangrijke config:
+- [contact.php](/Users/robert/Desktop/MyApp-001/config/contact.php)
 
-De live database is succesvol aangemaakt op Hostnet.
+## Rapportage En Exports
 
-Belangrijk:
-- migrations zijn uitgevoerd op live
-- de baseline-questionnaires zijn daardoor automatisch aanwezig
-- admin-accounts worden niet automatisch seed-based aangemaakt
+Het admin-portal bevat response-overzichten, statistiekweergave en CSV-export.
 
-Gevolg:
-- op een nieuwe omgeving moet een eerste admin handmatig worden aangemaakt of gepromoveerd
+Actuele status:
+- detail export
+- summary export
+- stats export
+- belangrijke labels en CSV-headers zijn meertalig gekoppeld
 
-## Deploy-status En Aanpak
+Belangrijke controller:
+- [QuestionnaireResponseReportController.php](/Users/robert/Desktop/MyApp-001/app/Http/Controllers/Admin/QuestionnaireResponseReportController.php)
 
-De eerste productie-deploy is succesvol uitgevoerd naar Hostnet.
+## UI En Branding
 
-De werkende aanpak is nu:
-1. lokaal dependencies en frontend-build gereed maken
-2. bestanden uploaden naar `/webroots/sites/hermesresults.com/hermesresults-app`
-3. productie-`.env` gebruiken
-4. indien nodig migrations draaien
-5. Laravel-caches verversen
-6. Hostnet-cache legen via `cache-purge`
+De app gebruikt een duidelijke Hermes Results-stijl.
 
-Belangrijke deploy-opmerking:
-- de actieve Laravel-app staat live binnen de webroot-submap
-- de site-root bevat de publieke bestanden plus een aangepaste `index.php`
-- eerdere poging met een app-map buiten de webroot werkte niet betrouwbaar op Hostnet
+Homepage-palette:
+- primaire kleuren:
+- `#1E473D`
+- `#102A23`
+- `#BC5B2C`
+- `#8D3F18`
+- ondersteunende kleuren:
+- `#F4EDE3`
+- `#EFE5D7`
+- `#172321`
+- `#56655F`
+- `#D6B37A`
 
-## Praktische Deploy-checklist
+Belangrijke ontwerpkenmerken:
+- warme zandtinten
+- diep groen als vertrouwenskleur
+- clay als actieaccent
+- goud voor verfijning
+- afgeronde panelen
+- editorial typografie
 
-Globale volgorde voor volgende deploys:
-1. lokaal `npm run build`
-2. gewijzigde bestanden uploaden naar `/webroots/sites/hermesresults.com/hermesresults-app`
-3. SSH naar Hostnet
-4. indien nodig `php artisan migrate --force`
-5. `php artisan optimize:clear`
-6. `php artisan config:cache`
-7. `php artisan route:cache`
-8. `php artisan view:cache`
-9. `cache-purge`
+Er is ook een eerste PowerPoint-templatebestand gegenereerd in:
+- [hermes-results-powerpoint-template.pptx](/Users/robert/Desktop/MyApp-001/resources/presentation/hermes-results-powerpoint-template.pptx)
 
-Belangrijke loglocatie bij problemen:
-- `/logs/sites/php_error.log`
+Belangrijke caveat:
+- dit bestand is technisch als pakket opgebouwd, maar is nog niet bevestigd als bruikbaar in PowerPoint op een Windows-laptop met Microsoft Office
 
-## Bekende Operationele Aandachtspunten
+## Teststatus En Tooling
 
-- productie gebruikt een eigen `.env`; die niet onbedoeld overschrijven
-- databasewachtwoord is na de eerste deploy best opnieuw te wijzigen voor veiligheid
-- de oude map `/home/cl1myceal_u/hermesresults-app` is nu alleen nog backup
-- bij frontend-wijzigingen moet `public/build` opnieuw meegeüpload worden
-- bij nieuwe baseline-questionnaires is code-first aanmaken via migrations of seeders de voorkeursroute
+Actuele lokale status in deze werkmap:
+- `vendor/bin/pint` is beschikbaar
+- Pest is beschikbaar via `vendor/bin/pest`
+- `php artisan test` is in deze omgeving niet de primaire runner; gerichte tests zijn recent uitgevoerd via Pest
 
-## Aanbevolen Vervolgprioriteiten
+Wel aanwezige testbasis:
+- featuretests voor registratie, locale-gedrag, questionnaire-flow, dashboard en Academy
+- Academy-tests dekken publiekscatalogus en adminbeheerflow
 
-- deployproces verder vereenvoudigen en documenteren
-- eventuele echte productie-seeders of sync-acties explicieter structureren
-- bepalen welke questionnaires product-standaard zijn en dus in code horen
-- deployment en rollback-procedure nog verder standaardiseren
-- later eventueel de oude home-directory app-map opruimen zodra die niet meer nodig is
+Belangrijke testfiles:
+- [LocalePreferenceTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/LocalePreferenceTest.php)
+- [AcademyTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/AcademyTest.php)
+- [AcademyAdminManagementTest.php](/Users/robert/Desktop/MyApp-001/tests/Feature/AcademyAdminManagementTest.php)
 
-## Baseline-conclusie
+## Openstaande Aandachtspunten
 
-Hermes Results is nu geen prototype meer, maar een functionele live Laravel-applicatie met:
-- publieke homepage
-- werkende auth-flow
-- organisatiegescopeerd dashboard
-- admin-portal voor `Admin` en `Beheerder`
-- questionnaire-bibliotheek
-- questionnaire-beschikbaarheid per organisatie
-- invulflow en response-opslag
-- rapportage en exports
-- een werkende productie-deploy op Hostnet
+- host-based locale defaults werken pas volledig zodra `.nl` en `.eu` direct naar dezelfde app verwijzen in plaats van via kale redirects
+- PowerPoint-template moet nog in echte Microsoft PowerPoint worden gevalideerd
+- verdere vertaalpolish kan later nog nodig zijn per taal en scherm
+- de daadwerkelijke web-exportbestanden van e-learnings blijven file-based en moeten per cursus in de juiste publieke map worden geplaatst
+- voor productie moeten Academy-migratie en Academy-seeder ook op live worden uitgevoerd
 
-Dit document moet voorlopig worden behandeld als de functionele en operationele baseline voor vervolgwerk.
+## Werkafspraken Voor Vervolg
+
+Gebruik voor vervolgwerk deze baseline:
+- behoud Laravel/Fortify/Blade-conventies van de huidige codebase
+- behandel `Project_Context.md` als functionele startcontext
+- ga uit van meertaligheid als vaste systeemkeuze
+- houd questionnaires, Academy, rapportage en organisatie-scope centraal
+- behoud de bestaande Hermes Results branding

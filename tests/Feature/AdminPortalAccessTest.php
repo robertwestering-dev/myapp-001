@@ -23,7 +23,8 @@ test('admins can visit the admin portal', function () {
         ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
         ->assertSee('Baseline assessments')
         ->assertSee('/images/hermes-results-logo.png')
-        ->assertSee('https://calendly.com/robertwestering/30min')
+        ->assertSee('/?contact=1#contact', false)
+        ->assertSee('Français')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 

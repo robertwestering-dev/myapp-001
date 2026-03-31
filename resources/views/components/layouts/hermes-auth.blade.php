@@ -11,7 +11,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -86,6 +86,29 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+        .locale-switcher {
+            display: inline-flex;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .locale-switcher__label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .locale-switcher__select {
+            min-width: 72px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
         }
 
         .brand {

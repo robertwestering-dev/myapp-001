@@ -1,18 +1,22 @@
 <x-layouts.hermes-auth
-    title="Login"
+    :title="__('hermes.auth.login.title')"
     :back-href="route('home')"
-    back-label="Terug naar home"
-    eyebrow="Secure Access"
-    heading="Toegang tot jouw portal"
-    lead="Na inloggen heb je gratis toegang tot de Quick scans, de Academy en meer. Organisaties kunnen een zakelijk account aanmaken (plan daarvoor een afspraak)."
-    form-title="Log in"
+    :back-label="__('hermes.auth.login.back_label')"
+    :eyebrow="__('hermes.auth.login.eyebrow')"
+    :heading="__('hermes.auth.login.heading')"
+    :lead="__('hermes.auth.login.lead')"
+    :form-title="__('hermes.auth.login.form_title')"
     helper=""
-    :points="['Een nieuw account aanmaken is gratis','Je ontvangt een bericht om je emailadres te verifiëren','Via je account heb je toegang tot de portal']"
+    :points="[
+        __('hermes.auth.login.point_1'),
+        __('hermes.auth.login.point_2'),
+        __('hermes.auth.login.point_3'),
+    ]"
 >
     <x-slot:heroActions>
-        <a class="pill pill--strong" href="{{ route('home') }}">Terug naar homepage</a>
+        <a class="pill pill--strong" href="{{ route('home') }}">{{ __('hermes.auth.login.hero_back') }}</a>
         @if (Route::has('register'))
-            <a class="pill" href="{{ route('register') }}">Nieuw account aanmaken</a>
+            <a class="pill" href="{{ route('register') }}">{{ __('hermes.auth.login.hero_register') }}</a>
         @endif
     </x-slot:heroActions>
 
@@ -20,7 +24,7 @@
         @csrf
 
         <label>
-            <span>Email address</span>
+            <span>{{ __('hermes.auth.login.email') }}</span>
             <input
                 type="email"
                 name="email"
@@ -33,7 +37,7 @@
         </label>
 
         <label>
-            <span>Password</span>
+            <span>{{ __('hermes.auth.login.password') }}</span>
             <input
                 type="password"
                 name="password"
@@ -46,21 +50,21 @@
         <div class="row">
             <label class="checkbox">
                 <input type="checkbox" name="remember" @checked(old('remember'))>
-                <span>Remember me</span>
+                <span>{{ __('hermes.auth.login.remember') }}</span>
             </label>
 
             @if (Route::has('password.request'))
-                <a class="helper" href="{{ route('password.request') }}">Forgot your password?</a>
+                <a class="helper" href="{{ route('password.request') }}">{{ __('hermes.auth.login.forgot_password') }}</a>
             @endif
         </div>
 
-        <button type="submit" class="pill pill--strong submit">Inloggen</button>
+        <button type="submit" class="pill pill--strong submit">{{ __('hermes.auth.login.submit') }}</button>
     </form>
 
     @if (Route::has('register'))
         <x-slot:secondary>
-            Nog geen account?
-            <a href="{{ route('register') }}">Maak er hier een aan</a>
+            {{ __('hermes.auth.login.secondary') }}
+            <a href="{{ route('register') }}">{{ __('hermes.auth.login.secondary_link') }}</a>
         </x-slot:secondary>
     @endif
 

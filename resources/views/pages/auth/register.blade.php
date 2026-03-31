@@ -1,80 +1,80 @@
 <x-layouts.hermes-auth
-    title="Register"
+    :title="__('hermes.auth.register.title')"
     :back-href="route('login')"
-    back-label="Terug naar login"
-    eyebrow="Create Access"
-    heading="Gratis account aanmaken"
-    lead="Op deze pagina kun je een account aanmaken. Jouw persoonlijke account geeft je toegang tot de Quick scans, de Academy, en meer. Organisaties kunnen een zakelijk account aanmaken (plan daarvoor een afspraak)."
-    form-title="Create account"
-    helper="Vul hieronder je gegevens in om een account aan te maken."
+    :back-label="__('hermes.auth.register.back_label')"
+    :eyebrow="__('hermes.auth.register.eyebrow')"
+    :heading="__('hermes.auth.register.heading')"
+    :lead="__('hermes.auth.register.lead')"
+    :form-title="__('hermes.auth.register.form_title')"
+    :helper="__('hermes.auth.register.helper')"
     :points="[
-        'Registreer met een geldig e-mailadres',
-        'Kies een veilig wachtwoord voor je account',
-        'Na registratie ga je direct naar je welkomstpagina',
+        __('hermes.auth.register.point_1'),
+        __('hermes.auth.register.point_2'),
+        __('hermes.auth.register.point_3'),
     ]"
 >
     <x-slot:heroActions>
-        <a class="pill pill--strong" href="{{ route('login') }}">Ik heb al een account</a>
+        <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.auth.register.hero_login') }}</a>
     </x-slot:heroActions>
 
     <form method="POST" action="{{ route('register.store') }}">
         @csrf
 
         <label>
-            <span>Naam</span>
+            <span>{{ __('hermes.auth.register.name') }}</span>
             <input
                 type="text"
                 name="name"
                 value="{{ old('name') }}"
                 autocomplete="name"
-                placeholder="Uw naam"
+                placeholder="{{ __('hermes.auth.register.name_placeholder') }}"
                 required
                 autofocus
             >
         </label>
 
         <label>
-            <span>Email address</span>
+            <span>{{ __('hermes.auth.register.email') }}</span>
             <input
                 type="email"
                 name="email"
                 value="{{ old('email') }}"
                 autocomplete="email"
-                placeholder="email@example.com"
+                placeholder="{{ __('hermes.auth.register.email_placeholder') }}"
                 required
             >
         </label>
 
         <label>
-            <span>Password</span>
+            <span>{{ __('hermes.auth.register.password') }}</span>
             <input
                 type="password"
                 name="password"
                 autocomplete="new-password"
-                placeholder="Password"
+                placeholder="{{ __('hermes.auth.register.password_placeholder') }}"
                 required
             >
         </label>
 
         <label>
-            <span>Confirm password</span>
+            <span>{{ __('hermes.auth.register.password_confirmation') }}</span>
             <input
                 type="password"
                 name="password_confirmation"
                 autocomplete="new-password"
-                placeholder="Confirm password"
+                placeholder="{{ __('hermes.auth.register.password_confirmation_placeholder') }}"
                 required
             >
         </label>
 
         <button type="submit" class="pill pill--strong" data-test="register-user-button">
-            Create account
+            {{ __('hermes.auth.register.submit') }}
         </button>
     </form>
 
     <x-slot:secondary>
-        Heb je al een account?
-        <a href="{{ route('login') }}">Log dan hier in</a>
+        {{ __('hermes.auth.register.secondary') }}
+        <a href="{{ route('login') }}">{{ __('hermes.auth.register.secondary_link') }}</a>
     </x-slot:secondary>
 
     <x-slot:sideNote>

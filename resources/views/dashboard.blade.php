@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
+    <title>{{ __('hermes.dashboard.title') }}</title>
     <x-favicon-links />
     <style>
         :root {
@@ -70,6 +70,29 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+        .locale-switcher {
+            display: inline-flex;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .locale-switcher__label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .locale-switcher__select {
+            min-width: 72px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
         }
 
         .brand {
@@ -158,6 +181,72 @@
             margin-top: 28px;
         }
 
+        .dashboard-stack {
+            display: grid;
+            gap: 28px;
+            margin-top: 28px;
+        }
+
+        .dashboard-section {
+            display: grid;
+            gap: 18px;
+        }
+
+        .dashboard-section__heading {
+            display: grid;
+            gap: 8px;
+        }
+
+        .dashboard-section__eyebrow {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--forest-soft);
+        }
+
+        .academy-spotlight {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.8fr);
+            gap: 22px;
+            padding: 26px;
+            border-radius: 28px;
+            background:
+                linear-gradient(145deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97)),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+            color: #f6efe5;
+            box-shadow: var(--shadow);
+        }
+
+        .academy-spotlight p {
+            color: rgba(246, 239, 229, 0.82);
+        }
+
+        .academy-spotlight__content,
+        .academy-spotlight__meta {
+            display: grid;
+            gap: 14px;
+        }
+
+        .academy-spotlight__meta {
+            align-content: start;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .academy-spotlight__stat {
+            display: grid;
+            gap: 6px;
+        }
+
+        .academy-spotlight__stat strong {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
         .questionnaire-card {
             display: grid;
             gap: 10px;
@@ -182,6 +271,10 @@
             .welcome__card {
                 padding: 28px;
             }
+
+            .academy-spotlight {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -189,37 +282,72 @@
     <x-hermes-header>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="pill pill--neutral">Logout</button>
+            <button type="submit" class="pill pill--neutral">{{ __('hermes.dashboard.logout') }}</button>
         </form>
     </x-hermes-header>
 
     <main class="welcome">
         <section class="welcome__card">
-            <h1>Welkom: {{ auth()->user()->email }}</h1>
-            <p>U bent ingelogd.</p>
+            <h1>{{ __('hermes.dashboard.welcome', ['email' => auth()->user()->email]) }}</h1>
+            <p>{{ __('hermes.dashboard.logged_in') }}</p>
 
-            <div class="questionnaire-list">
-                @forelse ($availableQuestionnaires as $availableQuestionnaire)
-                    <article class="questionnaire-card">
-                        <div>
-                            <strong>{{ $availableQuestionnaire->questionnaire->title }}</strong>
+            <div class="dashboard-stack">
+                <section class="dashboard-section" aria-labelledby="academy-section-title">
+                    <div class="dashboard-section__heading">
+                        <span class="dashboard-section__eyebrow">{{ __('hermes.dashboard.academy_eyebrow') }}</span>
+                        <h2 id="academy-section-title">{{ __('hermes.dashboard.academy_title') }}</h2>
+                        <p>{{ __('hermes.dashboard.academy_text') }}</p>
+                    </div>
+
+                    <article class="academy-spotlight">
+                        <div class="academy-spotlight__content">
+                            <strong>{{ __('hermes.dashboard.academy_card_title') }}</strong>
+                            <p>{{ __('hermes.dashboard.academy_card_text') }}</p>
+                            <div>
+                                <a href="{{ route('academy.index') }}" class="pill">{{ __('hermes.dashboard.academy_action') }}</a>
+                            </div>
                         </div>
-                        <div>{{ $availableQuestionnaire->questionnaire->description ?: 'Deze questionnaire heeft nog geen beschrijving.' }}</div>
-                        <div class="questionnaire-card__actions">
-                            <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">Open questionnaire</a>
-                            @if ($availableQuestionnaire->currentResponse?->submitted_at)
-                                <span>Laatst ingevuld op {{ $availableQuestionnaire->currentResponse->submitted_at->format('d-m-Y H:i') }}</span>
-                            @else
-                                <span>Nog niet ingevuld</span>
-                            @endif
+
+                        <div class="academy-spotlight__meta">
+                            <div class="academy-spotlight__stat">
+                                <span>{{ __('hermes.dashboard.academy_courses_label') }}</span>
+                                <strong>{{ $academyCourseCount }}</strong>
+                            </div>
+                            <span>{{ __('hermes.dashboard.academy_meta') }}</span>
                         </div>
                     </article>
-                @empty
-                    <article class="questionnaire-card">
-                        <strong>Er zijn momenteel geen questionnaires beschikbaar.</strong>
-                        <div>Neem contact op met uw beheerder als u hier een questionnaire verwacht.</div>
-                    </article>
-                @endforelse
+                </section>
+
+                <section class="dashboard-section" aria-labelledby="questionnaires-section-title">
+                    <div class="dashboard-section__heading">
+                        <span class="dashboard-section__eyebrow">{{ __('hermes.dashboard.questionnaires_eyebrow') }}</span>
+                        <h2 id="questionnaires-section-title">{{ __('hermes.dashboard.questionnaires_title') }}</h2>
+                    </div>
+
+                    <div class="questionnaire-list">
+                        @forelse ($availableQuestionnaires as $availableQuestionnaire)
+                            <article class="questionnaire-card">
+                                <div>
+                                    <strong>{{ $availableQuestionnaire->questionnaire->title }}</strong>
+                                </div>
+                                <div>{{ $availableQuestionnaire->questionnaire->description ?: __('hermes.dashboard.description_fallback') }}</div>
+                                <div class="questionnaire-card__actions">
+                                    <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">{{ __('hermes.dashboard.open_questionnaire') }}</a>
+                                    @if ($availableQuestionnaire->currentResponse?->submitted_at)
+                                        <span>{{ __('hermes.dashboard.last_completed', ['datetime' => $availableQuestionnaire->currentResponse->submitted_at->format('d-m-Y H:i')]) }}</span>
+                                    @else
+                                        <span>{{ __('hermes.dashboard.not_completed') }}</span>
+                                    @endif
+                                </div>
+                            </article>
+                        @empty
+                            <article class="questionnaire-card">
+                                <strong>{{ __('hermes.dashboard.empty_title') }}</strong>
+                                <div>{{ __('hermes.dashboard.empty_text') }}</div>
+                            </article>
+                        @endforelse
+                    </div>
+                </section>
             </div>
         </section>
     </main>

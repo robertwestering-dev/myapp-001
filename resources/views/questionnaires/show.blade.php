@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -123,6 +123,29 @@
             border-color: transparent;
             color: #f8f3eb;
             background: linear-gradient(180deg, rgba(30, 71, 61, 0.96), rgba(16, 42, 35, 0.98));
+        }
+
+        .locale-switcher {
+            display: inline-flex;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .locale-switcher__label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .locale-switcher__select {
+            min-width: 72px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
         }
 
         main {
@@ -562,7 +585,7 @@
     <main>
         <div class="page">
             <section class="panel panel--intro">
-                <span class="eyebrow">Questionnaire</span>
+                <span class="eyebrow">{{ __('hermes.questionnaire.eyebrow') }}</span>
                 <h1>{{ $organizationQuestionnaire->questionnaire->title }}</h1>
                 <p class="lead">{{ $organizationQuestionnaire->questionnaire->description }}</p>
 
@@ -572,7 +595,7 @@
                     @endif
 
                     @if ($response?->submitted_at)
-                        <p class="muted">Laatst opgeslagen op {{ $response->submitted_at->format('d-m-Y H:i') }}.</p>
+                        <p class="muted">{{ __('hermes.questionnaire.last_saved', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]) }}</p>
                     @endif
 
                     @if ($errors->any())
@@ -586,23 +609,23 @@
             </section>
 
             <section class="panel panel--instructions">
-                <span class="eyebrow">Invulinstructie</span>
-                <p class="lead">Beantwoord per stap alle verplichte vragen voordat u doorgaat naar de volgende categorie. U kunt altijd terug om eerdere antwoorden te bekijken of aan te passen.</p>
+                <span class="eyebrow">{{ __('hermes.questionnaire.instructions') }}</span>
+                <p class="lead">{{ __('hermes.questionnaire.instructions_text') }}</p>
 
                 <div class="instruction-grid">
                     <div class="instruction-card">
-                        <strong>Organisatie</strong>
+                        <strong>{{ __('hermes.questionnaire.organization') }}</strong>
                         <span>{{ $organizationQuestionnaire->organization->naam ?? 'Niet gekoppeld' }}</span>
                     </div>
 
                     <div class="instruction-card">
-                        <strong>Categorieen</strong>
-                        <span>{{ $categories->count() }} onderdelen in deze questionnaire</span>
+                        <strong>{{ __('hermes.questionnaire.categories') }}</strong>
+                        <span>{{ __('hermes.questionnaire.categories_count', ['count' => $categories->count()]) }}</span>
                     </div>
 
                     <div class="instruction-card">
-                        <strong>Opslaan</strong>
-                        <span>Uw antwoorden worden opgeslagen zodra u de laatste stap indient.</span>
+                        <strong>{{ __('hermes.questionnaire.save') }}</strong>
+                        <span>{{ __('hermes.questionnaire.save_text') }}</span>
                     </div>
                 </div>
             </section>
@@ -610,7 +633,7 @@
             <section class="panel">
                 <div class="progress-row">
                     <div class="progress-label" data-questionnaire-progress-label>
-                        Stap {{ $initialStepIndex + 1 }} van {{ max($categories->count(), 1) }}
+                        {{ __('hermes.questionnaire.step_of', ['current' => $initialStepIndex + 1, 'total' => max($categories->count(), 1)]) }}
                     </div>
 
                     <div class="progress-pills" aria-label="Voortgang door de questionnaire">
@@ -642,7 +665,7 @@
                             @if ($categoryIndex !== $initialStepIndex) hidden @endif
                         >
                             <div class="step__header">
-                                <span class="step__counter">Stap {{ $categoryIndex + 1 }} van {{ $categories->count() }}</span>
+                                <span class="step__counter">{{ __('hermes.questionnaire.step_of', ['current' => $categoryIndex + 1, 'total' => $categories->count()]) }}</span>
                                 <h2>{{ $category->title }}</h2>
 
                                 @if ($category->description)
@@ -748,12 +771,12 @@
 
                     <div class="actions">
                         <div class="actions__group">
-                            <button type="button" class="ghost-pill" data-previous-step>Vorige stap</button>
-                            <button type="button" class="questionnaire-pill" data-next-step>Volgende stap</button>
-                            <button type="submit" class="questionnaire-pill" data-submit-step>Antwoorden opslaan</button>
+                            <button type="button" class="ghost-pill" data-previous-step>{{ __('hermes.questionnaire.previous_step') }}</button>
+                            <button type="button" class="questionnaire-pill" data-next-step>{{ __('hermes.questionnaire.next_step') }}</button>
+                            <button type="submit" class="questionnaire-pill" data-submit-step>{{ __('hermes.questionnaire.submit') }}</button>
                         </div>
 
-                        <a href="{{ route('dashboard') }}" class="ghost-pill">Terug naar dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="ghost-pill">{{ __('hermes.questionnaire.back_to_dashboard') }}</a>
                     </div>
                 </form>
             </section>
@@ -820,7 +843,7 @@
                     const isChecked = controls.some((control) => control.checked);
 
                     if (! isChecked) {
-                        setClientError(question, 'Deze vraag is verplicht.');
+                        setClientError(question, @json(__('hermes.questionnaire.validation.required')));
 
                         return false;
                     }
@@ -832,7 +855,7 @@
                     const isChecked = controls.some((control) => control.checked);
 
                     if (! isChecked) {
-                        setClientError(question, 'Deze vraag is verplicht.');
+                        setClientError(question, @json(__('hermes.questionnaire.validation.required')));
 
                         return false;
                     }
@@ -844,7 +867,7 @@
 
                 if (value === '') {
                     firstControl.reportValidity();
-                    setClientError(question, 'Deze vraag is verplicht.');
+                    setClientError(question, @json(__('hermes.questionnaire.validation.required')));
 
                     return false;
                 }
@@ -890,7 +913,9 @@
                 });
 
                 if (progressLabel) {
-                    progressLabel.textContent = `Stap ${currentStepIndex + 1} van ${totalSteps}`;
+                    progressLabel.textContent = @json(__('hermes.questionnaire.step_of', ['current' => '__CURRENT__', 'total' => '__TOTAL__']))
+                        .replace('__CURRENT__', String(currentStepIndex + 1))
+                        .replace('__TOTAL__', String(totalSteps));
                 }
 
                 if (previousButton) {

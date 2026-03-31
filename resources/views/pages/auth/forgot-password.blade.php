@@ -1,27 +1,27 @@
 <x-layouts.hermes-auth
-    title="Forgot password"
+    :title="__('hermes.auth.forgot_password.title')"
     :back-href="route('login')"
-    back-label="Terug naar login"
-    eyebrow="Password Recovery"
-    heading="Wachtwoord vergeten?"
-    lead="Voer hiernaast je emailadres in. Als dat bestaat in onze database, dan ontvang je een resetlink voor het instellen van een nieuw wachtwoord."
-    form-title="Forgot password"
-    helper="Vul je e-mailadres in en we sturen je een link om je wachtwoord opnieuw in te stellen."
+    :back-label="__('hermes.auth.forgot_password.back_label')"
+    :eyebrow="__('hermes.auth.forgot_password.eyebrow')"
+    :heading="__('hermes.auth.forgot_password.heading')"
+    :lead="__('hermes.auth.forgot_password.lead')"
+    :form-title="__('hermes.auth.forgot_password.form_title')"
+    :helper="__('hermes.auth.forgot_password.helper')"
     :points="[
-        'Voer het e-mailadres van je account in',
-        'Ontvang een resetlink',
-        'Kies daarna een nieuw wachtwoord en log opnieuw in',
+        __('hermes.auth.forgot_password.point_1'),
+        __('hermes.auth.forgot_password.point_2'),
+        __('hermes.auth.forgot_password.point_3'),
     ]"
 >
     <x-slot:heroActions>
-        <a class="pill pill--strong" href="{{ route('login') }}">Terug naar login</a>
+        <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.auth.forgot_password.hero_back') }}</a>
     </x-slot:heroActions>
 
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
         <label>
-            <span>Email address</span>
+            <span>{{ __('hermes.auth.forgot_password.email') }}</span>
             <input
                 type="email"
                 name="email"
@@ -34,12 +34,12 @@
         </label>
 
         <button type="submit" class="pill pill--strong submit" data-test="email-password-reset-link-button">
-            Email password reset link
+            {{ __('hermes.auth.forgot_password.submit') }}
         </button>
     </form>
 
     <x-slot:secondary>
-        Of ga terug naar <a href="{{ route('login') }}">inloggen</a>
+        {{ __('hermes.auth.forgot_password.secondary') }} <a href="{{ route('login') }}">{{ __('hermes.auth.forgot_password.secondary_link') }}</a>
     </x-slot:secondary>
 
     <x-slot:sideNote>

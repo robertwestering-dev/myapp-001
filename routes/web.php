@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AcademyController;
+use App\Http\Controllers\Admin\AcademyCourseController;
 use App\Http\Controllers\Admin\AdminPortalController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationQuestionnaireController;
@@ -7,11 +9,15 @@ use App\Http\Controllers\Admin\QuestionnaireCategoryController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\QuestionnaireQuestionController;
 use App\Http\Controllers\Admin\QuestionnaireResponseReportController;
+use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\ContactRequestController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\QuestionnaireResponseController;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureUserIsGlobalAdmin;
+use App\Models\AcademyCourse;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\QuestionnaireResponse;
 use Illuminate\Http\Request;
@@ -20,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function (Request $request) {
     $user = $request->user();
 
-    if ($user !== null) {
+    if ($user !== null && ! $request->boolean('contact')) {
         return redirect()->route($user->canAccessAdminPortal() ? 'admin.portal' : 'dashboard');
     }
 
@@ -28,6 +34,7 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 Route::post('/contact', [ContactRequestController::class, 'store'])->name('contact.store');
+Route::post('/locale', LocaleController::class)->name('locale.update');
 
 Route::get('/dashboard', function (Request $request) {
     $user = $request->user();
@@ -56,10 +63,15 @@ Route::get('/dashboard', function (Request $request) {
 
     return view('dashboard', [
         'availableQuestionnaires' => $availableQuestionnaires,
+        'academyCourseCount' => AcademyCourse::query()->active()->count(),
     ]);
 })
     ->middleware(['auth'])
     ->name('dashboard');
+
+Route::middleware(['auth'])->group(function (): void {
+    Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
+});
 
 Route::middleware(['auth'])
     ->prefix('questionnaires')
@@ -78,6 +90,28 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/', [AdminPortalController::class, 'index'])->name('portal');
+
+        Route::middleware([EnsureUserIsGlobalAdmin::class])
+            ->prefix('academy-courses')
+            ->name('academy-courses.')
+            ->group(function (): void {
+                Route::get('/', [AcademyCourseController::class, 'index'])->name('index');
+                Route::get('/create', [AcademyCourseController::class, 'create'])->name('create');
+                Route::post('/', [AcademyCourseController::class, 'store'])->name('store');
+                Route::get('/{academyCourse}/edit', [AcademyCourseController::class, 'edit'])->name('edit');
+                Route::get('/{academyCourse}/confirm-delete', [AcademyCourseController::class, 'confirmDestroy'])->name('confirm-delete');
+                Route::put('/{academyCourse}', [AcademyCourseController::class, 'update'])->name('update');
+                Route::delete('/{academyCourse}', [AcademyCourseController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::middleware([EnsureUserIsGlobalAdmin::class])
+            ->prefix('translations')
+            ->name('translations.')
+            ->group(function (): void {
+                Route::get('/', [TranslationController::class, 'index'])->name('index');
+                Route::get('/edit', [TranslationController::class, 'edit'])->name('edit');
+                Route::put('/', [TranslationController::class, 'update'])->name('update');
+            });
 
         Route::prefix('users')
             ->name('users.')

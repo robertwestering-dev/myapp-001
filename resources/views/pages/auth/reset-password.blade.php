@@ -1,20 +1,20 @@
 <x-layouts.hermes-auth
-    title="Reset password"
+    :title="__('hermes.auth.reset_password.title')"
     :back-href="route('login')"
-    back-label="Terug naar login"
-    eyebrow="New Password"
-    heading="Kies een nieuw wachtwoord in dezelfde vertrouwde stijl."
-    lead="Ook de reset-password pagina sluit nu visueel aan op de andere auth-schermen, met dezelfde rustige premium uitstraling en duidelijke formulieropbouw."
-    form-title="Reset password"
-    helper="Voer hieronder je e-mailadres en nieuwe wachtwoord in om je accounttoegang te herstellen."
+    :back-label="__('hermes.auth.reset_password.back_label')"
+    :eyebrow="__('hermes.auth.reset_password.eyebrow')"
+    :heading="__('hermes.auth.reset_password.heading')"
+    :lead="__('hermes.auth.reset_password.lead')"
+    :form-title="__('hermes.auth.reset_password.form_title')"
+    :helper="__('hermes.auth.reset_password.helper')"
     :points="[
-        'Vul hetzelfde e-mailadres in als bij het account',
-        'Kies een nieuw veilig wachtwoord',
-        'Na het resetten kun je direct opnieuw inloggen',
+        __('hermes.auth.reset_password.point_1'),
+        __('hermes.auth.reset_password.point_2'),
+        __('hermes.auth.reset_password.point_3'),
     ]"
 >
     <x-slot:heroActions>
-        <a class="pill pill--strong" href="{{ route('login') }}">Terug naar login</a>
+        <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.auth.reset_password.hero_back') }}</a>
     </x-slot:heroActions>
 
     <form method="POST" action="{{ route('password.update') }}">
@@ -23,7 +23,7 @@
         <input type="hidden" name="token" value="{{ request()->route('token') }}">
 
         <label>
-            <span>Email address</span>
+            <span>{{ __('hermes.auth.reset_password.email') }}</span>
             <input
                 type="email"
                 name="email"
@@ -36,38 +36,38 @@
         </label>
 
         <label>
-            <span>Password</span>
+            <span>{{ __('hermes.auth.reset_password.password') }}</span>
             <input
                 type="password"
                 name="password"
                 autocomplete="new-password"
-                placeholder="Nieuw wachtwoord"
+                placeholder="{{ __('hermes.auth.reset_password.password_placeholder') }}"
                 required
             >
         </label>
 
         <label>
-            <span>Confirm password</span>
+            <span>{{ __('hermes.auth.reset_password.password_confirmation') }}</span>
             <input
                 type="password"
                 name="password_confirmation"
                 autocomplete="new-password"
-                placeholder="Bevestig wachtwoord"
+                placeholder="{{ __('hermes.auth.reset_password.password_confirmation_placeholder') }}"
                 required
             >
         </label>
 
         <button type="submit" class="pill pill--strong submit" data-test="reset-password-button">
-            Reset password
+            {{ __('hermes.auth.reset_password.submit') }}
         </button>
     </form>
 
     <x-slot:secondary>
-        Terug naar je account?
-        <a href="{{ route('login') }}">Log dan hier in</a>
+        {{ __('hermes.auth.reset_password.secondary') }}
+        <a href="{{ route('login') }}">{{ __('hermes.auth.reset_password.secondary_link') }}</a>
     </x-slot:secondary>
 
     <x-slot:sideNote>
-        De reset-flow blijft gebruikmaken van dezelfde Laravel Fortify-validatie en beveiliging als voorheen.
+        {{ __('hermes.auth.reset_password.side_note') }}
     </x-slot:sideNote>
 </x-layouts.hermes-auth>

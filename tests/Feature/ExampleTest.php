@@ -9,17 +9,21 @@ test('home page can be rendered', function () {
 
     $response->assertOk()
         ->assertDontSee('U bent niet ingelogd')
-        ->assertSee('Maak digitale transformatie begrijpelijk, meetbaar en menselijk.')
+        ->assertSee(__('hermes.home.hero_title'))
         ->assertSee('Diensten')
+        ->assertSee('Academy')
         ->assertSee('Contact')
-        ->assertSee('Quick scan adaptability van medewerkers')
-        ->assertSee('Quick scan digitale weerbaarheid')
-        ->assertSee('Verandermanagement bij digitale transformatie')
+        ->assertSee(__('hermes.home.offer_1_title'))
+        ->assertSee(__('hermes.home.offer_2_title'))
+        ->assertSee(__('hermes.home.offer_3_title'))
         ->assertSee('Naam')
         ->assertSee('Emailadres')
         ->assertSee('Bericht')
         ->assertSee('Ik ga akkoord met verwerking van mijn gegevens om contact op te nemen.')
         ->assertSee('/images/hermes-results-logo.png')
+        ->assertSee(route('academy.index', absolute: false), false)
+        ->assertSee('/?contact=1#contact', false)
+        ->assertSee('Nederlands')
         ->assertSee('https://calendly.com/robertwestering/30min')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
@@ -37,6 +41,14 @@ test('authenticated users still see the guest homepage text on the home page', f
     $response = $this->actingAs(User::factory()->create())->get(route('home'));
 
     $response->assertRedirect(route('dashboard'));
+});
+
+test('authenticated users can still open the homepage contact section', function () {
+    $response = $this->actingAs(User::factory()->create())->get(route('home', ['contact' => 1]));
+
+    $response->assertOk()
+        ->assertSee('Naam')
+        ->assertSee('Bericht');
 });
 
 test('guests can submit the contact form', function () {

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             AdaptabilityAceQuestionnaireSeeder::class,
+            AcademyCourseSeeder::class,
             DigitalResilienceQuickScanQuestionnaireSeeder::class,
         ]);
 

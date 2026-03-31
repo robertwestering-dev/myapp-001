@@ -15,6 +15,7 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk()
         ->assertSee('Welkom: '.$user->email)
         ->assertSee('Logout')
+        ->assertSee(__('hermes.dashboard.academy_title'))
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });

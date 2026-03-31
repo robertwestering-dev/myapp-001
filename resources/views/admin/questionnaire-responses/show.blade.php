@@ -1,8 +1,8 @@
 <x-layouts.hermes-admin
-    title="Questionnaire response"
-    eyebrow="Responses"
-    heading="Response van {{ $response->user->name }}"
-    :lead="'Questionnaire: '.$response->organizationQuestionnaire->questionnaire->title.' · Organisatie: '.$response->organizationQuestionnaire->organization->naam"
+    :title="__('hermes.reports.show_title')"
+    :eyebrow="__('hermes.reports.eyebrow')"
+    :heading="__('hermes.reports.show_heading', ['name' => $response->user->name])"
+    :lead="__('hermes.reports.show_lead', ['questionnaire' => $response->organizationQuestionnaire->questionnaire->title, 'organization' => $response->organizationQuestionnaire->organization->naam])"
     menu-active="questionnaire-responses"
 >
     <style>
@@ -39,9 +39,9 @@
 
     <section class="content-panel">
         <div class="response-card">
-            <strong>Gebruiker</strong>
+            <strong>{{ __('hermes.reports.show_user') }}</strong>
             <div>{{ $response->user->name }} · {{ $response->user->email }}</div>
-            <div class="muted">Ingezonden op {{ $response->submitted_at?->format('d-m-Y H:i') ?? 'onbekend' }}</div>
+            <div class="muted">{{ __('hermes.reports.show_submitted_at', ['datetime' => $response->submitted_at?->format('d-m-Y H:i') ?? __('hermes.reports.submitted_at_unknown')]) }}</div>
         </div>
 
         <div class="response-list">

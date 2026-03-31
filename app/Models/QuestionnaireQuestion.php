@@ -66,13 +66,13 @@ class QuestionnaireQuestion extends Model
     public static function typeLabels(): array
     {
         return [
-            self::TYPE_SHORT_TEXT => 'Korte tekst',
-            self::TYPE_LONG_TEXT => 'Lange tekst',
-            self::TYPE_SINGLE_CHOICE => 'Enkele keuze',
-            self::TYPE_MULTIPLE_CHOICE => 'Meerdere keuzes',
-            self::TYPE_NUMBER => 'Getal',
-            self::TYPE_BOOLEAN => 'Ja / nee',
-            self::TYPE_DATE => 'Datum',
+            self::TYPE_SHORT_TEXT => __('hermes.question_types.short_text'),
+            self::TYPE_LONG_TEXT => __('hermes.question_types.long_text'),
+            self::TYPE_SINGLE_CHOICE => __('hermes.question_types.single_choice'),
+            self::TYPE_MULTIPLE_CHOICE => __('hermes.question_types.multiple_choice'),
+            self::TYPE_NUMBER => __('hermes.question_types.number'),
+            self::TYPE_BOOLEAN => __('hermes.question_types.boolean'),
+            self::TYPE_DATE => __('hermes.question_types.date'),
         ];
     }
 

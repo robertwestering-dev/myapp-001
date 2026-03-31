@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'role' => User::ROLE_USER,
             'org_id' => DB::table('organizations')->where('naam', 'Hermes Results')->value('org_id'),
+            'locale' => config('app.locale'),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

@@ -1,23 +1,23 @@
 <x-layouts.hermes-admin
-    title="Questionnaire statistieken"
-    eyebrow="Responses"
-    heading="Statistieken voor {{ $questionnaire->title }}"
-    lead="Bekijk direct in de app hoeveel responses zijn ingezonden en hoe keuzevragen zijn verdeeld."
+    :title="__('hermes.reports.stats_title')"
+    :eyebrow="__('hermes.reports.eyebrow')"
+    :heading="__('hermes.reports.stats_heading', ['title' => $questionnaire->title])"
+    :lead="__('hermes.reports.stats_lead')"
     menu-active="questionnaire-responses"
     :show-secondary-menu-items="false"
 >
     <x-slot:heroFacts>
         <x-hermes-fact
             :title="$responseCount"
-            description="Responses in de huidige selectie"
+            :description="__('hermes.reports.responses_in_selection')"
         />
         <x-hermes-fact
             :title="$statistics->sum(fn ($category) => $category['questions']->count())"
-            description="Vragen in deze questionnaire"
+            :description="__('hermes.reports.questions_in_questionnaire')"
         />
         <x-hermes-fact
             :title="$statistics->count()"
-            description="Categorieen in beeld"
+            :description="__('hermes.reports.categories_in_view')"
         />
     </x-slot:heroFacts>
 
@@ -185,7 +185,7 @@
 
         <form method="GET" action="{{ route('admin.questionnaire-responses.stats') }}" class="filters">
             <label>
-                <span>Questionnaire</span>
+                <span>{{ __('hermes.reports.questionnaire') }}</span>
                 <select name="questionnaire_id">
                     @foreach ($questionnaires as $id => $title)
                         <option value="{{ $id }}" @selected($questionnaireId === (int) $id)>{{ $title }}</option>
@@ -194,9 +194,9 @@
             </label>
 
             <label>
-                <span>Organisatie</span>
+                <span>{{ __('hermes.reports.organization') }}</span>
                 <select name="org_id">
-                    <option value="">Alle organisaties</option>
+                    <option value="">{{ __('hermes.reports.all_organizations') }}</option>
                     @foreach ($organizations as $id => $name)
                         <option value="{{ $id }}" @selected($orgId === (int) $id)>{{ $name }}</option>
                     @endforeach
@@ -204,21 +204,21 @@
             </label>
 
             <label>
-                <span>Gebruiker</span>
+                <span>{{ __('hermes.reports.user') }}</span>
                 <select name="user_id">
-                    <option value="">Alle gebruikers</option>
+                    <option value="">{{ __('hermes.reports.all_users') }}</option>
                     @foreach ($users as $id => $label)
                         <option value="{{ $id }}" @selected($selectedUserId === (int) $id)>{{ $label }}</option>
                     @endforeach
                 </select>
             </label>
 
-            <button type="submit" class="pill">Ververs statistieken</button>
+            <button type="submit" class="pill">{{ __('hermes.reports.refresh_stats') }}</button>
             <a href="{{ route('admin.questionnaire-responses.index', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}" class="ghost-pill">
-                Terug naar responses
+                {{ __('hermes.reports.back_to_responses') }}
             </a>
             <a href="{{ route('admin.questionnaire-responses.export-stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}" class="ghost-pill">
-                Export statistiek CSV
+                {{ __('hermes.reports.export_stats') }}
             </a>
         </form>
 
@@ -226,7 +226,7 @@
             <section class="category-section">
                 <div class="category-card">
                     <h2>{{ $categoryStats['category']->title }}</h2>
-                    <p class="muted">{{ $categoryStats['questions']->count() }} vragen in deze categorie.</p>
+                    <p class="muted">{{ __('hermes.reports.questions_in_category', ['count' => $categoryStats['questions']->count()]) }}</p>
                 </div>
 
                 <div class="stats-grid">
@@ -238,8 +238,8 @@
                             </div>
 
                             <div class="question-meta">
-                                <span class="stat-chip">{{ $questionStats['answered_count'] }} van {{ $responseCount }} ingevuld</span>
-                                <span class="stat-chip">{{ $questionStats['answered_percentage'] }}% respons</span>
+                                <span class="stat-chip">{{ __('hermes.reports.answered_count', ['answered' => $questionStats['answered_count'], 'total' => $responseCount]) }}</span>
+                                <span class="stat-chip">{{ __('hermes.reports.response_percentage', ['percentage' => $questionStats['answered_percentage']]) }}</span>
                             </div>
 
                             @if ($questionStats['options']->isNotEmpty())
@@ -258,7 +258,7 @@
                                 </div>
                             @elseif ($questionStats['latest_answers']->isNotEmpty())
                                 <div class="samples-panel">
-                                    <div class="muted">Recente antwoorden</div>
+                                    <div class="muted">{{ __('hermes.reports.latest_answers') }}</div>
                                     <ul class="samples">
                                         @foreach ($questionStats['latest_answers'] as $answer)
                                             <li class="sample-pill">{{ $answer }}</li>
@@ -266,7 +266,7 @@
                                     </ul>
                                 </div>
                             @else
-                                <div class="muted">Nog geen antwoorden binnen voor deze vraag.</div>
+                                <div class="muted">{{ __('hermes.reports.no_answers_yet') }}</div>
                             @endif
                         </article>
                     @endforeach
@@ -274,8 +274,8 @@
             </section>
         @empty
             <div class="category-card">
-                <strong>Geen statistieken beschikbaar</strong>
-                <p class="muted">Deze questionnaire bevat nog geen vragen of responses voor de huidige selectie.</p>
+                <strong>{{ __('hermes.reports.no_answers_yet') }}</strong>
+                <p class="muted">{{ __('hermes.reports.no_responses_text') }}</p>
             </div>
         @endforelse
     </section>

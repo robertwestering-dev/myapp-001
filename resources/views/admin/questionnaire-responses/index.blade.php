@@ -1,23 +1,23 @@
 <x-layouts.hermes-admin
-    title="Questionnaire responses"
-    eyebrow="Responses"
-    heading="Ingevulde questionnaires"
-    lead="Bekijk per questionnaire, organisatie en gebruiker welke antwoorden zijn ingezonden."
+    :title="__('hermes.reports.index_title')"
+    :eyebrow="__('hermes.reports.eyebrow')"
+    :heading="__('hermes.reports.index_heading')"
+    :lead="__('hermes.reports.index_lead')"
     menu-active="questionnaire-responses"
     :show-secondary-menu-items="false"
 >
     <x-slot:heroFacts>
         <x-hermes-fact
             :title="$responses->total()"
-            description="Responses in de huidige selectie"
+            :description="__('hermes.reports.responses_in_selection')"
         />
         <x-hermes-fact
             :title="count($questionnaires)"
-            description="Beschikbare questionnaires als filter"
+            :description="__('hermes.reports.available_questionnaires_filter')"
         />
         <x-hermes-fact
-            title="Scope"
-            description="Admins zien alles, beheerders alleen hun organisatie"
+            :title="__('hermes.reports.scope')"
+            :description="__('hermes.reports.scope_text')"
         />
     </x-slot:heroFacts>
 
@@ -161,8 +161,9 @@
         <form method="GET" action="{{ route('admin.questionnaire-responses.index') }}" class="filters">
             <label>
                 <span>Questionnaire</span>
+                <span>{{ __('hermes.reports.questionnaire') }}</span>
                 <select name="questionnaire_id">
-                    <option value="">Alle questionnaires</option>
+                    <option value="">{{ __('hermes.reports.all_questionnaires') }}</option>
                     @foreach ($questionnaires as $id => $title)
                         <option value="{{ $id }}" @selected($questionnaireId === (int) $id)>{{ $title }}</option>
                     @endforeach
@@ -170,9 +171,9 @@
             </label>
 
             <label>
-                <span>Organisatie</span>
+                <span>{{ __('hermes.reports.organization') }}</span>
                 <select name="org_id">
-                    <option value="">Alle organisaties</option>
+                    <option value="">{{ __('hermes.reports.all_organizations') }}</option>
                     @foreach ($organizations as $id => $name)
                         <option value="{{ $id }}" @selected($orgId === (int) $id)>{{ $name }}</option>
                     @endforeach
@@ -180,40 +181,40 @@
             </label>
 
             <label>
-                <span>Gebruiker</span>
+                <span>{{ __('hermes.reports.user') }}</span>
                 <select name="user_id">
-                    <option value="">Alle gebruikers</option>
+                    <option value="">{{ __('hermes.reports.all_users') }}</option>
                     @foreach ($users as $id => $label)
                         <option value="{{ $id }}" @selected($selectedUserId === (int) $id)>{{ $label }}</option>
                     @endforeach
                 </select>
             </label>
 
-            <button type="submit" class="pill">Filter</button>
-            <a href="{{ route('admin.questionnaire-responses.index') }}" class="ghost-pill">Reset</a>
+            <button type="submit" class="pill">{{ __('hermes.reports.filter') }}</button>
+            <a href="{{ route('admin.questionnaire-responses.index') }}" class="ghost-pill">{{ __('hermes.reports.reset') }}</a>
             <a
                 href="{{ route('admin.questionnaire-responses.stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
                 class="ghost-pill"
             >
-                Bekijk statistieken
+                {{ __('hermes.reports.view_stats') }}
             </a>
             <a
                 href="{{ route('admin.questionnaire-responses.export', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
                 class="ghost-pill"
             >
-                Export detail CSV
+                {{ __('hermes.reports.export_detail') }}
             </a>
             <a
                 href="{{ route('admin.questionnaire-responses.export-summary', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
                 class="ghost-pill"
             >
-                Export samenvatting CSV
+                {{ __('hermes.reports.export_summary') }}
             </a>
             <a
                 href="{{ route('admin.questionnaire-responses.export-stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
                 class="ghost-pill"
             >
-                Export statistiek CSV
+                {{ __('hermes.reports.export_stats') }}
             </a>
         </form>
 
@@ -221,7 +222,7 @@
             @foreach ($spotlightQuestionnaires as $spotlightQuestionnaire)
                 <article class="spotlight-card">
                     <div>
-                        <span class="eyebrow">Uitgelicht</span>
+                        <span class="eyebrow">{{ __('hermes.reports.featured') }}</span>
                     </div>
                     <div>
                         <strong>{{ $spotlightQuestionnaire->title }}</strong>
@@ -229,13 +230,13 @@
                     </div>
                     <div class="spotlight-card__actions">
                         <a href="{{ route('admin.questionnaire-responses.index', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
-                            Filter responses
+                            {{ __('hermes.reports.filter_responses') }}
                         </a>
                         <a href="{{ route('admin.questionnaire-responses.stats', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
-                            Open statistieken
+                            {{ __('hermes.reports.open_stats') }}
                         </a>
                         <a href="{{ route('admin.questionnaire-responses.export-summary', ['questionnaire_id' => $spotlightQuestionnaire->id]) }}" class="ghost-pill">
-                            Export samenvatting
+                            {{ __('hermes.reports.summary_export') }}
                         </a>
                     </div>
                 </article>
@@ -246,11 +247,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Questionnaire</th>
-                        <th>Organisatie</th>
-                        <th>Gebruiker</th>
-                        <th>Ingezonden op</th>
-                        <th>Actie</th>
+                        <th>{{ __('hermes.reports.questionnaire') }}</th>
+                        <th>{{ __('hermes.reports.organization') }}</th>
+                        <th>{{ __('hermes.reports.user') }}</th>
+                        <th>{{ __('hermes.reports.submitted_at') }}</th>
+                        <th>{{ __('hermes.reports.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -264,12 +265,12 @@
                             </td>
                             <td>{{ $response->submitted_at?->format('d-m-Y H:i') ?? 'Niet ingezonden' }}</td>
                             <td>
-                                <a href="{{ route('admin.questionnaire-responses.show', $response) }}" class="ghost-pill">Bekijk response</a>
+                                <a href="{{ route('admin.questionnaire-responses.show', $response) }}" class="ghost-pill">{{ __('hermes.reports.view_response') }}</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">Er zijn geen ingevulde questionnaires gevonden voor deze selectie.</td>
+                            <td colspan="5">{{ __('hermes.reports.no_responses_title') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -278,11 +279,11 @@
 
         <div class="meta">
             <div class="muted">
-                Resultaten {{ $responses->firstItem() ?? 0 }} t/m {{ $responses->lastItem() ?? 0 }} van {{ $responses->total() }}
+                {{ __('hermes.reports.results_range', ['from' => $responses->firstItem() ?? 0, 'to' => $responses->lastItem() ?? 0, 'total' => $responses->total()]) }}
             </div>
 
             @if ($responses->hasPages())
-                <nav class="pagination" aria-label="Paginering">
+                <nav class="pagination" aria-label="{{ __('hermes.reports.action') }}">
                     @foreach ($responses->linkCollection() as $link)
                         @if ($link['url'] === null)
                             <span class="pagination__current">{{ $link['label'] }}</span>
