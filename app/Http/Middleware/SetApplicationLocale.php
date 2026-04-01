@@ -20,6 +20,7 @@ class SetApplicationLocale
         $defaultLocale = config('app.locale');
         $sessionKey = config('locales.session_key', 'locale');
         $hostDefaults = config('locales.host_defaults', []);
+        $queryLocale = $request->query('lang');
         $sessionLocale = $request->session()->get($sessionKey);
         $userLocale = $request->user()?->locale;
         $hostLocale = $hostDefaults[$request->getHost()] ?? null;
@@ -32,6 +33,10 @@ class SetApplicationLocale
 
         if (in_array($sessionLocale, $supportedLocales, true)) {
             $locale = $sessionLocale;
+        }
+
+        if (in_array($queryLocale, $supportedLocales, true)) {
+            $locale = $queryLocale;
         }
 
         if (in_array($userLocale, $supportedLocales, true)) {

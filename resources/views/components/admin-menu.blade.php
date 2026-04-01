@@ -25,6 +25,10 @@
             {{ __('hermes.admin_menu.academy') }}
         </a>
 
+        <a href="{{ route('admin.blog-posts.index') }}" @class(['admin-menu__item', 'admin-menu__item--active' => $active === 'blog-posts'])>
+            {{ __('hermes.admin_menu.blog') }}
+        </a>
+
         <a href="{{ route('admin.translations.index') }}" @class(['admin-menu__item', 'admin-menu__item--active' => $active === 'translations'])>
             {{ __('hermes.admin_menu.translations') }}
         </a>

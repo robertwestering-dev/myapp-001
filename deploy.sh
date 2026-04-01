@@ -4,7 +4,6 @@ set -euo pipefail
 APP_DIR="/webroots/sites/hermesresults.com/hermesresults-app"
 PHP_BIN="php"
 COMPOSER_BIN="composer"
-NPM_BIN="npm"
 SEED_CLASS="AcademyCourseSeeder"
 
 say() {
@@ -46,7 +45,7 @@ if [[ ! -d "$APP_DIR" ]]; then
     exit 1
 fi
 
-for command in "$PHP_BIN" "$COMPOSER_BIN" "$NPM_BIN" git; do
+for command in "$PHP_BIN" "$COMPOSER_BIN" git; do
     if ! command -v "$command" >/dev/null 2>&1; then
         say "FOUT: commando '$command' is niet beschikbaar op deze server."
         exit 1
@@ -88,8 +87,10 @@ else
     say "Academy seeder wordt overgeslagen"
 fi
 
-say "6/9 - Frontend assets bouwen"
-"$NPM_BIN" run build
+say "6/9 - Frontend assets"
+say "Op deze server is geen npm beschikbaar."
+say "Frontend-builds moet je daarom lokaal op je Mac maken met 'npm run build'."
+say "Upload daarna handmatig de map public/build naar de live server als je frontend hebt aangepast."
 
 say "7/9 - Laravel caches opschonen"
 "$PHP_BIN" artisan optimize:clear

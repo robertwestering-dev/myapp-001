@@ -668,6 +668,7 @@
     <x-hermes-header>
         <x-slot:menu>
             <a href="#diensten">{{ __('hermes.nav.services') }}</a>
+            <a href="{{ route('blog.index') }}">{{ __('hermes.nav.blog') }}</a>
             <a href="{{ route('academy.index') }}">{{ __('hermes.nav.academy') }}</a>
             <a href="#contact">{{ __('hermes.nav.contact') }}</a>
         </x-slot:menu>

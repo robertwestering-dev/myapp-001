@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademyController;
 use App\Http\Controllers\Admin\AcademyCourseController;
 use App\Http\Controllers\Admin\AdminPortalController;
+use App\Http\Controllers\Admin\BlogPostController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationQuestionnaireController;
 use App\Http\Controllers\Admin\QuestionnaireCategoryController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\QuestionnaireResponseReportController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactRequestController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\QuestionnaireResponseController;
@@ -35,6 +37,8 @@ Route::get('/', function (Request $request) {
 
 Route::post('/contact', [ContactRequestController::class, 'store'])->name('contact.store');
 Route::post('/locale', LocaleController::class)->name('locale.update');
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/dashboard', function (Request $request) {
     $user = $request->user();
@@ -111,6 +115,19 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                 Route::get('/', [TranslationController::class, 'index'])->name('index');
                 Route::get('/edit', [TranslationController::class, 'edit'])->name('edit');
                 Route::put('/', [TranslationController::class, 'update'])->name('update');
+            });
+
+        Route::middleware([EnsureUserIsGlobalAdmin::class])
+            ->prefix('blog-posts')
+            ->name('blog-posts.')
+            ->group(function (): void {
+                Route::get('/', [BlogPostController::class, 'index'])->name('index');
+                Route::get('/create', [BlogPostController::class, 'create'])->name('create');
+                Route::post('/', [BlogPostController::class, 'store'])->name('store');
+                Route::get('/{blogPost}/edit', [BlogPostController::class, 'edit'])->name('edit');
+                Route::get('/{blogPost}/confirm-delete', [BlogPostController::class, 'confirmDestroy'])->name('confirm-delete');
+                Route::put('/{blogPost}', [BlogPostController::class, 'update'])->name('update');
+                Route::delete('/{blogPost}', [BlogPostController::class, 'destroy'])->name('destroy');
             });
 
         Route::prefix('users')

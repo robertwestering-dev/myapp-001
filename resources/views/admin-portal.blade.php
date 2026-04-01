@@ -84,6 +84,13 @@
                     <div class="spotlight-meta">{{ __('hermes.admin_portal.translations_count', ['count' => $translationCount]) }}</div>
                     <a href="{{ route('admin.translations.index') }}" class="pill">{{ __('hermes.admin_portal.translations_action') }}</a>
                 </article>
+
+                <article class="portal-card">
+                    <h2>{{ __('hermes.admin_portal.blog_title') }}</h2>
+                    <p>{{ __('hermes.admin_portal.blog_text') }}</p>
+                    <div class="spotlight-meta">{{ __('hermes.admin_portal.blog_count', ['count' => $blogPostCount]) }}</div>
+                    <a href="{{ route('admin.blog-posts.index') }}" class="pill">{{ __('hermes.admin_portal.blog_action') }}</a>
+                </article>
             @endif
 
             <article class="portal-card">
