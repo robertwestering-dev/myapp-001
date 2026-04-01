@@ -6,6 +6,7 @@ return [
     'supported' => [
         'nl' => 'NL',
         'en' => 'EN',
+        'de' => 'DE',
     ],
 
     'host_defaults' => [
@@ -17,12 +18,3 @@ return [
         'www.hermesresults.eu' => 'de',
     ],
 ];
-
-/*
-    'supported' => [
-        'nl' => 'NL',
-        'en' => 'EN',
-        'de' => 'DE',
-        'fr' => 'FR',
-    ],
-*/

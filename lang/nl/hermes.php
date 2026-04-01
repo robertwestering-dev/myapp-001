@@ -19,7 +19,7 @@ return [
     'home' => [
         'eyebrow' => 'Hermes Results',
         'hero_title' => 'Maak digitale transformatie begrijpelijk, meetbaar en menselijk',
-        'hero_intro' => 'Hermes Results helpt u om snel inzicht te krijgen in de digitale vaardigheden, weerbaarheid en het aanpassingsvermogen van medewerkers. Deze inzichten vormen het startpunt voor een doelgerichte aanpak en roadmap.',
+        'hero_intro' => 'Hermes Results helpt snel inzicht te krijgen in de digitale vaardigheden, digitale weerbaarheid en het aanpassingsvermogen van medewerkers. Deze inzichten vormen het startpunt voor een doelgerichte aanpak en praktische roadmap.',
         'hero_primary' => 'Plan een kennismaking',
         'hero_secondary' => 'Bekijk de quick scans',
         'proof_quick_scans_title' => 'Quick scans',
@@ -29,7 +29,7 @@ return [
         'proof_insight_title' => 'Inzicht & overzicht',
         'proof_insight_text' => 'Heldere rapportage, prioriteiten en een werkbare veranderroute voor digitale transformatie.',
         'sidebar_eyebrow' => 'Focus op mensen',
-        'sidebar_title' => 'Uw team wil vooruit, maar onzichtbare frictie vertraagt verandering.',
+        'sidebar_title' => 'Het team wil vooruit, maar onzichtbare frictie vertraagt verandering',
         'sidebar_text' => 'Nieuwe systemen, veranderende processen en hoge (digitale) verwachtingen vragen niet alleen om technologie, maar om medewerkers die mee kunnen bewegen. Wanneer adaptability laag is of digitale weerbaarheid onder druk staat, blijven adoptie, eigenaarschap en voortgang achter.',
         'sidebar_point_1' => 'U ziet weerstand, maar mist nog scherpte over de werkelijke oorzaak.',
         'sidebar_point_2' => "U wilt investeren in transformatie, maar eerst weten waar de grootste risico's zitten.",
