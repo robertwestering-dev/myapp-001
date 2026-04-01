@@ -444,6 +444,7 @@ class QuestionnaireResponseReportController extends Controller
     ): Builder {
         return QuestionnaireResponse::query()
             ->select(['id', 'organization_questionnaire_id', 'user_id', 'submitted_at', 'created_at'])
+            ->whereNotNull('submitted_at')
             ->with([
                 'user:id,name,email,org_id',
                 'organizationQuestionnaire.organization:org_id,naam',

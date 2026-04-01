@@ -335,6 +335,8 @@
                                     <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">{{ __('hermes.dashboard.open_questionnaire') }}</a>
                                     @if ($availableQuestionnaire->currentResponse?->submitted_at)
                                         <span>{{ __('hermes.dashboard.last_completed', ['datetime' => $availableQuestionnaire->currentResponse->submitted_at->format('d-m-Y H:i')]) }}</span>
+                                    @elseif ($availableQuestionnaire->currentResponse?->last_saved_at)
+                                        <span>{{ __('hermes.dashboard.draft_saved', ['datetime' => $availableQuestionnaire->currentResponse->last_saved_at->format('d-m-Y H:i')]) }}</span>
                                     @else
                                         <span>{{ __('hermes.dashboard.not_completed') }}</span>
                                     @endif

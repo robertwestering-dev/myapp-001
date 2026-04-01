@@ -74,6 +74,7 @@ test('users can submit and revisit questionnaire responses', function () {
 
     $this->actingAs($user)
         ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
             'answers' => [
                 $textQuestion->id => 'Druk maar goed te doen.',
                 $choiceQuestion->id => 'Soms',
@@ -225,6 +226,7 @@ test('required questionnaire questions must be answered with valid values', func
 
     $this->actingAs($user)
         ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
             'answers' => [
                 $requiredChoice->id => 'Onjuiste optie',
                 $requiredNumber->id => 'geen getal',
@@ -271,6 +273,7 @@ test('required questions on earlier questionnaire pages must still be completed 
     $this->actingAs($user)
         ->from(route('questionnaire-responses.show', $availability))
         ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
             'answers' => [
                 $requiredSecondQuestion->id => 'Antwoord op de tweede pagina',
             ],

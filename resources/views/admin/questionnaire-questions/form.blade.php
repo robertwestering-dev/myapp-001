@@ -107,6 +107,35 @@
             </label>
 
             <label>
+                <span>Alleen tonen wanneer</span>
+                <select name="display_condition_question_id">
+                    <option value="">Altijd tonen</option>
+                    @foreach ($conditionQuestionOptions as $questionId => $questionLabel)
+                        <option value="{{ $questionId }}" @selected((string) old('display_condition_question_id', $question->display_condition_question_id) === (string) $questionId)>
+                            {{ $questionLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                <span>Conditie</span>
+                <select name="display_condition_operator">
+                    <option value="">Kies een conditie</option>
+                    @foreach ($conditionOperators as $operator => $operatorLabel)
+                        <option value="{{ $operator }}" @selected(old('display_condition_operator', $question->display_condition_operator) === $operator)>
+                            {{ $operatorLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                <span>Verwachte waarde(n)</span>
+                <textarea name="display_condition_answer" placeholder="Gebruik bij meerdere mogelijke waarden telkens een nieuwe regel. Laat leeg bij 'is ingevuld' of 'is niet ingevuld'.">{{ old('display_condition_answer', is_array($question->display_condition_answer) ? implode("\n", $question->display_condition_answer) : '') }}</textarea>
+            </label>
+
+            <label>
                 <span>Volgorde</span>
                 <input type="number" min="0" name="sort_order" value="{{ old('sort_order', $question->sort_order ?? 0) }}" required>
             </label>

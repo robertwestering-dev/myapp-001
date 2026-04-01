@@ -26,6 +26,8 @@ class QuestionnaireQuestionController extends Controller
                 'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
                 'sort_order' => 0,
             ]),
+            'conditionQuestionOptions' => $this->conditionQuestionOptions($questionnaire),
+            'conditionOperators' => QuestionnaireQuestion::displayConditionOperatorLabels(),
             'questionTypes' => QuestionnaireQuestion::typeLabels(),
             'isEditing' => false,
         ]);
@@ -37,6 +39,10 @@ class QuestionnaireQuestionController extends Controller
 
         $attributes = $request->validated();
         $attributes['options'] = $this->normalizeOptions($attributes['type'], $attributes['options'] ?? null);
+        $attributes['display_condition_answer'] = $this->normalizeConditionAnswer(
+            $attributes['display_condition_operator'] ?? null,
+            $attributes['display_condition_answer'] ?? null,
+        );
         $attributes['is_required'] = $request->boolean('is_required');
 
         QuestionnaireQuestion::create($attributes);
@@ -57,6 +63,8 @@ class QuestionnaireQuestionController extends Controller
             'intro' => 'Werk deze vraag en het antwoordtype bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'question' => $question,
+            'conditionQuestionOptions' => $this->conditionQuestionOptions($questionnaire, $question),
+            'conditionOperators' => QuestionnaireQuestion::displayConditionOperatorLabels(),
             'questionTypes' => QuestionnaireQuestion::typeLabels(),
             'isEditing' => true,
         ]);
@@ -72,6 +80,10 @@ class QuestionnaireQuestionController extends Controller
 
         $attributes = $request->validated();
         $attributes['options'] = $this->normalizeOptions($attributes['type'], $attributes['options'] ?? null);
+        $attributes['display_condition_answer'] = $this->normalizeConditionAnswer(
+            $attributes['display_condition_operator'] ?? null,
+            $attributes['display_condition_answer'] ?? null,
+        );
         $attributes['is_required'] = $request->boolean('is_required');
 
         $question->update($attributes);
@@ -107,6 +119,44 @@ class QuestionnaireQuestionController extends Controller
 
         return collect(preg_split('/\r\n|\r|\n/', (string) $options))
             ->map(fn (?string $option): string => trim((string) $option))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function conditionQuestionOptions(
+        Questionnaire $questionnaire,
+        ?QuestionnaireQuestion $currentQuestion = null
+    ): array {
+        return $questionnaire->loadMissing('categories.questions')->categories
+            ->flatMap(function ($category) use ($currentQuestion) {
+                return $category->questions
+                    ->reject(fn (QuestionnaireQuestion $question): bool => $question->is($currentQuestion))
+                    ->sortBy('sort_order')
+                    ->mapWithKeys(fn (QuestionnaireQuestion $question): array => [
+                        $question->id => $category->title.' -> '.$question->prompt,
+                    ]);
+            })
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    protected function normalizeConditionAnswer(?string $operator, ?string $value): ?array
+    {
+        if ($operator === null || in_array($operator, [
+            QuestionnaireQuestion::DISPLAY_CONDITION_ANSWERED,
+            QuestionnaireQuestion::DISPLAY_CONDITION_NOT_ANSWERED,
+        ], true)) {
+            return null;
+        }
+
+        return collect(preg_split('/\r\n|\r|\n/', (string) $value))
+            ->map(fn (?string $item): string => trim((string) $item))
             ->filter()
             ->values()
             ->all();

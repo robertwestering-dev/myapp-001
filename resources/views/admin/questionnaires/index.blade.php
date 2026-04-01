@@ -191,6 +191,9 @@
                         {{ $spotlightQuestionnaire->categories_count }} categorieen · {{ $spotlightQuestionnaire->questions_count }} vragen ·
                         {{ $spotlightQuestionnaire->organization_questionnaires_count }} organisatiekoppelingen
                     </div>
+                    @if (! $spotlightQuestionnaire->is_active)
+                        <div class="muted">Let op: deze questionnaire staat inactief in de bibliotheek en is daardoor niet zichtbaar voor gebruikers, ook niet met een organisatiekoppeling.</div>
+                    @endif
                     <div class="spotlight-card__actions">
                         @if ($spotlightAvailability)
                             <a href="{{ route('admin.questionnaires.availability.edit', [$spotlightQuestionnaire, $spotlightAvailability]) }}" class="ghost-pill">
@@ -253,6 +256,9 @@
                                             vanaf {{ $ownAvailability->available_from->format('d-m-Y') }}
                                         @endif
                                     </div>
+                                    @if (! $questionnaire->is_active)
+                                        <div class="muted">Niet zichtbaar voor gebruikers zolang de questionnaire zelf op inactief staat.</div>
+                                    @endif
                                 @else
                                     <div>{{ $questionnaire->organization_questionnaires_count }} organisatiekoppelingen</div>
                                     <div class="muted">Nog geen eigen koppeling in deze scope</div>

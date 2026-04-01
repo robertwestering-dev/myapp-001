@@ -4,6 +4,7 @@ use App\Models\Organization;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('managers can make a questionnaire available for their own organization', function () {
     $organization = Organization::factory()->create([
@@ -83,4 +84,40 @@ test('admins can configure and update questionnaire availability for any organiz
     expect($availability->available_from?->toDateString())->toBe('2026-04-12');
     expect($availability->available_until?->toDateString())->toBe('2026-05-12');
     expect($availability->is_active)->toBeFalse();
+});
+
+test('users do not see inactive questionnaires on the dashboard even when availability exists', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Verborgen scan',
+        'is_active' => false,
+    ]);
+
+    OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Verborgen scan');
+});
+
+test('admins see a warning when making an inactive questionnaire available', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'is_active' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.questionnaires.availability.create', $questionnaire))
+        ->assertOk()
+        ->assertSee('Deze questionnaire staat momenteel inactief in de bibliotheek.');
 });

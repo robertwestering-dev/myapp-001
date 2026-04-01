@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['organization_questionnaire_id', 'user_id', 'submitted_at'])]
+#[Fillable(['organization_questionnaire_id', 'user_id', 'submitted_at', 'last_saved_at', 'resume_token'])]
 class QuestionnaireResponse extends Model
 {
     /** @use HasFactory<QuestionnaireResponseFactory> */
@@ -19,7 +19,13 @@ class QuestionnaireResponse extends Model
     {
         return [
             'submitted_at' => 'datetime',
+            'last_saved_at' => 'datetime',
         ];
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->submitted_at === null;
     }
 
     public function answers(): HasMany

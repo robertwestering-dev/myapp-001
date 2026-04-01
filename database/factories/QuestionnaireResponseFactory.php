@@ -23,6 +23,16 @@ class QuestionnaireResponseFactory extends Factory
             'organization_questionnaire_id' => OrganizationQuestionnaire::factory(),
             'user_id' => User::factory(),
             'submitted_at' => now(),
+            'last_saved_at' => now(),
+            'resume_token' => fake()->unique()->sha256(),
         ];
+    }
+
+    public function draft(): static
+    {
+        return $this->state(fn (): array => [
+            'submitted_at' => null,
+            'last_saved_at' => now(),
+        ]);
     }
 }

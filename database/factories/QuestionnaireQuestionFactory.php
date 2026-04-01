@@ -24,6 +24,9 @@ class QuestionnaireQuestionFactory extends Factory
             'help_text' => fake()->optional()->sentence(),
             'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
             'options' => null,
+            'display_condition_question_id' => null,
+            'display_condition_operator' => null,
+            'display_condition_answer' => null,
             'is_required' => fake()->boolean(),
             'sort_order' => fake()->numberBetween(1, 10),
         ];

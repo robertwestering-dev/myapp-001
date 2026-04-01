@@ -4,8 +4,10 @@ namespace App\Http\Requests;
 
 use App\Models\OrganizationQuestionnaire;
 use App\Models\QuestionnaireQuestion;
+use App\Support\Questionnaires\QuestionnaireConditionEvaluator;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SubmitQuestionnaireResponseRequest extends FormRequest
 {
@@ -17,8 +19,14 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers' => ['required', 'array'],
+            'intent' => ['required', 'string', Rule::in(['draft', 'submit'])],
+            'answers' => ['nullable', 'array'],
         ];
+    }
+
+    public function saveAsDraft(): bool
+    {
+        return $this->string('intent')->value() === 'draft';
     }
 
     /**
@@ -33,11 +41,17 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
                 $questions = $organizationQuestionnaire->questionnaire
                     ->loadMissing('categories.questions')
                     ->questions;
+                $answers = $this->input('answers', []);
+                $conditionEvaluator = app(QuestionnaireConditionEvaluator::class);
 
                 foreach ($questions as $question) {
-                    $value = data_get($this->input('answers', []), (string) $question->id);
+                    if (! $conditionEvaluator->isVisible($question, $answers)) {
+                        continue;
+                    }
 
-                    if ($question->is_required && $this->isEmptyAnswer($value)) {
+                    $value = data_get($answers, (string) $question->id);
+
+                    if (! $this->saveAsDraft() && $question->is_required && $this->isEmptyAnswer($value)) {
                         $validator->errors()->add("answers.{$question->id}", __('hermes.questionnaire.validation.required'));
 
                         continue;

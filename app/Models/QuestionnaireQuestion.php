@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'help_text',
     'type',
     'options',
+    'display_condition_question_id',
+    'display_condition_operator',
+    'display_condition_answer',
     'is_required',
     'sort_order',
 ])]
@@ -36,10 +39,23 @@ class QuestionnaireQuestion extends Model
 
     public const TYPE_DATE = 'date';
 
+    public const DISPLAY_CONDITION_EQUALS = 'equals';
+
+    public const DISPLAY_CONDITION_NOT_EQUALS = 'not_equals';
+
+    public const DISPLAY_CONDITION_CONTAINS = 'contains';
+
+    public const DISPLAY_CONDITION_NOT_CONTAINS = 'not_contains';
+
+    public const DISPLAY_CONDITION_ANSWERED = 'answered';
+
+    public const DISPLAY_CONDITION_NOT_ANSWERED = 'not_answered';
+
     protected function casts(): array
     {
         return [
             'options' => 'array',
+            'display_condition_answer' => 'array',
             'is_required' => 'boolean',
         ];
     }
@@ -76,8 +92,43 @@ class QuestionnaireQuestion extends Model
         ];
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public static function displayConditionOperators(): array
+    {
+        return [
+            self::DISPLAY_CONDITION_EQUALS,
+            self::DISPLAY_CONDITION_NOT_EQUALS,
+            self::DISPLAY_CONDITION_CONTAINS,
+            self::DISPLAY_CONDITION_NOT_CONTAINS,
+            self::DISPLAY_CONDITION_ANSWERED,
+            self::DISPLAY_CONDITION_NOT_ANSWERED,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function displayConditionOperatorLabels(): array
+    {
+        return [
+            self::DISPLAY_CONDITION_EQUALS => 'Is gelijk aan',
+            self::DISPLAY_CONDITION_NOT_EQUALS => 'Is niet gelijk aan',
+            self::DISPLAY_CONDITION_CONTAINS => 'Bevat',
+            self::DISPLAY_CONDITION_NOT_CONTAINS => 'Bevat niet',
+            self::DISPLAY_CONDITION_ANSWERED => 'Is ingevuld',
+            self::DISPLAY_CONDITION_NOT_ANSWERED => 'Is niet ingevuld',
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(QuestionnaireCategory::class, 'questionnaire_category_id');
+    }
+
+    public function displayConditionQuestion(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'display_condition_question_id');
     }
 }

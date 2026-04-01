@@ -81,6 +81,7 @@ Route::middleware(['auth'])
     ->prefix('questionnaires')
     ->name('questionnaire-responses.')
     ->group(function (): void {
+        Route::get('/resume/{token}', [QuestionnaireResponseController::class, 'resume'])->name('resume');
         Route::get('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'show'])->name('show');
         Route::post('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'store'])->name('store');
     });

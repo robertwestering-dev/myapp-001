@@ -60,6 +60,15 @@
 
         <p><strong>Questionnaire:</strong> {{ $questionnaire->title }}</p>
 
+        @if (! $questionnaire->is_active)
+            <div class="errors">
+                <div>Deze questionnaire staat momenteel inactief in de bibliotheek. Gebruikers zien deze pas op hun dashboard zodra de questionnaire zelf ook actief is.</div>
+                @if (request()->user()?->isAdmin())
+                    <div><a href="{{ route('admin.questionnaires.edit', $questionnaire) }}">Open de questionnaire en activeer deze eerst.</a></div>
+                @endif
+            </div>
+        @endif
+
         <form method="POST" action="{{ $isEditing ? route('admin.questionnaires.availability.update', [$questionnaire, $availability]) : route('admin.questionnaires.availability.store', $questionnaire) }}">
             @csrf
             @if ($isEditing)
@@ -102,7 +111,7 @@
             <form method="POST" action="{{ route('admin.questionnaires.availability.destroy', [$questionnaire, $availability]) }}">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="danger-pill">Koppeling verwijderen</button>
+                <button type="submit" class="danger-pill">Beschikbaarheid voor deze organisatie verwijderen</button>
             </form>
         @endif
     </section>

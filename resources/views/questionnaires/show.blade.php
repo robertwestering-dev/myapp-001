@@ -307,6 +307,13 @@
             margin-top: 6px;
         }
 
+        .meta-link {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
         .progress-row {
             display: flex;
             align-items: center;
@@ -369,6 +376,10 @@
         }
 
         .step[hidden] {
+            display: none;
+        }
+
+        .question[hidden] {
             display: none;
         }
 
@@ -594,8 +605,19 @@
                         <div class="status">{{ session('status') }}</div>
                     @endif
 
+                    @if ($response?->last_saved_at)
+                        <p class="muted">{{ __('hermes.questionnaire.last_saved', ['datetime' => $response->last_saved_at->format('d-m-Y H:i')]) }}</p>
+                    @endif
+
                     @if ($response?->submitted_at)
-                        <p class="muted">{{ __('hermes.questionnaire.last_saved', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]) }}</p>
+                        <p class="muted">{{ __('hermes.questionnaire.last_completed', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]) }}</p>
+                    @endif
+
+                    @if ($resumeUrl)
+                        <p class="muted">
+                            {{ __('hermes.questionnaire.resume_hint') }}
+                            <a href="{{ $resumeUrl }}" class="meta-link">{{ __('hermes.questionnaire.resume_link') }}</a>
+                        </p>
                     @endif
 
                     @if ($errors->any())
@@ -679,7 +701,13 @@
                                     <div
                                         class="question"
                                         data-question
+                                        data-question-id="{{ $question->id }}"
+                                        data-visible-default="{{ in_array($question->id, $visibleQuestionIds, true) ? 'true' : 'false' }}"
+                                        data-condition-question-id="{{ $question->display_condition_question_id }}"
+                                        data-condition-operator="{{ $question->display_condition_operator }}"
+                                        data-condition-answer='@json($question->display_condition_answer ?? [])'
                                         data-required="{{ $question->is_required ? 'true' : 'false' }}"
+                                        @hidden(! in_array($question->id, $visibleQuestionIds, true))
                                     >
                                         <label for="question-{{ $question->id }}">
                                             {{ $question->prompt }}@if ($question->is_required) * @endif
@@ -773,7 +801,8 @@
                         <div class="actions__group">
                             <button type="button" class="ghost-pill" data-previous-step>{{ __('hermes.questionnaire.previous_step') }}</button>
                             <button type="button" class="questionnaire-pill" data-next-step>{{ __('hermes.questionnaire.next_step') }}</button>
-                            <button type="submit" class="questionnaire-pill" data-submit-step>{{ __('hermes.questionnaire.submit') }}</button>
+                            <button type="submit" class="ghost-pill" name="intent" value="draft" data-save-draft>{{ __('hermes.questionnaire.save_draft') }}</button>
+                            <button type="submit" class="questionnaire-pill" name="intent" value="submit" data-submit-step>{{ __('hermes.questionnaire.submit') }}</button>
                         </div>
 
                         <a href="{{ route('dashboard') }}" class="ghost-pill">{{ __('hermes.questionnaire.back_to_dashboard') }}</a>
@@ -799,8 +828,69 @@
             const previousButton = form.querySelector('[data-previous-step]');
             const nextButton = form.querySelector('[data-next-step]');
             const submitButton = form.querySelector('[data-submit-step]');
-            const totalSteps = Number(form.dataset.stepTotal || steps.length || 1);
+            const draftButton = form.querySelector('[data-save-draft]');
             let currentStepIndex = Number(form.dataset.initialStep || 0);
+
+            const normalizeValue = (value) => String(value || '').trim();
+
+            const answerValuesForQuestion = (questionId) => {
+                const controls = Array.from(form.querySelectorAll(`[name="answers[${questionId}]"], [name="answers[${questionId}][]"]`));
+
+                if (controls.length === 0) {
+                    return [];
+                }
+
+                const firstControl = controls[0];
+
+                if (firstControl.type === 'radio' || firstControl.type === 'checkbox') {
+                    return controls
+                        .filter((control) => control.checked)
+                        .map((control) => normalizeValue(control.value))
+                        .filter(Boolean);
+                }
+
+                const value = normalizeValue(firstControl.value);
+
+                return value === '' ? [] : [value];
+            };
+
+            const isQuestionVisible = (question) => {
+                const dependencyId = question.dataset.conditionQuestionId;
+                const operator = question.dataset.conditionOperator;
+
+                if (! dependencyId || ! operator) {
+                    return question.dataset.visibleDefault !== 'false';
+                }
+
+                const expected = JSON.parse(question.dataset.conditionAnswer || '[]');
+                const answerValues = answerValuesForQuestion(dependencyId);
+
+                if (operator === 'answered') {
+                    return answerValues.length > 0;
+                }
+
+                if (operator === 'not_answered') {
+                    return answerValues.length === 0;
+                }
+
+                if (operator === 'equals') {
+                    return answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0];
+                }
+
+                if (operator === 'not_equals') {
+                    return ! (answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0]);
+                }
+
+                if (operator === 'contains') {
+                    return expected.some((value) => answerValues.includes(value));
+                }
+
+                if (operator === 'not_contains') {
+                    return expected.every((value) => ! answerValues.includes(value));
+                }
+
+                return true;
+            };
 
             const clearClientError = (question) => {
                 question.classList.remove('question--invalid');
@@ -826,6 +916,10 @@
 
             const validateQuestion = (question) => {
                 clearClientError(question);
+
+                if (question.hidden) {
+                    return true;
+                }
 
                 if (question.dataset.required !== 'true') {
                     return true;
@@ -881,8 +975,29 @@
                 return true;
             };
 
+            const syncConditionalQuestions = () => {
+                const questions = Array.from(form.querySelectorAll('[data-question]'));
+
+                questions.forEach((question) => {
+                    const shouldShow = isQuestionVisible(question);
+                    question.hidden = ! shouldShow;
+
+                    const controls = Array.from(question.querySelectorAll('input, textarea, select'));
+
+                    controls.forEach((control) => {
+                        control.disabled = ! shouldShow;
+                    });
+
+                    if (! shouldShow) {
+                        clearClientError(question);
+                    }
+                });
+            };
+
+            const visibleSteps = () => steps.filter((step) => Array.from(step.querySelectorAll('[data-question]')).some((question) => ! question.hidden));
+
             const validateStep = (step) => {
-                const questions = Array.from(step.querySelectorAll('[data-question]'));
+                const questions = Array.from(step.querySelectorAll('[data-question]')).filter((question) => ! question.hidden);
                 let firstInvalidControl = null;
 
                 const isValid = questions.every((question) => {
@@ -903,13 +1018,26 @@
             };
 
             const renderStep = () => {
-                steps.forEach((step, index) => {
-                    step.hidden = index !== currentStepIndex;
+                syncConditionalQuestions();
+
+                const activeSteps = visibleSteps();
+                const totalSteps = Math.max(activeSteps.length, 1);
+
+                if (activeSteps.length > 0) {
+                    currentStepIndex = Math.min(currentStepIndex, activeSteps.length - 1);
+                } else {
+                    currentStepIndex = 0;
+                }
+
+                steps.forEach((step) => {
+                    step.hidden = ! activeSteps.includes(step);
                 });
 
                 progressPills.forEach((pill, index) => {
-                    pill.classList.toggle('is-active', index === currentStepIndex);
-                    pill.classList.toggle('is-complete', index < currentStepIndex);
+                    const isVisible = activeSteps.includes(steps[index]);
+                    pill.hidden = ! isVisible;
+                    pill.classList.toggle('is-active', isVisible && activeSteps[currentStepIndex] === steps[index]);
+                    pill.classList.toggle('is-complete', isVisible && activeSteps.indexOf(steps[index]) < currentStepIndex);
                 });
 
                 if (progressLabel) {
@@ -929,6 +1057,10 @@
                 if (submitButton) {
                     submitButton.hidden = currentStepIndex !== totalSteps - 1;
                 }
+
+                if (draftButton) {
+                    draftButton.hidden = false;
+                }
             };
 
             previousButton?.addEventListener('click', () => {
@@ -941,13 +1073,38 @@
             });
 
             nextButton?.addEventListener('click', () => {
-                const currentStep = steps[currentStepIndex];
+                const currentStep = visibleSteps()[currentStepIndex];
 
                 if (! currentStep || ! validateStep(currentStep)) {
                     return;
                 }
 
                 currentStepIndex += 1;
+                renderStep();
+            });
+
+            form.addEventListener('submit', (event) => {
+                const submitter = event.submitter;
+
+                if (! submitter || submitter.dataset.submitStep === undefined) {
+                    return;
+                }
+
+                syncConditionalQuestions();
+
+                const activeSteps = visibleSteps();
+
+                for (const [index, step] of activeSteps.entries()) {
+                    if (! validateStep(step)) {
+                        event.preventDefault();
+                        currentStepIndex = index;
+                        renderStep();
+                        return;
+                    }
+                }
+            });
+
+            form.addEventListener('change', () => {
                 renderStep();
             });
 

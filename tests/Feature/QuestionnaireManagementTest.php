@@ -87,6 +87,37 @@ test('admins can compose a questionnaire with categories and questions', functio
         ->assertSee('Hoeveel energie ervaart u gemiddeld tijdens uw werkdag?');
 });
 
+test('admins can configure conditional questionnaire questions', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create();
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+    ]);
+    $triggerQuestion = QuestionnaireQuestion::factory()->singleChoice()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Is extra verdieping nodig?',
+        'options' => ['Ja', 'Nee'],
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.questionnaires.questions.store', $questionnaire), [
+            'questionnaire_category_id' => $category->id,
+            'prompt' => 'Welke verdieping wilt u ontvangen?',
+            'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
+            'display_condition_question_id' => $triggerQuestion->id,
+            'display_condition_operator' => QuestionnaireQuestion::DISPLAY_CONDITION_EQUALS,
+            'display_condition_answer' => 'Ja',
+            'sort_order' => 2,
+        ])
+        ->assertRedirect(route('admin.questionnaires.edit', $questionnaire));
+
+    $this->assertDatabaseHas('questionnaire_questions', [
+        'questionnaire_category_id' => $category->id,
+        'display_condition_question_id' => $triggerQuestion->id,
+        'display_condition_operator' => QuestionnaireQuestion::DISPLAY_CONDITION_EQUALS,
+    ]);
+});
+
 test('admins can update and delete questionnaire categories', function () {
     $admin = User::factory()->admin()->create();
     $questionnaire = Questionnaire::factory()->create();
