@@ -1,20 +1,37 @@
-<div class="flex items-start max-md:flex-col">
-    <div class="me-10 w-full pb-4 md:w-[220px]">
-        <flux:navlist aria-label="{{ __('Settings') }}">
-            <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
-            <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Security') }}</flux:navlist.item>
-            <flux:navlist.item :href="route('appearance.edit')" wire:navigate>{{ __('Appearance') }}</flux:navlist.item>
-        </flux:navlist>
-    </div>
+@props([
+    'heading' => '',
+    'subheading' => '',
+    'eyebrow' => null,
+])
 
-    <flux:separator class="md:hidden" />
+<div class="settings-shell">
+    <style>
+        .settings-shell__panel {
+            padding: 32px;
+            display: grid;
+            gap: 22px;
+        }
 
-    <div class="flex-1 self-stretch max-md:pt-6">
-        <flux:heading>{{ $heading ?? '' }}</flux:heading>
-        <flux:subheading>{{ $subheading ?? '' }}</flux:subheading>
+        .settings-shell__content {
+            display: grid;
+            gap: 24px;
+            width: 100%;
+        }
 
-        <div class="mt-5 w-full max-w-lg">
+        .settings-shell {
+            display: grid;
+        }
+    </style>
+
+    <section class="settings-shell__panel user-panel user-panel--compact">
+        <x-user-page-heading
+            :eyebrow="$eyebrow"
+            :title="$heading"
+            :text="$subheading"
+        />
+
+        <div class="settings-shell__content">
             {{ $slot }}
         </div>
-    </div>
+    </section>
 </div>

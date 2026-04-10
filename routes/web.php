@@ -4,24 +4,28 @@ use App\Http\Controllers\AcademyController;
 use App\Http\Controllers\Admin\AcademyCourseController;
 use App\Http\Controllers\Admin\AdminPortalController;
 use App\Http\Controllers\Admin\BlogPostController;
+use App\Http\Controllers\Admin\MediaAssetController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\OrganizationQuestionnaireController;
 use App\Http\Controllers\Admin\QuestionnaireCategoryController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\QuestionnaireQuestionController;
 use App\Http\Controllers\Admin\QuestionnaireResponseReportController;
+use App\Http\Controllers\Admin\StrategyPageController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BlogSitemapController;
 use App\Http\Controllers\ContactRequestController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ForumReplyController;
+use App\Http\Controllers\ForumThreadController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\QuestionnaireLibraryController;
 use App\Http\Controllers\QuestionnaireResponseController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsGlobalAdmin;
-use App\Models\AcademyCourse;
-use App\Models\OrganizationQuestionnaire;
-use App\Models\QuestionnaireResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,44 +41,28 @@ Route::get('/', function (Request $request) {
 
 Route::post('/contact', [ContactRequestController::class, 'store'])->name('contact.store');
 Route::post('/locale', LocaleController::class)->name('locale.update');
+Route::get('/sitemap.xml', BlogSitemapController::class)->name('sitemap');
+Route::view('/inspiratiebronnen', 'inspiration-sources')->name('inspiration-sources.show');
+Route::view('/over-ons', 'about')->name('about.show');
+Route::view('/prijzen', 'pricing')->name('pricing.show');
+Route::view('/privacy', 'privacy')->name('privacy.show');
+Route::view('/voor-organisaties', 'organizations')->name('organizations.landing');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
 
-Route::get('/dashboard', function (Request $request) {
-    $user = $request->user();
-
-    if ($user !== null && $user->canAccessAdminPortal()) {
-        return redirect()->route('admin.portal');
-    }
-
-    $availableQuestionnaires = OrganizationQuestionnaire::query()
-        ->with('questionnaire')
-        ->where('org_id', $user?->org_id)
-        ->where('is_active', true)
-        ->get()
-        ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->isAvailable())
-        ->map(function (OrganizationQuestionnaire $organizationQuestionnaire) use ($user): OrganizationQuestionnaire {
-            $organizationQuestionnaire->setRelation(
-                'currentResponse',
-                QuestionnaireResponse::query()
-                    ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
-                    ->where('user_id', $user?->id)
-                    ->first(),
-            );
-
-            return $organizationQuestionnaire;
-        });
-
-    return view('dashboard', [
-        'availableQuestionnaires' => $availableQuestionnaires,
-        'academyCourseCount' => AcademyCourse::query()->active()->count(),
-    ]);
-})
+Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
+    Route::get('/forum', [ForumThreadController::class, 'index'])->name('forum.index');
+    Route::get('/forum/{forumThread}', [ForumThreadController::class, 'show'])->name('forum.show');
+    Route::post('/forum', [ForumThreadController::class, 'store'])->name('forum.store');
+    Route::post('/forum/{forumThread}/replies', [ForumReplyController::class, 'store'])->name('forum-replies.store');
+    Route::put('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'update'])->name('forum-replies.update');
+    Route::delete('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'destroy'])->name('forum-replies.destroy');
+    Route::get('/vragenlijsten', QuestionnaireLibraryController::class)->name('questionnaires.index');
 });
 
 Route::middleware(['auth'])
@@ -95,6 +83,15 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/', [AdminPortalController::class, 'index'])->name('portal');
+
+        Route::middleware([EnsureUserIsGlobalAdmin::class])
+            ->prefix('strategie')
+            ->name('strategy-pages.')
+            ->group(function (): void {
+                Route::get('/', [StrategyPageController::class, 'index'])->name('index');
+                Route::get('/{page}', [StrategyPageController::class, 'show'])->name('show');
+                Route::get('/{page}/preview', [StrategyPageController::class, 'preview'])->name('preview');
+            });
 
         Route::middleware([EnsureUserIsGlobalAdmin::class])
             ->prefix('academy-courses')
@@ -125,10 +122,19 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                 Route::get('/', [BlogPostController::class, 'index'])->name('index');
                 Route::get('/create', [BlogPostController::class, 'create'])->name('create');
                 Route::post('/', [BlogPostController::class, 'store'])->name('store');
+                Route::get('/{blogPost}/preview', [BlogPostController::class, 'preview'])->name('preview');
                 Route::get('/{blogPost}/edit', [BlogPostController::class, 'edit'])->name('edit');
                 Route::get('/{blogPost}/confirm-delete', [BlogPostController::class, 'confirmDestroy'])->name('confirm-delete');
                 Route::put('/{blogPost}', [BlogPostController::class, 'update'])->name('update');
                 Route::delete('/{blogPost}', [BlogPostController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::middleware([EnsureUserIsGlobalAdmin::class])
+            ->prefix('media-assets')
+            ->name('media-assets.')
+            ->group(function (): void {
+                Route::get('/', [MediaAssetController::class, 'index'])->name('index');
+                Route::post('/', [MediaAssetController::class, 'store'])->name('store');
             });
 
         Route::prefix('users')
@@ -181,6 +187,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                 Route::get('/{questionnaire}/availability/create', [OrganizationQuestionnaireController::class, 'create'])->name('availability.create');
                 Route::post('/{questionnaire}/availability', [OrganizationQuestionnaireController::class, 'store'])->name('availability.store');
                 Route::get('/{questionnaire}/availability/{organizationQuestionnaire}/edit', [OrganizationQuestionnaireController::class, 'edit'])->name('availability.edit');
+                Route::post('/{questionnaire}/availability/{organization}/toggle', [OrganizationQuestionnaireController::class, 'toggle'])->name('availability.toggle');
                 Route::put('/{questionnaire}/availability/{organizationQuestionnaire}', [OrganizationQuestionnaireController::class, 'update'])->name('availability.update');
                 Route::delete('/{questionnaire}/availability/{organizationQuestionnaire}', [OrganizationQuestionnaireController::class, 'destroy'])->name('availability.destroy');
             });

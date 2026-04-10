@@ -1,349 +1,273 @@
-<x-layouts.hermes-public :title="__('hermes.blog.title')">
+<x-layouts.hermes-public
+    :title="$activeTag !== '' ? __('hermes.blog.title_topic', ['topic' => $activeTag]) : __('hermes.blog.title')"
+    :meta-description="$activeTag !== '' ? __('hermes.blog.meta_topic', ['topic' => $activeTag]) : __('hermes.blog.meta_description')"
+    :canonical-url="$activeTag !== '' ? route('blog.index', ['tag' => $activeTag]) : $blogIndexUrl"
+    :meta-image="$blogPosts->first()?->cover_image_url"
+    :show-header-booking="auth()->check()"
+    :show-header-contact-link="auth()->check()"
+    :structured-data="[
+        '@context' => 'https://schema.org',
+        '@type' => 'Blog',
+        'name' => __('hermes.blog.title'),
+        'description' => $activeTag !== '' ? __('hermes.blog.meta_topic', ['topic' => $activeTag]) : __('hermes.blog.meta_description'),
+        'url' => $activeTag !== '' ? route('blog.index', ['tag' => $activeTag]) : $blogIndexUrl,
+    ]"
+>
+    @guest
+        <x-slot:headerMenu>
+            <a class="home-menu-item" href="{{ route('home') }}">Home</a>
+            <a class="home-menu-item" href="{{ route('blog.index') }}">Blog</a>
+            <div class="home-menu-dropdown">
+                <a class="home-menu-trigger" href="{{ route('about.show') }}">
+                    Over
+                    <span aria-hidden="true">▾</span>
+                </a>
+                <div class="home-submenu">
+                    <a href="{{ route('inspiration-sources.show') }}">Inspiratiebronnen</a>
+                    <a href="{{ route('about.show') }}">Over ons</a>
+                    <a href="{{ route('pricing.show') }}">Prijzen</a>
+                    <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
+                </div>
+            </div>
+            <a class="home-menu-item" href="{{ route('organizations.landing') }}">Organisaties</a>
+        </x-slot:headerMenu>
+    @endguest
+
     <x-slot:head>
         <style>
-            .blog-hero,
-            .blog-toolbar,
-            .blog-grid,
-            .tag-cloud,
-            .blog-stats,
-            .card-actions,
-            .empty-state {
+            .blog-page {
                 display: grid;
-                gap: 18px;
+                gap: 24px;
             }
 
-            .blog-hero {
-                grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-                align-items: stretch;
-            }
-
-            .blog-hero__panel,
-            .blog-hero__featured,
-            .blog-toolbar,
-            .blog-card,
-            .blog-stats,
-            .empty-state {
-                border: 1px solid rgba(255, 255, 255, 0.58);
-                box-shadow: var(--shadow);
-                border-radius: var(--radius-xl);
-            }
-
-            .blog-hero__panel,
-            .blog-toolbar,
-            .blog-card,
-            .empty-state {
-                background: var(--panel);
-            }
-
-            .blog-hero__panel,
-            .blog-hero__featured,
-            .blog-toolbar,
-            .blog-card,
-            .empty-state {
-                padding: 28px;
-            }
-
-            .blog-hero__panel {
-                background:
-                    radial-gradient(circle at 82% 24%, rgba(214, 179, 122, 0.28), transparent 24%),
-                    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 243, 234, 0.82));
-            }
-
-            .blog-hero__lead,
-            .blog-card__excerpt,
-            .meta,
-            .blog-toolbar label,
-            .empty-state p {
-                color: var(--muted);
-                line-height: 1.75;
-            }
-
-            .blog-hero__lead {
-                max-width: 62ch;
-                font-size: 1.04rem;
-            }
-
-            .blog-stats {
-                margin-top: 22px;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                background: rgba(255, 255, 255, 0.56);
-                padding: 18px;
-            }
-
-            .blog-stats strong {
-                display: block;
-                font-size: 1.45rem;
-                font-family: "Georgia", "Times New Roman", serif;
-            }
-
-            .blog-stats span {
-                color: var(--muted);
-                font-size: 0.92rem;
-            }
-
-            .blog-hero__featured {
-                color: #f8f1e7;
-                background:
-                    linear-gradient(180deg, rgba(30, 71, 61, 0.98), rgba(16, 42, 35, 0.98)),
-                    var(--forest);
-            }
-
-            .blog-hero__featured h2,
-            .blog-hero__featured p,
-            .blog-hero__featured a,
-            .blog-hero__featured .meta {
-                color: inherit;
-            }
-
-            .blog-toolbar {
-                margin-top: 26px;
-                grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-                align-items: end;
-            }
-
-            .blog-toolbar form {
+            .blog-content {
                 display: grid;
-                gap: 12px;
+                gap: 24px;
+                grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.78fr);
+                align-items: start;
             }
 
-            .blog-toolbar input {
-                width: 100%;
-                padding: 14px 16px;
-                border-radius: 16px;
-                border: 1px solid var(--line);
-                background: rgba(255, 255, 255, 0.85);
-                font: inherit;
-                color: var(--ink);
-            }
-
-            .tag-cloud {
-                grid-template-columns: repeat(auto-fit, minmax(140px, max-content));
-                align-content: start;
-            }
-
-            .tag-chip {
-                display: inline-flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-                padding: 10px 14px;
-                border-radius: 999px;
-                border: 1px solid var(--line);
-                background: rgba(255, 255, 255, 0.74);
-                font-size: 0.94rem;
-            }
-
-            .tag-chip--active {
-                background: rgba(188, 91, 44, 0.12);
-                border-color: rgba(188, 91, 44, 0.18);
-                color: var(--clay-deep);
-            }
-
-            .blog-grid {
-                margin-top: 26px;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .blog-card {
-                display: flex;
-                flex-direction: column;
+            .blog-list,
+            .blog-sidebar,
+            .blog-article-card,
+            .blog-article-card__header,
+            .blog-article-card__meta,
+            .blog-article-card__tags,
+            .blog-sidebar__tags,
+            .blog-search-form {
+                display: grid;
                 gap: 16px;
             }
 
-            .blog-card__image,
-            .blog-hero__featured-image {
-                width: 100%;
-                aspect-ratio: 16 / 9;
-                object-fit: cover;
-                border-radius: 20px;
-            }
-
-            .blog-card__placeholder,
-            .blog-hero__placeholder {
-                width: 100%;
-                aspect-ratio: 16 / 9;
-                border-radius: 20px;
-                background:
-                    radial-gradient(circle at top right, rgba(214, 179, 122, 0.36), transparent 24%),
-                    linear-gradient(135deg, rgba(188, 91, 44, 0.3), rgba(30, 71, 61, 0.92));
-            }
-
-            .blog-card h3,
-            .blog-hero__featured h2 {
-                font-size: 1.5rem;
-                line-height: 1.1;
-                margin-bottom: 10px;
-            }
-
-            .meta {
+            .blog-search-form__actions,
+            .blog-article-card__actions {
                 display: flex;
-                gap: 10px;
                 flex-wrap: wrap;
-                font-size: 0.92rem;
+                gap: 12px;
+                align-items: center;
             }
 
-            .tag-list {
-                display: flex;
+            .blog-search-label {
+                display: grid;
                 gap: 8px;
-                flex-wrap: wrap;
+                font-family: Arial, Helvetica, sans-serif;
+                font-weight: 700;
+                color: #20453a;
             }
 
-            .tag-list span {
+            .blog-search-field {
+                width: 100%;
+                min-height: 52px;
+                padding: 0 16px;
+                border-radius: 18px;
+                border: 1px solid rgba(22, 33, 29, 0.12);
+                background: rgba(255, 255, 255, 0.92);
+                color: #16211d;
+                font: inherit;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .blog-article-card__header {
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: start;
+            }
+
+            .blog-article-card__title {
+                margin: 0;
+                font-size: 1.2rem;
+                line-height: 1.15;
+            }
+
+            .blog-article-card__summary,
+            .blog-sidebar__note,
+            .blog-empty-text {
+                margin: 0;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #5a6762;
+                line-height: 1.6;
+            }
+
+            .blog-article-card__tags,
+            .blog-sidebar__tags {
+                grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
+            }
+
+            .blog-chip,
+            .blog-badge {
                 display: inline-flex;
                 align-items: center;
-                padding: 7px 11px;
+                width: fit-content;
+                padding: 8px 12px;
                 border-radius: 999px;
-                background: rgba(30, 71, 61, 0.08);
-                color: var(--forest);
-                font-size: 0.84rem;
-                font-weight: 600;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 0.85rem;
+                font-weight: 700;
             }
 
-            .card-actions {
-                grid-auto-flow: column;
-                justify-content: start;
-                margin-top: auto;
+            .blog-chip {
+                background: rgba(32, 69, 58, 0.08);
+                border: 1px solid rgba(32, 69, 58, 0.12);
+                color: #20453a;
             }
 
-            .pagination {
-                margin-top: 26px;
+            .blog-chip--active {
+                background: rgba(217, 106, 43, 0.12);
+                border-color: rgba(217, 106, 43, 0.18);
+                color: #a84a19;
+            }
+
+            .blog-badge {
+                background: rgba(42, 106, 109, 0.12);
+                color: #20575b;
+            }
+
+            .blog-pagination {
                 display: flex;
                 justify-content: center;
             }
 
-            @media (max-width: 1040px) {
-                .blog-hero,
-                .blog-toolbar,
-                .blog-grid {
+            @media (max-width: 980px) {
+                .blog-content,
+                .blog-article-card__header {
                     grid-template-columns: 1fr;
                 }
             }
         </style>
     </x-slot:head>
 
-    <section class="blog-hero">
-        <div class="blog-hero__panel">
-            <span class="eyebrow">{{ __('hermes.blog.eyebrow') }}</span>
-            <h1>{{ __('hermes.blog.heading') }}</h1>
-            <p class="blog-hero__lead">{{ __('hermes.blog.intro') }}</p>
+    <div class="blog-page">
+        <div class="blog-content">
+            <section class="blog-list">
+                @forelse ($blogPosts as $blogPost)
+                    <x-user-surface-card variant="soft" class="blog-article-card">
+                        <div class="blog-article-card__header">
+                            <div class="blog-article-card__meta">
+                                <x-user-inline-meta
+                                    :items="[
+                                        $blogPost->author?->name ?? __('hermes.blog.editorial_team'),
+                                        $blogPost->published_at?->translatedFormat('d-m-Y'),
+                                        __('hermes.blog.reading_time', ['minutes' => $blogPost->readingTimeInMinutes()]),
+                                    ]"
+                                />
 
-            <div class="blog-stats">
-                <div>
-                    <strong>{{ ($featuredPost ? 1 : 0) + $blogPosts->total() }}</strong>
-                    <span>{{ __('hermes.blog.stats_posts') }}</span>
-                </div>
-                <div>
-                    <strong>{{ $tagCounts->count() }}</strong>
-                    <span>{{ __('hermes.blog.stats_topics') }}</span>
-                </div>
-                <div>
-                    <strong>{{ $featuredPost?->author?->name ?? __('hermes.blog.stats_editorial') }}</strong>
-                    <span>{{ __('hermes.blog.stats_latest') }}</span>
-                </div>
-            </div>
-        </div>
+                                <h2 class="blog-article-card__title">
+                                    <a href="{{ route('blog.show', $blogPost) }}">{{ $blogPost->titleForLocale() }}</a>
+                                </h2>
+                            </div>
 
-        <aside class="blog-hero__featured">
-            <span class="eyebrow eyebrow--light">{{ __('hermes.blog.featured') }}</span>
+                            <span class="blog-badge">{{ __('hermes.blog.article_badge') }}</span>
+                        </div>
 
-            @if ($featuredPost)
-                @if ($featuredPost->cover_image_url)
-                    <img class="blog-hero__featured-image" src="{{ $featuredPost->cover_image_url }}" alt="{{ $featuredPost->titleForLocale() }}">
-                @else
-                    <div class="blog-hero__placeholder" aria-hidden="true"></div>
+                        <p class="blog-article-card__summary">{{ $blogPost->excerptForLocale() }}</p>
+
+                        @if ($blogPost->tagsList() !== [])
+                            <div class="blog-article-card__tags">
+                                @foreach ($blogPost->tagsList() as $tag)
+                                    <a
+                                        href="{{ route('blog.index', array_merge(request()->except('page'), ['tag' => $tag])) }}"
+                                        @class(['blog-chip', 'blog-chip--active' => $activeTag === $tag])
+                                    >
+                                        {{ $tag }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="blog-article-card__actions">
+                            <a href="{{ route('blog.show', $blogPost) }}" class="pill">{{ __('hermes.blog.read_post') }}</a>
+                        </div>
+                    </x-user-surface-card>
+                @empty
+                    <x-user-guidance-card
+                        :eyebrow="__('hermes.blog.eyebrow')"
+                        :title="__('hermes.blog.empty_title')"
+                        :text="__('hermes.blog.empty_text')"
+                    />
+                @endforelse
+
+                @if ($blogPosts->count() > 0)
+                    <div class="blog-pagination">
+                        {{ $blogPosts->links() }}
+                    </div>
                 @endif
+            </section>
 
-                <div class="meta">
-                    <span>{{ $featuredPost->author?->name ?? __('hermes.blog.editorial_team') }}</span>
-                    <span>{{ $featuredPost->published_at?->translatedFormat('j M Y') }}</span>
-                    <span>{{ __('hermes.blog.reading_time', ['minutes' => $featuredPost->readingTimeInMinutes()]) }}</span>
-                </div>
+            <aside class="blog-sidebar">
+                <section class="user-filter-panel" aria-labelledby="blog-overview-title">
+                    <x-user-section-heading
+                        id="blog-overview-title"
+                        :eyebrow="__('hermes.blog.summary_eyebrow')"
+                        :title="__('hermes.blog.summary_title')"
+                        :text="$activeTag !== '' ? __('hermes.blog.active_topic', ['topic' => $activeTag]) : __('hermes.blog.summary_text')"
+                    />
 
-                <div>
-                    <h2>{{ $featuredPost->titleForLocale() }}</h2>
-                    <p>{{ $featuredPost->excerptForLocale() }}</p>
-                </div>
+                    <p class="blog-sidebar__note">{{ __('hermes.blog.editorial_note') }}</p>
 
-                <a class="pill pill--strong" href="{{ route('blog.show', $featuredPost) }}">{{ __('hermes.blog.read_post') }}</a>
-            @else
-                <h2>{{ __('hermes.blog.empty_title') }}</h2>
-                <p>{{ __('hermes.blog.empty_text') }}</p>
-            @endif
-        </aside>
-    </section>
+                    <form method="GET" action="{{ route('blog.index') }}" class="blog-search-form">
+                        <label class="blog-search-label">
+                            <span>{{ __('hermes.blog.search_label') }}</span>
+                            <input
+                                type="search"
+                                name="search"
+                                value="{{ $search }}"
+                                class="blog-search-field"
+                                placeholder="{{ __('hermes.blog.search_placeholder') }}"
+                            >
+                        </label>
 
-    <section class="blog-toolbar">
-        <form method="GET" action="{{ route('blog.index') }}">
-            <label for="search">{{ __('hermes.blog.search_label') }}</label>
-            <input id="search" type="search" name="search" value="{{ $search }}" placeholder="{{ __('hermes.blog.search_placeholder') }}">
-            @if ($activeTag !== '')
-                <input type="hidden" name="tag" value="{{ $activeTag }}">
-            @endif
+                        @if ($activeTag !== '')
+                            <input type="hidden" name="tag" value="{{ $activeTag }}">
+                        @endif
 
-            <div class="card-actions">
-                <button type="submit" class="pill pill--strong">{{ __('hermes.blog.search_action') }}</button>
-                <a class="pill" href="{{ route('blog.index') }}">{{ __('hermes.blog.reset_action') }}</a>
-            </div>
-        </form>
+                        <div class="blog-search-form__actions">
+                            <button type="submit" class="pill">{{ __('hermes.blog.search_action') }}</button>
+                            <a href="{{ route('blog.index') }}" class="pill pill--neutral">{{ __('hermes.blog.reset_action') }}</a>
+                        </div>
+                    </form>
 
-        <div>
-            <p class="meta">{{ __('hermes.blog.tag_intro') }}</p>
-            <div class="tag-cloud">
-                <a href="{{ route('blog.index', request()->except(['tag', 'page'])) }}" @class(['tag-chip', 'tag-chip--active' => $activeTag === ''])>
-                    <span>{{ __('hermes.blog.all_topics') }}</span>
-                </a>
+                    @if ($tagCounts->isNotEmpty())
+                        <div class="blog-sidebar__tags">
+                            <a
+                                href="{{ route('blog.index', request()->except(['tag', 'page'])) }}"
+                                @class(['blog-chip', 'blog-chip--active' => $activeTag === ''])
+                            >
+                                {{ __('hermes.blog.all_topics') }}
+                            </a>
 
-                @foreach ($tagCounts->take(8) as $tag => $count)
-                    <a href="{{ route('blog.index', array_merge(request()->except('page'), ['tag' => $tag])) }}" @class(['tag-chip', 'tag-chip--active' => $activeTag === $tag])>
-                        <span>{{ $tag }}</span>
-                        <strong>{{ $count }}</strong>
-                    </a>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    @if ($blogPosts->count() > 0)
-        <section class="blog-grid">
-            @foreach ($blogPosts as $blogPost)
-                <article class="blog-card">
-                    @if ($blogPost->cover_image_url)
-                        <img class="blog-card__image" src="{{ $blogPost->cover_image_url }}" alt="{{ $blogPost->titleForLocale() }}">
+                            @foreach ($tagCounts->take(8) as $tag => $count)
+                                <a
+                                    href="{{ route('blog.index', array_merge(request()->except('page'), ['tag' => $tag])) }}"
+                                    @class(['blog-chip', 'blog-chip--active' => $activeTag === $tag])
+                                >
+                                    {{ $tag }} ({{ $count }})
+                                </a>
+                            @endforeach
+                        </div>
                     @else
-                        <div class="blog-card__placeholder" aria-hidden="true"></div>
+                        <p class="blog-empty-text">{{ __('hermes.blog.empty_topics') }}</p>
                     @endif
-
-                    <div class="meta">
-                        <span>{{ $blogPost->author?->name ?? __('hermes.blog.editorial_team') }}</span>
-                        <span>{{ $blogPost->published_at?->translatedFormat('j M Y') }}</span>
-                        <span>{{ __('hermes.blog.reading_time', ['minutes' => $blogPost->readingTimeInMinutes()]) }}</span>
-                    </div>
-
-                    <div>
-                        <h3>{{ $blogPost->titleForLocale() }}</h3>
-                        <p class="blog-card__excerpt">{{ $blogPost->excerptForLocale() }}</p>
-                    </div>
-
-                    <div class="tag-list">
-                        @foreach ($blogPost->tagsList() as $tag)
-                            <span>{{ $tag }}</span>
-                        @endforeach
-                    </div>
-
-                    <div class="card-actions">
-                        <a class="pill pill--strong" href="{{ route('blog.show', $blogPost) }}">{{ __('hermes.blog.read_post') }}</a>
-                    </div>
-                </article>
-            @endforeach
-        </section>
-
-        <div class="pagination">
-            {{ $blogPosts->links() }}
+                </section>
+            </aside>
         </div>
-    @else
-        <section class="empty-state">
-            <h2>{{ __('hermes.blog.empty_title') }}</h2>
-            <p>{{ __('hermes.blog.empty_text') }}</p>
-        </section>
-    @endif
+    </div>
 </x-layouts.hermes-public>

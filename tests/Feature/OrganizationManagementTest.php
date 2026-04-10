@@ -16,18 +16,24 @@ test('admins can view the organizations list', function () {
     $response = $this->actingAs($admin)->get(route('admin.organizations.index'));
 
     $response->assertOk()
-        ->assertSee('Organisatieoverzicht')
+        ->assertDontSee('Organisatieoverzicht')
         ->assertSee($organization->naam)
         ->assertSee('Anja Contact')
         ->assertSee('Nieuwe organisatie')
+        ->assertSee('Resultaten 1 t/m 2 van 2')
+        ->assertSee('ghost-pill icon-button', false)
+        ->assertSee('danger-pill icon-button icon-button--danger', false)
         ->assertSee('aria-label="Wijzig '.$organization->naam.'"', false)
         ->assertSee('aria-label="Verwijder '.$organization->naam.'"', false);
 });
 
 test('admins can view the create organization page', function () {
     $admin = User::factory()->admin()->create();
-    $contact = User::factory()->create([
+    $contact = User::factory()->manager()->create([
         'name' => 'Bram Contact',
+    ]);
+    $regularUser = User::factory()->create([
+        'name' => 'Sanne Gebruiker',
     ]);
 
     $response = $this->actingAs($admin)->get(route('admin.organizations.create'));
@@ -35,12 +41,21 @@ test('admins can view the create organization page', function () {
     $response->assertOk()
         ->assertSee('Nieuwe organisatie')
         ->assertSee('Organisatie toevoegen')
-        ->assertSee('Bram Contact');
+        ->assertSee('Bram Contact')
+        ->assertDontSee('Sanne Gebruiker')
+        ->assertSee('Kies een land')
+        ->assertSee('Nederland')
+        ->assertSee('België')
+        ->assertSee('Duitsland')
+        ->assertSee('Frankrijk')
+        ->assertSee('UK')
+        ->assertSee('VS')
+        ->assertSee('Anders');
 });
 
 test('admins can create a new organization', function () {
     $admin = User::factory()->admin()->create();
-    $contact = User::factory()->create();
+    $contact = User::factory()->manager()->create();
 
     $response = $this->actingAs($admin)->post(route('admin.organizations.store'), [
         'naam' => 'Nova Partners',
@@ -62,8 +77,8 @@ test('admins can create a new organization', function () {
 
 test('admins can update an organization', function () {
     $admin = User::factory()->admin()->create();
-    $oldContact = User::factory()->create();
-    $newContact = User::factory()->create([
+    $oldContact = User::factory()->manager()->create();
+    $newContact = User::factory()->admin()->create([
         'name' => 'Nieuwe Contactpersoon',
     ]);
     $organization = Organization::factory()->create([
@@ -87,6 +102,54 @@ test('admins can update an organization', function () {
         'org_id' => $organization->org_id,
         'naam' => 'Nieuwe Organisatie',
         'contact_id' => $newContact->id,
+    ]);
+});
+
+test('admins cannot create an organization with a country outside the fixed list', function () {
+    $admin = User::factory()->admin()->create();
+    $contact = User::factory()->manager()->create();
+
+    $response = $this->from(route('admin.organizations.create'))
+        ->actingAs($admin)
+        ->post(route('admin.organizations.store'), [
+            'naam' => 'Nova Partners',
+            'adres' => 'Markt 12',
+            'postcode' => '1234 AB',
+            'plaats' => 'Rotterdam',
+            'land' => 'Spanje',
+            'telefoon' => '+31 10 123 4567',
+            'contact_id' => $contact->id,
+        ]);
+
+    $response->assertRedirect(route('admin.organizations.create'))
+        ->assertSessionHasErrors('land');
+
+    $this->assertDatabaseMissing('organizations', [
+        'naam' => 'Nova Partners',
+    ]);
+});
+
+test('admins cannot create an organization with a regular user as contact person', function () {
+    $admin = User::factory()->admin()->create();
+    $contact = User::factory()->create();
+
+    $response = $this->from(route('admin.organizations.create'))
+        ->actingAs($admin)
+        ->post(route('admin.organizations.store'), [
+            'naam' => 'Nova Partners',
+            'adres' => 'Markt 12',
+            'postcode' => '1234 AB',
+            'plaats' => 'Rotterdam',
+            'land' => 'Nederland',
+            'telefoon' => '+31 10 123 4567',
+            'contact_id' => $contact->id,
+        ]);
+
+    $response->assertRedirect(route('admin.organizations.create'))
+        ->assertSessionHasErrors('contact_id');
+
+    $this->assertDatabaseMissing('organizations', [
+        'naam' => 'Nova Partners',
     ]);
 });
 
@@ -250,4 +313,16 @@ test('managers cannot view organizations from another organization', function ()
     $this->actingAs($manager)
         ->get(route('admin.organizations.edit', $otherOrganization))
         ->assertForbidden();
+});
+
+test('organizations overview still offers a clear next step when only the default organization remains', function () {
+    $admin = User::factory()->admin()->create();
+
+    Organization::query()->where('naam', '!=', 'Hermes Results')->delete();
+
+    $this->actingAs($admin)
+        ->get(route('admin.organizations.index'))
+        ->assertOk()
+        ->assertSee('Hermes Results')
+        ->assertSee('Nieuwe organisatie');
 });

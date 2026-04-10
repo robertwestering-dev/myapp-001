@@ -67,6 +67,189 @@ php artisan db:seed --class=Database\\Seeders\\AcademyCourseSeeder --force
 
 8. Test daarna live de site.
 
+## Release Checklist Per Wijzigingstype
+
+Gebruik voortaan deze korte keuzehulp voordat je gaat uploaden.
+
+### Alleen Blade of vertalingen
+
+Voorbeelden:
+
+- `resources/views/`
+- `lang/`
+
+Actie:
+
+1. Upload alleen de gewijzigde Blade- en/of taalbestanden.
+2. Run op de server:
+
+```bash
+php artisan optimize:clear
+php artisan view:cache
+```
+
+3. Test direct de betreffende pagina live.
+
+### Blade + assets
+
+Voorbeelden:
+
+- wijzigingen in `resources/views/` die zichtbaar afhangen van Vite/Tailwind
+- wijzigingen in `resources/css/`
+- wijzigingen in `resources/js/`
+
+Actie:
+
+1. Run lokaal:
+
+```bash
+npm run build
+```
+
+2. Upload:
+
+- de gewijzigde bronbestanden
+- `public/build/`
+
+3. Run op de server:
+
+```bash
+php artisan optimize:clear
+php artisan view:cache
+```
+
+4. Test live op desktop en mobiel.
+
+### Migraties
+
+Voorbeelden:
+
+- nieuwe files in `database/migrations/`
+
+Actie:
+
+1. Upload de migraties en alle code die daarbij hoort.
+2. Run op de server:
+
+```bash
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+3. Controleer daarna meteen de betrokken flow live.
+
+### Alleen PHP backend
+
+Voorbeelden:
+
+- `app/`
+- `routes/`
+- `bootstrap/app.php`
+- `config/`
+
+Actie:
+
+1. Upload de gewijzigde bestanden.
+2. Run op de server:
+
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+3. Test daarna de relevante pagina of actie live.
+
+## Vaste Productiecontrole Na Elke Upload
+
+Gebruik deze routine als iets live anders werkt dan lokaal.
+
+### 1. Controleer of de juiste file echt live staat
+
+Voorbeelden:
+
+```bash
+sed -n '1,220p' resources/views/pages/settings/⚡delete-user-form.blade.php
+sed -n '1,220p' resources/views/pages/settings/⚡delete-user-modal.blade.php
+sed -n '1,220p' app/Http/Middleware/SetApplicationLocale.php
+```
+
+### 2. Leeg en vernieuw Laravel caches
+
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### 3. Controleer Laravel logs
+
+```bash
+tail -n 100 storage/logs/laravel.log
+```
+
+Let op:
+
+- nieuwe exceptions
+- view errors
+- route of config errors
+- vertaalkeys of locale-gerelateerde fouten
+
+### 4. Controleer browser-output
+
+Open de live pagina en let op:
+
+- layoutverschillen
+- ontbrekende styles
+- console errors
+- netwerkfouten in assets of Livewire requests
+
+### 5. Controleer of een frontend build echt mee is gegaan
+
+Als een pagina er visueel anders uitziet dan lokaal, controleer dan extra:
+
+- of `public/build/` echt is geüpload
+- of de Vite-manifestbestanden actueel zijn
+- of de browser geen oude assets uit cache gebruikt
+
+## Werkende Mailinstellingen Op Live
+
+De uitgaande mail in de live-omgeving werkt nu via Hostnet met deze instellingen:
+
+```bash
+MAIL_MAILER=smtp
+MAIL_HOST=mailout.hostnet.nl
+MAIL_PORT=587
+MAIL_USERNAME=robert@hermesresults.com
+MAIL_PASSWORD=JE_WACHTWOORD
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=robert@hermesresults.com
+MAIL_FROM_NAME="Hermes Results"
+```
+
+Belangrijk:
+
+- `MAIL_USERNAME` moet een echt bij Hostnet gehost e-mailadres zijn
+- `MAIL_FROM_ADDRESS` moet ook een echt Hostnet-adres zijn
+- zet geen inline comments achter waarden in `.env`
+
+Voorbeeld van wat je niet moet doen:
+
+```bash
+MAIL_USERNAME=robert@hermesresults.com # uitleg
+```
+
+Dat moet gewoon zijn:
+
+```bash
+MAIL_USERNAME=robert@hermesresults.com
+```
+
 ## Wat Je Bijna Altijd Moet Uploaden
 
 Na de problemen die we hebben opgelost, is dit de belangrijkste regel:
@@ -219,6 +402,13 @@ php artisan view:cache
 
 Als je locale-, middleware- of bootstrap-wijzigingen hebt gedaan, is dit blok extra belangrijk.
 
+Als je `.env` mailinstellingen hebt gewijzigd, is vooral dit deel belangrijk:
+
+```bash
+php artisan optimize:clear
+php artisan config:cache
+```
+
 ### Stap 7. Alleen als nodig: seeders
 
 Als je Academy-data of Academy seeders hebt aangepast:
@@ -246,6 +436,8 @@ Open daarna:
 7. `/admin-portal`
 8. `/blog`
 9. `/admin-portal/blog-posts`
+10. wachtwoord reset
+11. e-mailverificatie
 
 ## Wat Je Op De Server Moet Typen
 
@@ -646,7 +838,7 @@ php artisan db:seed --class=Database\\Seeders\\BlogPostSeeder --force
 
 ## Mijn Advies Voor De Volgende Keer
 
-Denk de volgende keer niet in "deploy-script op de server", maar in:
+Denk de volgende keer niet in "iets automatisch runnen op de server", maar in:
 
 1. wat heb ik lokaal aangepast?
 2. welke mappen horen daarbij?

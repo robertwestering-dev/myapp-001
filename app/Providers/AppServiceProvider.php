@@ -2,11 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\BlogPost;
+use App\Models\Questionnaire;
 use App\Models\User;
+use App\Policies\BlogPostPolicy;
+use App\Policies\QuestionnairePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -27,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerPolicies();
+    }
+
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Questionnaire::class, QuestionnairePolicy::class);
+        Gate::policy(BlogPost::class, BlogPostPolicy::class);
     }
 
     /**

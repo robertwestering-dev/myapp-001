@@ -9,20 +9,21 @@ use App\Models\Questionnaire;
 use App\Models\QuestionnaireQuestion;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class QuestionnaireQuestionController extends Controller
 {
-    public function create(Questionnaire $questionnaire): View
+    public function create(Request $request, Questionnaire $questionnaire): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         return view('admin.questionnaire-questions.form', [
             'questionnaire' => $questionnaire->load('categories'),
-            'title' => 'Nieuwe vraag',
+            'title' => __('hermes.admin.form_titles.new_questionnaire_question'),
             'intro' => 'Voeg een nieuwe vraag toe aan een categorie binnen deze questionnaire.',
             'submitLabel' => 'Vraag opslaan',
             'question' => new QuestionnaireQuestion([
-                'questionnaire_category_id' => request()->integer('category'),
+                'questionnaire_category_id' => $request->integer('category'),
                 'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
                 'sort_order' => 0,
             ]),
@@ -35,7 +36,7 @@ class QuestionnaireQuestionController extends Controller
 
     public function store(StoreQuestionnaireQuestionRequest $request, Questionnaire $questionnaire): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         $attributes = $request->validated();
         $attributes['options'] = $this->normalizeOptions($attributes['type'], $attributes['options'] ?? null);
@@ -44,22 +45,23 @@ class QuestionnaireQuestionController extends Controller
             $attributes['display_condition_answer'] ?? null,
         );
         $attributes['is_required'] = $request->boolean('is_required');
+        $attributes['locale'] = $questionnaire->locale;
 
         QuestionnaireQuestion::create($attributes);
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Vraag succesvol toegevoegd.');
+            ->with('status', __('hermes.admin.questionnaire_questions.created'));
     }
 
-    public function edit(Questionnaire $questionnaire, QuestionnaireQuestion $question): View
+    public function edit(Request $request, Questionnaire $questionnaire, QuestionnaireQuestion $question): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
-        abort_unless($question->category->questionnaire_id === $questionnaire->id, 404);
+        $this->authorize('manage', Questionnaire::class);
+        abort_unless($question->category()->value('questionnaire_id') === $questionnaire->id, 404);
 
         return view('admin.questionnaire-questions.form', [
             'questionnaire' => $questionnaire->load('categories'),
-            'title' => 'Vraag wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_questionnaire_question'),
             'intro' => 'Werk deze vraag en het antwoordtype bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'question' => $question,
@@ -75,8 +77,8 @@ class QuestionnaireQuestionController extends Controller
         Questionnaire $questionnaire,
         QuestionnaireQuestion $question
     ): RedirectResponse {
-        abort_unless($request->user()?->isAdmin(), 403);
-        abort_unless($question->category->questionnaire_id === $questionnaire->id, 404);
+        $this->authorize('manage', Questionnaire::class);
+        abort_unless($question->category()->value('questionnaire_id') === $questionnaire->id, 404);
 
         $attributes = $request->validated();
         $attributes['options'] = $this->normalizeOptions($attributes['type'], $attributes['options'] ?? null);
@@ -85,24 +87,25 @@ class QuestionnaireQuestionController extends Controller
             $attributes['display_condition_answer'] ?? null,
         );
         $attributes['is_required'] = $request->boolean('is_required');
+        $attributes['locale'] = $questionnaire->locale;
 
         $question->update($attributes);
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Vraag succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.questionnaire_questions.updated'));
     }
 
-    public function destroy(Questionnaire $questionnaire, QuestionnaireQuestion $question): RedirectResponse
+    public function destroy(Request $request, Questionnaire $questionnaire, QuestionnaireQuestion $question): RedirectResponse
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
-        abort_unless($question->category->questionnaire_id === $questionnaire->id, 404);
+        $this->authorize('manage', Questionnaire::class);
+        abort_unless($question->category()->value('questionnaire_id') === $questionnaire->id, 404);
 
         $question->delete();
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Vraag succesvol verwijderd.');
+            ->with('status', __('hermes.admin.questionnaire_questions.deleted'));
     }
 
     /**
@@ -113,6 +116,7 @@ class QuestionnaireQuestionController extends Controller
         if (! in_array($type, [
             QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
             QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE,
+            QuestionnaireQuestion::TYPE_LIKERT_SCALE,
         ], true)) {
             return null;
         }

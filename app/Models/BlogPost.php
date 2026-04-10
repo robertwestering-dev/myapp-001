@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Concerns\HasTranslations;
+use App\Services\BlogPostRenderer;
 use Database\Factories\BlogPostFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'author_id',
@@ -25,7 +28,7 @@ use Illuminate\Support\Arr;
 class BlogPost extends Model
 {
     /** @use HasFactory<BlogPostFactory> */
-    use HasFactory;
+    use HasFactory, HasTranslations;
 
     protected function casts(): array
     {
@@ -68,9 +71,30 @@ class BlogPost extends Model
         return $this->translatedString('excerpt', $locale);
     }
 
+    public function metaTitleForLocale(?string $locale = null): string
+    {
+        return $this->titleForLocale($locale);
+    }
+
+    public function metaDescriptionForLocale(?string $locale = null): string
+    {
+        $excerpt = trim($this->excerptForLocale($locale));
+
+        if ($excerpt !== '') {
+            return Str::limit($excerpt, 160);
+        }
+
+        return Str::limit(trim(strip_tags($this->renderedContentForLocale($locale))), 160);
+    }
+
     public function contentForLocale(?string $locale = null): string
     {
         return $this->translatedString('content', $locale);
+    }
+
+    public function renderedContentForLocale(?string $locale = null): string
+    {
+        return app(BlogPostRenderer::class)->render($this->contentForLocale($locale));
     }
 
     /**
@@ -85,9 +109,10 @@ class BlogPost extends Model
             ->all();
     }
 
-    public function translation(string $attribute, string $locale): mixed
+    public function normalizedTags(): Collection
     {
-        return Arr::get($this->getAttribute($attribute) ?? [], $locale);
+        return collect($this->tagsList())
+            ->map(fn (string $tag): string => Str::lower($tag));
     }
 
     public function readingTimeInMinutes(?string $locale = null): int
@@ -104,11 +129,22 @@ class BlogPost extends Model
             && $this->published_at->lte(now());
     }
 
-    protected function translatedString(string $attribute, ?string $locale = null): string
+    public function publicationStatus(): string
     {
-        $value = $this->translatedValue($attribute, $locale);
+        if (! $this->is_published) {
+            return 'draft';
+        }
 
-        return is_string($value) ? $value : '';
+        if ($this->published_at !== null && $this->published_at->isFuture()) {
+            return 'scheduled';
+        }
+
+        return 'published';
+    }
+
+    public function publicUrl(): string
+    {
+        return route('blog.show', $this);
     }
 
     protected function translatedValue(string $attribute, ?string $locale = null): mixed
@@ -117,9 +153,34 @@ class BlogPost extends Model
         $values = $this->getAttribute($attribute) ?? [];
         $preferredLocale = $locale ?? app()->getLocale();
         $fallbackLocale = config('app.fallback_locale');
+        $preferredValue = $values[$preferredLocale] ?? null;
 
-        return $values[$preferredLocale]
-            ?? $values[$fallbackLocale]
-            ?? Arr::first($values);
+        if ($this->isMeaningfulTranslation($preferredValue)) {
+            return $preferredValue;
+        }
+
+        $fallbackValue = $values[$fallbackLocale] ?? null;
+
+        if ($this->isMeaningfulTranslation($fallbackValue)) {
+            return $fallbackValue;
+        }
+
+        return collect($values)
+            ->first(fn (mixed $value): bool => $this->isMeaningfulTranslation($value));
+    }
+
+    protected function isMeaningfulTranslation(mixed $value): bool
+    {
+        if (! is_string($value)) {
+            return false;
+        }
+
+        $normalizedValue = trim($value);
+
+        if ($normalizedValue === '') {
+            return false;
+        }
+
+        return preg_match('/[\p{L}\p{N}]/u', $normalizedValue) === 1;
     }
 }

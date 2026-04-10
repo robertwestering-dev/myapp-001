@@ -1,50 +1,48 @@
 <?php
 
-use App\Concerns\PasswordValidationRules;
 use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 new class extends Component {
-    use PasswordValidationRules;
-
-    public string $password = '';
-
-    /**
-     * Delete the currently authenticated user.
-     */
-    public function deleteUser(Logout $logout): void
+    public function anonymizeUser(Logout $logout): void
     {
-        $this->validate([
-            'password' => $this->currentPasswordRules(),
-        ]);
+        $user = Auth::user();
 
-        tap(Auth::user(), $logout(...))->delete();
+        if (! $user) {
+            return;
+        }
+
+        $user->anonymizeForStatistics();
+
+        $logout();
 
         $this->redirect('/', navigate: true);
     }
 }; ?>
 
 <flux:modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
-    <form method="POST" wire:submit="deleteUser" class="space-y-6">
-        <div>
-            <flux:heading size="lg">{{ __('Are you sure you want to delete your account?') }}</flux:heading>
+    <style>
+        .delete-user-modal-actions {
+            justify-content: flex-end;
+        }
+    </style>
 
-            <flux:subheading>
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
-            </flux:subheading>
+    <form method="POST" wire:submit="anonymizeUser" class="space-y-6">
+        <div>
+            <flux:text class="mt-4 block text-base leading-7 text-zinc-600">
+                {!! nl2br(e(__('hermes.settings.delete_account.confirmation'))) !!}
+            </flux:text>
         </div>
 
-        <flux:input wire:model="password" :label="__('Password')" type="password" viewable />
-
-        <div class="flex justify-end space-x-2 rtl:space-x-reverse">
+        <x-user-action-row align="end" class="delete-user-modal-actions">
             <flux:modal.close>
-                <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
+                <button type="button" class="pill pill--neutral">{{ __('hermes.settings.delete_account.cancel') }}</button>
             </flux:modal.close>
 
-            <flux:button variant="danger" type="submit" data-test="confirm-delete-user-button">
-                {{ __('Delete account') }}
-            </flux:button>
-        </div>
+            <button type="submit" class="pill" data-test="confirm-delete-user-button">
+                {{ __('hermes.settings.delete_account.confirm') }}
+            </button>
+        </x-user-action-row>
     </form>
 </flux:modal>

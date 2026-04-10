@@ -6,6 +6,7 @@
     :heading="__('hermes.auth.login.heading')"
     :lead="__('hermes.auth.login.lead')"
     :form-title="__('hermes.auth.login.form_title')"
+    :announcement="__('hermes.auth.announcement')"
     helper=""
     :points="[
         __('hermes.auth.login.point_1'),
@@ -14,9 +15,8 @@
     ]"
 >
     <x-slot:heroActions>
-        <a class="pill pill--strong" href="{{ route('home') }}">{{ __('hermes.auth.login.hero_back') }}</a>
         @if (Route::has('register'))
-            <a class="pill" href="{{ route('register') }}">{{ __('hermes.auth.login.hero_register') }}</a>
+            <a class="pill pill--strong" href="{{ route('register') }}">{{ __('hermes.auth.login.hero_register') }}</a>
         @endif
     </x-slot:heroActions>
 

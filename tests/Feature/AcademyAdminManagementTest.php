@@ -25,7 +25,8 @@ test('admin can open academy course management overview', function () {
     $response = $this->actingAs($admin)->get(route('admin.academy-courses.index'));
 
     $response->assertOk()
-        ->assertSee('Academy-catalogus')
+        ->assertDontSee('Academy-catalogus')
+        ->assertSee('admin-status-badge', false)
         ->assertSee($course->titleForLocale('nl'));
 });
 

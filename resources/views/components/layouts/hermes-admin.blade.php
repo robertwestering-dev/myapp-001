@@ -5,6 +5,7 @@
     'lead',
     'menuActive' => 'portal',
     'showSecondaryMenuItems' => true,
+    'showHero' => true,
 ])
 
 <!DOCTYPE html>
@@ -84,6 +85,37 @@
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+        .topbar__left {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar__menu {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            margin-left: 16px;
+            white-space: nowrap;
+        }
+
+        .topbar__menu a,
+        .topbar__menu summary {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .topbar__menu a:hover,
+        .topbar__menu a[aria-current='page'],
+        .topbar__menu summary:hover,
+        .topbar__menu details[open] > summary,
+        .topbar__menu details[data-active='true'] > summary {
+            color: var(--accent-deep);
         }
 
         .locale-switcher {
@@ -175,14 +207,10 @@
         }
 
         .hero {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 28px;
-            align-items: stretch;
+            display: block;
         }
 
         .hero__panel,
-        .hero__side,
         .content-panel,
         .summary-card,
         .notice-card {
@@ -211,15 +239,6 @@
             height: 280px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(217, 106, 43, 0.2), transparent 70%);
-        }
-
-        .hero__side {
-            border-radius: var(--radius-xl);
-            padding: 28px;
-            background:
-                linear-gradient(180deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97)),
-                var(--forest);
-            color: #f6f2eb;
         }
 
         .eyebrow {
@@ -307,6 +326,96 @@
             border-color: transparent;
         }
 
+        .admin-nav {
+            position: relative;
+        }
+
+        .admin-nav summary {
+            list-style: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .admin-nav summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .admin-nav summary::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-right: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: rotate(45deg) translateY(-1px);
+            transition: transform 180ms ease;
+        }
+
+        .admin-nav[open] summary::after {
+            transform: rotate(-135deg) translateY(-1px);
+        }
+
+        .admin-nav__panel {
+            position: absolute;
+            left: 0;
+            top: calc(100% + 14px);
+            min-width: 260px;
+            padding: 14px;
+            border-radius: 24px;
+            border: 1px solid rgba(22, 33, 29, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 26px 60px rgba(24, 34, 30, 0.16);
+            z-index: 30;
+        }
+
+        .admin-nav__panel::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 28px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid rgba(22, 33, 29, 0.1);
+            border-left: 1px solid rgba(22, 33, 29, 0.1);
+            transform: rotate(45deg);
+        }
+
+        .admin-menu__dropdown {
+            display: grid;
+            gap: 6px;
+        }
+
+        .admin-menu__dropdown-item {
+            display: block;
+            padding: 13px 14px;
+            border-radius: 18px;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--ink);
+        }
+
+        .admin-menu__dropdown-item:hover,
+        .admin-menu__dropdown-item:focus-visible {
+            background: rgba(30, 71, 61, 0.08);
+            outline: none;
+        }
+
+        .admin-menu__dropdown-item--active {
+            background: rgba(188, 91, 44, 0.12);
+            color: var(--accent-deep);
+        }
+
+        .admin-menu__dropdown-item--muted {
+            color: var(--muted);
+        }
+
+        .admin-menu__divider {
+            height: 1px;
+            margin: 6px 0;
+            background: rgba(22, 33, 29, 0.08);
+        }
+
         .content-section {
             margin-top: 24px;
         }
@@ -362,13 +471,48 @@
             color: var(--accent-deep);
         }
 
+        .admin-status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(32, 69, 58, 0.09);
+            color: var(--forest);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.84rem;
+            line-height: 1.2;
+        }
+
+        .admin-status-badge--warning {
+            background: rgba(168, 74, 25, 0.12);
+            color: var(--accent-deep);
+        }
+
+        .admin-status-badge--danger {
+            background: rgba(168, 74, 25, 0.16);
+            color: var(--accent-deep);
+        }
+
+        .admin-status-badge--neutral {
+            background: rgba(90, 103, 98, 0.12);
+            color: var(--muted);
+        }
+
+        .admin-status-badge--uppercase {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
         .site-footer {
             background: rgba(244, 239, 230, 0.78);
             border-top: 1px solid rgba(22, 33, 29, 0.08);
         }
 
         .site-footer__inner {
-            min-height: 80px;
+            min-height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -376,10 +520,10 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.95rem;
             color: var(--muted);
+            line-height: 1.2;
         }
 
         @media (max-width: 980px) {
-            .hero,
             .hero__facts {
                 grid-template-columns: 1fr;
             }
@@ -392,8 +536,22 @@
                 flex-direction: column;
             }
 
+            .topbar__left {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .topbar__menu {
+                margin-left: 0;
+            }
+
+            .admin-nav__panel {
+                left: 0;
+                right: auto;
+                min-width: min(280px, calc(100vw - 48px));
+            }
+
             .hero__panel,
-            .hero__side,
             .content-panel,
             .notice-card {
                 padding: 22px;
@@ -407,6 +565,24 @@
 </head>
 <body>
     <x-hermes-header>
+        <x-slot:menu>
+            <details class="admin-nav" @if ($menuActive !== 'portal') data-active="true" @endif>
+                <summary @if ($menuActive !== 'portal') aria-current="page" @endif>
+                    {{ __('hermes.admin_menu.manage') }}
+                </summary>
+
+                <div class="admin-nav__panel">
+                    <x-admin-menu
+                        :active="$menuActive"
+                        :show-secondary-items="$showSecondaryMenuItems"
+                        variant="dropdown"
+                    />
+                </div>
+            </details>
+
+            <a href="{{ route('forum.index') }}">{{ __('hermes.admin_menu.forum') }}</a>
+        </x-slot:menu>
+
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="pill pill--neutral">Logout</button>
@@ -414,23 +590,23 @@
     </x-hermes-header>
 
     <main>
-        <section class="hero">
-            <div class="hero__panel">
-                <span class="eyebrow">{{ $eyebrow }}</span>
-                <h1>{{ $heading }}</h1>
-                <p class="lead">{{ $lead }}</p>
+        @if ($showHero)
+            <section class="hero">
+                <div class="hero__panel">
+                    @if (filled($eyebrow))
+                        <span class="eyebrow">{{ $eyebrow }}</span>
+                    @endif
+                    <h1>{{ $heading }}</h1>
+                    <p class="lead">{{ $lead }}</p>
 
-                @isset($heroFacts)
-                    <div class="hero__facts">
-                        {{ $heroFacts }}
-                    </div>
-                @endisset
-            </div>
-
-            <aside class="hero__side">
-                <x-admin-menu :active="$menuActive" :show-secondary-items="$showSecondaryMenuItems" />
-            </aside>
-        </section>
+                    @isset($heroFacts)
+                        <div class="hero__facts">
+                            {{ $heroFacts }}
+                        </div>
+                    @endisset
+                </div>
+            </section>
+        @endif
 
         <section class="content-section">
             {{ $slot }}

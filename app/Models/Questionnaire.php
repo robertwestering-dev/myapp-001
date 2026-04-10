@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Database\Factories\QuestionnaireFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-#[Fillable(['title', 'description', 'is_active'])]
+#[Fillable(['title', 'description', 'is_active', 'locale'])]
 class Questionnaire extends Model
 {
     /** @use HasFactory<QuestionnaireFactory> */
@@ -20,6 +21,19 @@ class Questionnaire extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    public function scopeForLocale(Builder $query, string $locale): void
+    {
+        $query->where('locale', $locale);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function localeOptions(): array
+    {
+        return array_keys(config('locales.supported', []));
     }
 
     public function categories(): HasMany

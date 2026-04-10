@@ -6,10 +6,13 @@ use App\Models\Questionnaire;
 use App\Models\QuestionnaireCategory;
 use App\Models\QuestionnaireQuestion;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SyncDigitalResilienceQuickScanQuestionnaire
 {
     public const TITLE = 'Quick scan digitale weerbaarheid';
+
+    public const ENGLISH_TITLE = 'Digital resilience quick scan';
 
     /**
      * @var array<int, string>
@@ -22,64 +25,123 @@ class SyncDigitalResilienceQuickScanQuestionnaire
         'Zeer mee eens',
     ];
 
+    /**
+     * @var array<int, string>
+     */
+    protected const AGREEMENT_OPTIONS_ENGLISH = [
+        'Strongly disagree',
+        'Disagree',
+        'Neutral',
+        'Agree',
+        'Strongly agree',
+    ];
+
     public function handle(): Questionnaire
     {
         return DB::transaction(function (): Questionnaire {
-            $questionnaire = Questionnaire::query()->updateOrCreate(
-                ['title' => self::TITLE],
-                [
-                    'description' => 'Deze quick scan is een verdieping op de questionnaire "Adaptability Scan volgens het A.C.E.-model" en richt zich op concreet gedrag rond leerbereidheid, digitale ontwikkeling en het vermogen om bij te blijven in een snel veranderend digitaal tijdperk.',
-                    'is_active' => true,
-                ],
-            );
+            $questionnaireTableHasLocale = Schema::hasColumn('questionnaires', 'locale');
+            $questionTableHasLocale = Schema::hasColumn('questionnaire_questions', 'locale');
+            $lastSyncedQuestionnaire = null;
 
-            $categorySortOrders = [];
-
-            foreach ($this->categories() as $categoryDefinition) {
-                $categorySortOrders[] = $categoryDefinition['sort_order'];
-
-                $category = QuestionnaireCategory::query()->updateOrCreate(
-                    [
-                        'questionnaire_id' => $questionnaire->id,
-                        'sort_order' => $categoryDefinition['sort_order'],
-                    ],
-                    [
-                        'title' => $categoryDefinition['title'],
-                        'description' => $categoryDefinition['description'],
-                    ],
+            foreach ($this->definitions() as $definition) {
+                $questionnaire = Questionnaire::query()->updateOrCreate(
+                    ['title' => $definition['title']],
+                    array_filter([
+                        'description' => $definition['description'],
+                        'locale' => $questionnaireTableHasLocale ? $definition['locale'] : null,
+                        'is_active' => true,
+                    ], fn (mixed $value): bool => $value !== null),
                 );
 
-                $questionSortOrders = [];
+                $categorySortOrders = [];
 
-                foreach ($categoryDefinition['questions'] as $questionDefinition) {
-                    $questionSortOrders[] = $questionDefinition['sort_order'];
+                foreach ($definition['categories'] as $categoryDefinition) {
+                    $categorySortOrders[] = $categoryDefinition['sort_order'];
 
-                    QuestionnaireQuestion::query()->updateOrCreate(
+                    $category = QuestionnaireCategory::query()->updateOrCreate(
                         [
-                            'questionnaire_category_id' => $category->id,
-                            'sort_order' => $questionDefinition['sort_order'],
+                            'questionnaire_id' => $questionnaire->id,
+                            'sort_order' => $categoryDefinition['sort_order'],
                         ],
                         [
-                            'prompt' => $questionDefinition['prompt'],
-                            'help_text' => $questionDefinition['help_text'],
-                            'type' => QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
-                            'options' => self::AGREEMENT_OPTIONS,
-                            'is_required' => true,
+                            'title' => $categoryDefinition['title'],
+                            'description' => $categoryDefinition['description'],
                         ],
                     );
+
+                    $questionSortOrders = [];
+
+                    foreach ($categoryDefinition['questions'] as $questionDefinition) {
+                        $questionSortOrders[] = $questionDefinition['sort_order'];
+
+                        QuestionnaireQuestion::query()->updateOrCreate(
+                            [
+                                'questionnaire_category_id' => $category->id,
+                                'sort_order' => $questionDefinition['sort_order'],
+                            ],
+                            array_filter([
+                                'locale' => $questionTableHasLocale ? ($questionnaire->locale ?? $definition['locale']) : null,
+                                'prompt' => $questionDefinition['prompt'],
+                                'help_text' => $questionDefinition['help_text'],
+                                'type' => QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
+                                'options' => $definition['agreement_options'],
+                                'is_required' => true,
+                            ], fn (mixed $value): bool => $value !== null),
+                        );
+                    }
+
+                    $category->questions()
+                        ->whereNotIn('sort_order', $questionSortOrders)
+                        ->delete();
                 }
 
-                $category->questions()
-                    ->whereNotIn('sort_order', $questionSortOrders)
+                $questionnaire->categories()
+                    ->whereNotIn('sort_order', $categorySortOrders)
                     ->delete();
+
+                $lastSyncedQuestionnaire = $questionnaire;
             }
 
-            $questionnaire->categories()
-                ->whereNotIn('sort_order', $categorySortOrders)
-                ->delete();
-
-            return $questionnaire->fresh(['categories.questions']);
+            return $lastSyncedQuestionnaire?->fresh(['categories.questions']) ?? new Questionnaire;
         });
+    }
+
+    /**
+     * @return array<int, array{
+     *     locale: string,
+     *     title: string,
+     *     description: string,
+     *     agreement_options: array<int, string>,
+     *     categories: array<int, array{
+     *         title: string,
+     *         description: string,
+     *         sort_order: int,
+     *         questions: array<int, array{
+     *             prompt: string,
+     *             help_text: string,
+     *             sort_order: int
+     *         }>
+     *     }>
+     * }>
+     */
+    protected function definitions(): array
+    {
+        return [
+            [
+                'locale' => 'nl',
+                'title' => self::TITLE,
+                'description' => 'Deze quick scan is een verdieping op de questionnaire "Adaptability Scan volgens het A.C.E.-model" en richt zich op concreet gedrag rond leerbereidheid, digitale ontwikkeling en het vermogen om bij te blijven in een snel veranderend digitaal tijdperk.',
+                'agreement_options' => self::AGREEMENT_OPTIONS,
+                'categories' => $this->dutchCategories(),
+            ],
+            [
+                'locale' => 'en',
+                'title' => self::ENGLISH_TITLE,
+                'description' => 'This quick scan builds on the questionnaire "Adaptability Scan based on the A.C.E. model" and focuses on concrete behaviour related to willingness to learn, digital development, and the ability to keep up in a rapidly changing digital era.',
+                'agreement_options' => self::AGREEMENT_OPTIONS_ENGLISH,
+                'categories' => $this->englishCategories(),
+            ],
+        ];
     }
 
     /**
@@ -94,7 +156,7 @@ class SyncDigitalResilienceQuickScanQuestionnaire
      *     }>
      * }>
      */
-    protected function categories(): array
+    protected function dutchCategories(): array
     {
         return [
             [
@@ -189,6 +251,120 @@ class SyncDigitalResilienceQuickScanQuestionnaire
                     [
                         'prompt' => 'Ik geloof dat digitale verandering iets is waar ik mij blijvend toe moet verhouden, niet iets tijdelijks.',
                         'help_text' => 'Beoordeel of u digitalisering ziet als een blijvend onderdeel van professioneel handelen.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array{
+     *     title: string,
+     *     description: string,
+     *     sort_order: int,
+     *     questions: array<int, array{
+     *         prompt: string,
+     *         help_text: string,
+     *         sort_order: int
+     *     }>
+     * }>
+     */
+    protected function englishCategories(): array
+    {
+        return [
+            [
+                'title' => 'Learning mindset and curiosity',
+                'description' => 'This category looks at the mindset needed to keep learning, experimenting, and actively exploring digital innovation.',
+                'sort_order' => 1,
+                'questions' => [
+                    [
+                        'prompt' => 'I deliberately set aside time to explore new digital tools, applications, or ways of working.',
+                        'help_text' => 'Think about making room for development even when things are busy.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'When I do not yet understand a new digital application, I mainly see it as something I can learn.',
+                        'help_text' => 'Assess your default attitude toward unfamiliar systems or technology.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'I actively look for explanations, examples, or training when I lack digital knowledge.',
+                        'help_text' => 'This is about taking initiative to close knowledge gaps.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I am willing to let go of existing routines if a new digital tool works better.',
+                        'help_text' => 'Look at your openness to replacing familiar ways of working.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'I believe it is important to continue developing digitally over the longer term as well.',
+                        'help_text' => 'Think about your commitment to lifelong learning.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Digital learning behaviour in practice',
+                'description' => 'This category zooms in on concrete behaviour that shows whether someone keeps up digitally and gets new tools working.',
+                'sort_order' => 2,
+                'questions' => [
+                    [
+                        'prompt' => 'I first try out new digital features or settings myself before giving up.',
+                        'help_text' => 'Assess how exploratory you are in practice.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'I learn quickly from digital mistakes or failed attempts and adjust my approach afterwards.',
+                        'help_text' => 'This is about learning by doing and making corrections.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'I actively keep track of digital developments that are relevant to my work or role.',
+                        'help_text' => 'Think about updates, trends, tools, or changing expectations.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I ask for targeted help or feedback when that speeds up my digital learning process.',
+                        'help_text' => 'Look at how well you use colleagues, support, or other sources.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'When I learn a new digital way of working, I actually apply it in my day-to-day work afterwards.',
+                        'help_text' => 'This is about transferring learning into concrete behaviour.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Adaptability in digital change',
+                'description' => 'This category is about flexibility, speed of adjustment, and staying the course when digitalization asks something different of you.',
+                'sort_order' => 3,
+                'questions' => [
+                    [
+                        'prompt' => 'I adapt quickly when my organization switches to new digital systems or processes.',
+                        'help_text' => 'Assess how quickly you switch gears during change.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'I generally stay calm and practical when digital changes create uncertainty or extra work.',
+                        'help_text' => 'Think about how you respond under pressure or ambiguity.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'I can switch well between different digital tools without getting stuck quickly.',
+                        'help_text' => 'This is about flexibility in an environment with multiple systems.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I take responsibility for remaining digitally employable, even if my employer does not organize everything for me.',
+                        'help_text' => 'Look at ownership of your own sustainable employability.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'I believe digital change is something I need to keep engaging with, not something temporary.',
+                        'help_text' => 'Assess whether you see digitalization as a lasting part of professional practice.',
                         'sort_order' => 5,
                     ],
                 ],

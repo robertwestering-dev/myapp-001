@@ -3,14 +3,13 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\AcademyCourse;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateAcademyCourseRequest extends FormRequest
+class UpdateAcademyCourseRequest extends BaseLocalizedRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() ?? false;
     }
 
     public function rules(): array
@@ -25,34 +24,12 @@ class UpdateAcademyCourseRequest extends FormRequest
             'estimated_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
-            ...$this->localizedStringRules('title', 255),
-            ...$this->localizedStringRules('audience'),
-            ...$this->localizedStringRules('goal'),
-            ...$this->localizedStringRules('summary'),
-            ...$this->localizedStringRules('learning_goals'),
-            ...$this->localizedStringRules('contents'),
+            ...$this->localizedStringRules('title', 255, primaryOnly: false),
+            ...$this->localizedStringRules('audience', primaryOnly: false),
+            ...$this->localizedStringRules('goal', primaryOnly: false),
+            ...$this->localizedStringRules('summary', primaryOnly: false),
+            ...$this->localizedStringRules('learning_goals', primaryOnly: false),
+            ...$this->localizedStringRules('contents', primaryOnly: false),
         ];
-    }
-
-    /**
-     * @return array<string, array<int, mixed>>
-     */
-    protected function localizedStringRules(string $attribute, ?int $maxLength = null): array
-    {
-        $rules = [
-            $attribute => ['required', 'array'],
-        ];
-
-        foreach (array_keys(config('locales.supported', [])) as $locale) {
-            $fieldRules = ['required', 'string'];
-
-            if ($maxLength !== null) {
-                $fieldRules[] = 'max:'.$maxLength;
-            }
-
-            $rules["{$attribute}.{$locale}"] = $fieldRules;
-        }
-
-        return $rules;
     }
 }

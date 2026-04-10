@@ -1,34 +1,29 @@
 <x-layouts.hermes-admin
     title="Admin gebruikers"
-    eyebrow="Gebruikers"
+    eyebrow=""
     heading="Gebruikersoverzicht"
     lead="Doorzoek en exporteer alle gebruikers. De lijst is gesorteerd op naam en toont telkens 15 records per pagina."
     menu-active="users"
     :show-secondary-menu-items="false"
+    :show-hero="false"
 >
-    <x-slot:heroFacts>
-        <x-hermes-fact
-            :title="$users->total()"
-            description="Totaal aantal gebruikers"
-        />
-        <x-hermes-fact
-            :title="$users->count()"
-            description="Resultaten op deze pagina"
-        />
-        <x-hermes-fact
-            title="CSV"
-            description="Export direct beschikbaar voor de huidige selectie"
-        />
-    </x-slot:heroFacts>
-
     <style>
-        .toolbar {
+        .admin-toolbar {
             display: flex;
-            align-items: end;
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
             margin: 28px 0 24px;
+        }
+
+        .admin-toolbar--end {
+            align-items: end;
+        }
+
+        .admin-toolbar__group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .search {
@@ -37,7 +32,12 @@
             gap: 10px;
         }
 
-        .search label {
+        .admin-filter-field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .admin-filter-field__label {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.84rem;
             letter-spacing: 0.08em;
@@ -45,21 +45,26 @@
             color: var(--muted);
         }
 
+        .admin-filter-actions,
         .search__row {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
         }
 
-        .search input {
-            flex: 1 1 220px;
-            min-width: 0;
+        .admin-filter-control {
+            min-width: 180px;
             padding: 14px 16px;
-            border-radius: 18px;
+            border-radius: 16px;
             border: 1px solid var(--line);
             background: rgba(255, 255, 255, 0.76);
             color: var(--ink);
             font: inherit;
+        }
+
+        .admin-filter-control--search {
+            flex: 1 1 220px;
+            min-width: 0;
         }
 
         .actions {
@@ -98,17 +103,6 @@
 
         tbody tr:last-child td {
             border-bottom: 0;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: rgba(32, 69, 58, 0.09);
-            color: var(--forest);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.84rem;
         }
 
         .icon-button {
@@ -175,6 +169,8 @@
         }
 
         .empty {
+            display: grid;
+            gap: 12px;
             padding: 26px;
             border-radius: 24px;
             background: rgba(32, 69, 58, 0.08);
@@ -183,39 +179,80 @@
     </style>
 
     <section class="content-panel">
-        @if (session('status'))
-            <div class="status">{{ session('status') }}</div>
-        @endif
+        <x-admin-feedback :messages="session('status')" />
+        <x-admin-feedback variant="errors" :messages="$errors->all()" />
 
-        @if ($errors->any())
-            <div class="errors">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="toolbar">
+        <x-admin-toolbar>
             <form method="GET" action="{{ route('admin.users.index') }}" class="search">
-                <label for="search">Zoek op naam of emailadres</label>
                 <div class="search__row">
-                    <input
-                        id="search"
-                        type="search"
-                        name="search"
-                        value="{{ $search }}"
-                        placeholder="Bijvoorbeeld anna of anna@example.com"
-                    >
+                    <x-admin-filter-field label="Zoek op naam of emailadres" for="search">
+                        <input
+                            id="search"
+                            type="search"
+                            name="search"
+                            value="{{ $search }}"
+                            placeholder="Bijvoorbeeld anna of anna@example.com"
+                            class="admin-filter-control admin-filter-control--search"
+                        >
+                    </x-admin-filter-field>
+
+                    <x-admin-filter-field label="Organisatie" for="organization">
+                        <select id="organization" name="organization" class="admin-filter-control">
+                            <option value="">Alle organisaties</option>
+                            @foreach ($organizations as $organizationId => $organizationName)
+                                <option value="{{ $organizationId }}" @selected($selectedOrganization === (string) $organizationId)>
+                                    {{ $organizationName }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </x-admin-filter-field>
+
+                    <x-admin-filter-field label="Rol" for="role">
+                        <select id="role" name="role" class="admin-filter-control">
+                            <option value="">Alle rollen</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role }}" @selected($selectedRole === $role)>
+                                    {{ $role }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </x-admin-filter-field>
+
+                    <x-admin-filter-field label="Land" for="country">
+                        <select id="country" name="country" class="admin-filter-control">
+                            <option value="">Alle landen</option>
+                            @foreach ($countries as $country)
+                                <option value="{{ $country }}" @selected($selectedCountry === $country)>
+                                    {{ $country }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </x-admin-filter-field>
+                </div>
+
+                <x-admin-filter-actions>
                     <button type="submit" class="pill">Zoeken</button>
                     <a href="{{ route('admin.users.index') }}" class="ghost-pill">Reset</a>
-                </div>
+                </x-admin-filter-actions>
             </form>
 
-            <div class="actions">
+            <x-admin-toolbar-group class="actions">
                 <a href="{{ route('admin.users.create') }}" class="pill">Nieuwe gebruiker</a>
-                <a href="{{ route('admin.users.export', ['search' => $search]) }}" class="ghost-pill">Export CSV</a>
-            </div>
-        </div>
+                <a
+                    href="{{ route('admin.users.export', ['search' => $search, 'organization' => $selectedOrganization, 'role' => $selectedRole, 'country' => $selectedCountry]) }}"
+                    class="ghost-pill"
+                >
+                    Export CSV
+                </a>
+            </x-admin-toolbar-group>
+        </x-admin-toolbar>
+
+        @if ($activeFilters !== [])
+            <x-admin-empty-state
+                title="Actieve filters"
+                :description="'Resultaten gefilterd op: ' . implode(' | ', $activeFilters)"
+            />
+        @endif
 
         @if ($users->count() > 0)
             <div class="table-wrap">
@@ -234,27 +271,26 @@
                             <tr>
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
-                                <td><span class="badge">{{ $user->role }}</span></td>
+                                <td><x-admin-status-badge :label="$user->role" /></td>
                                 <td class="muted">{{ $user->email_verified_at?->format('d-m-Y H:i') ?? 'Niet geverifieerd' }}</td>
                                 <td>
-                                    <div class="actions">
-                                        <a
-                                            href="{{ route('admin.users.edit', $user) }}"
-                                            class="ghost-pill icon-button"
-                                            aria-label="Wijzig {{ $user->name }}"
+                                    <x-admin-row-actions>
+                                        <x-admin-icon-link
+                                            :href="route('admin.users.edit', $user)"
+                                            :label="'Wijzig ' . $user->name"
                                             title="Wijzigen"
                                         >
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 <path d="M12 20h9"/>
                                                 <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/>
                                             </svg>
-                                        </a>
+                                        </x-admin-icon-link>
 
-                                        <a
-                                            href="{{ route('admin.users.confirm-delete', $user) }}"
-                                            class="danger-pill icon-button icon-button--danger"
-                                            aria-label="Verwijder {{ $user->name }}"
+                                        <x-admin-icon-link
+                                            :href="route('admin.users.confirm-delete', $user)"
+                                            :label="'Verwijder ' . $user->name"
                                             title="Verwijderen"
+                                            variant="danger"
                                         >
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 <path d="M3 6h18"/>
@@ -263,8 +299,8 @@
                                                 <path d="M10 11v6"/>
                                                 <path d="M14 11v6"/>
                                             </svg>
-                                        </a>
-                                    </div>
+                                        </x-admin-icon-link>
+                                    </x-admin-row-actions>
                                 </td>
                             </tr>
                         @endforeach
@@ -272,38 +308,19 @@
                 </table>
             </div>
 
-            <div class="meta">
-                <p class="muted">
-                    Resultaten {{ $users->firstItem() }} t/m {{ $users->lastItem() }} van {{ $users->total() }}
-                </p>
-
-                <nav class="pagination" aria-label="Paginatie">
-                    @if ($users->onFirstPage())
-                        <span class="pagination__link muted">Vorige</span>
-                    @else
-                        <a href="{{ $users->previousPageUrl() }}" class="pagination__link">Vorige</a>
-                    @endif
-
-                    @foreach (range(max(1, $users->currentPage() - 1), min($users->lastPage(), $users->currentPage() + 1)) as $page)
-                        @if ($page === $users->currentPage())
-                            <span class="pagination__current">{{ $page }}</span>
-                        @else
-                            <a href="{{ $users->url($page) }}" class="pagination__link">{{ $page }}</a>
-                        @endif
-                    @endforeach
-
-                    @if ($users->hasMorePages())
-                        <a href="{{ $users->nextPageUrl() }}" class="pagination__link">Volgende</a>
-                    @else
-                        <span class="pagination__link muted">Volgende</span>
-                    @endif
-                </nav>
-            </div>
+            <x-admin-results-meta :paginator="$users" aria-label="Paginatie" />
         @else
-            <div class="empty">
-                <strong>Geen gebruikers gevonden.</strong>
-                <p class="muted">Pas de zoekterm aan of reset het zoekveld om de volledige lijst te zien.</p>
-            </div>
+            <x-admin-empty-state
+                :title="$activeFilters !== [] ? 'Er zijn geen gebruikers gevonden voor deze filtercombinatie.' : 'Geen gebruikers gevonden.'"
+                :description="$activeFilters !== [] ? 'Pas een of meer filters aan of reset de lijst om alle gebruikers weer te zien.' : 'Voeg een gebruiker toe of probeer het later opnieuw.'"
+            >
+                <x-slot:actions>
+                    @if ($activeFilters !== [])
+                        <a href="{{ route('admin.users.index') }}" class="ghost-pill">Reset</a>
+                    @endif
+                    <a href="{{ route('admin.users.create') }}" class="pill">Nieuwe gebruiker</a>
+                </x-slot:actions>
+            </x-admin-empty-state>
         @endif
     </section>
 </x-layouts.hermes-admin>

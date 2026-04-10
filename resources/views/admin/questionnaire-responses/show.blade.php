@@ -45,7 +45,7 @@
         </div>
 
         <div class="response-list">
-            @foreach ($response->answers as $answer)
+            @forelse ($response->answers as $answer)
                 <article class="answer-card">
                     <div class="muted">{{ $answer->question->category->title }}</div>
                     <strong>{{ $answer->question->prompt }}</strong>
@@ -53,7 +53,12 @@
                         {{ $answer->answer ?? implode(', ', $answer->answer_list ?? []) }}
                     </div>
                 </article>
-            @endforeach
+            @empty
+                <article class="answer-card">
+                    <strong>{{ __('hermes.reports.no_answers_in_response_title') }}</strong>
+                    <div class="muted">{{ __('hermes.reports.no_answers_in_response_text') }}</div>
+                </article>
+            @endforelse
         </div>
     </section>
 </x-layouts.hermes-admin>

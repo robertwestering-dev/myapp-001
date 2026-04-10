@@ -1,4 +1,52 @@
-<x-layouts.hermes-public :title="$blogPost->titleForLocale()">
+@php
+    $isPreview = $isPreview ?? false;
+    $articleUrl = $isPreview ? route('admin.blog-posts.preview', $blogPost) : $blogPost->publicUrl();
+@endphp
+
+<x-layouts.hermes-public
+    :title="$blogPost->metaTitleForLocale()"
+    :meta-description="$blogPost->metaDescriptionForLocale()"
+    :canonical-url="$articleUrl"
+    :meta-image="$blogPost->cover_image_url"
+    :show-header-booking="auth()->check()"
+    :show-header-contact-link="auth()->check()"
+    og-type="article"
+    :structured-data="[
+        '@context' => 'https://schema.org',
+        '@type' => 'Article',
+        'headline' => $blogPost->titleForLocale(),
+        'description' => $blogPost->metaDescriptionForLocale(),
+        'image' => $blogPost->cover_image_url ? [$blogPost->cover_image_url] : [],
+        'datePublished' => $blogPost->published_at?->toAtomString(),
+        'dateModified' => $blogPost->updated_at?->toAtomString(),
+        'author' => [
+            '@type' => 'Person',
+            'name' => $blogPost->author?->name ?? __('hermes.blog.editorial_team'),
+        ],
+        'mainEntityOfPage' => $articleUrl,
+        'keywords' => implode(', ', $blogPost->tagsList()),
+    ]"
+>
+    @guest
+        <x-slot:headerMenu>
+            <a class="home-menu-item" href="{{ route('home') }}">Home</a>
+            <a class="home-menu-item" href="{{ route('blog.index') }}">Blog</a>
+            <div class="home-menu-dropdown">
+                <a class="home-menu-trigger" href="{{ route('about.show') }}">
+                    Over
+                    <span aria-hidden="true">▾</span>
+                </a>
+                <div class="home-submenu">
+                    <a href="{{ route('inspiration-sources.show') }}">Inspiratiebronnen</a>
+                    <a href="{{ route('about.show') }}">Over ons</a>
+                    <a href="{{ route('pricing.show') }}">Prijzen</a>
+                    <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
+                </div>
+            </div>
+            <a class="home-menu-item" href="{{ route('organizations.landing') }}">Organisaties</a>
+        </x-slot:headerMenu>
+    @endguest
+
     <x-slot:head>
         <style>
             .article-layout,
@@ -20,17 +68,6 @@
             .article-main,
             .article-side {
                 padding: 30px;
-                border-radius: var(--radius-xl);
-                border: 1px solid rgba(255, 255, 255, 0.58);
-                box-shadow: var(--shadow);
-            }
-
-            .article-main {
-                background: rgba(255, 255, 255, 0.84);
-            }
-
-            .article-side {
-                background: var(--panel);
             }
 
             .article-cover {
@@ -38,22 +75,6 @@
                 aspect-ratio: 16 / 9;
                 object-fit: cover;
                 border-radius: 24px;
-            }
-
-            .article-cover--placeholder {
-                width: 100%;
-                aspect-ratio: 16 / 9;
-                border-radius: 24px;
-                background:
-                    radial-gradient(circle at top right, rgba(214, 179, 122, 0.36), transparent 24%),
-                    linear-gradient(135deg, rgba(188, 91, 44, 0.3), rgba(30, 71, 61, 0.92));
-            }
-
-            .article-meta {
-                grid-auto-flow: column;
-                justify-content: start;
-                color: var(--muted);
-                font-size: 0.95rem;
             }
 
             .article-tags {
@@ -87,7 +108,8 @@
             .article-body p,
             .article-body ul,
             .article-body ol,
-            .article-body blockquote {
+            .article-body blockquote,
+            .article-body .article-media {
                 margin: 0 0 18px;
             }
 
@@ -96,16 +118,36 @@
                 padding-left: 20px;
             }
 
-            .article-actions {
-                grid-auto-flow: column;
-                justify-content: start;
+            .article-body::after {
+                content: "";
+                display: block;
+                clear: both;
             }
 
-            .related-card {
-                padding: 18px;
-                border-radius: 20px;
-                background: rgba(255, 255, 255, 0.72);
-                border: 1px solid rgba(23, 35, 33, 0.08);
+            .article-body .article-media {
+                width: 100%;
+            }
+
+            .article-body .article-media img,
+            .article-body .article-media video {
+                width: 100%;
+                display: block;
+                border-radius: 16px;
+            }
+
+            .article-body .article-media--left {
+                float: left;
+                margin: 6px 24px 18px 0;
+            }
+
+            .article-body .article-media--right {
+                float: right;
+                margin: 6px 0 18px 24px;
+            }
+
+            .article-body .article-media--center {
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .related-card h3 {
@@ -123,70 +165,91 @@
                 .article-layout {
                     grid-template-columns: 1fr;
                 }
+
+                .article-body .article-media--left,
+                .article-body .article-media--right {
+                    float: none;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
             }
         </style>
     </x-slot:head>
 
     <section class="article-layout">
-        <article class="article-main">
-            <span class="eyebrow">{{ __('hermes.blog.eyebrow') }}</span>
-            <h1>{{ $blogPost->titleForLocale() }}</h1>
-
-            <div class="article-meta">
-                <span>{{ $blogPost->author?->name ?? __('hermes.blog.editorial_team') }}</span>
-                <span>{{ $blogPost->published_at?->translatedFormat('j F Y') }}</span>
-                <span>{{ __('hermes.blog.reading_time', ['minutes' => $blogPost->readingTimeInMinutes()]) }}</span>
-            </div>
+        <x-user-surface-card class="article-main">
+            <x-user-page-heading
+                :eyebrow="__('hermes.blog.eyebrow')"
+                :title="$blogPost->titleForLocale()"
+            >
+                <x-slot:meta>
+                    <x-user-inline-meta
+                        :items="[
+                            $blogPost->author?->name ?? __('hermes.blog.editorial_team'),
+                            $blogPost->published_at?->translatedFormat('j F Y'),
+                            __('hermes.blog.reading_time', ['minutes' => $blogPost->readingTimeInMinutes()]),
+                        ]"
+                    />
+                </x-slot:meta>
+            </x-user-page-heading>
+            @if ($isPreview)
+                <div class="pill">{{ __('hermes.blog.preview_notice') }}</div>
+            @endif
 
             <p>{{ $blogPost->excerptForLocale() }}</p>
 
             @if ($blogPost->cover_image_url)
                 <img class="article-cover" src="{{ $blogPost->cover_image_url }}" alt="{{ $blogPost->titleForLocale() }}">
-            @else
-                <div class="article-cover--placeholder" aria-hidden="true"></div>
             @endif
 
             <div class="article-tags">
                 @foreach ($blogPost->tagsList() as $tag)
-                    <span>{{ $tag }}</span>
+                    <a class="pill" href="{{ route('blog.index', ['tag' => $tag]) }}">{{ $tag }}</a>
                 @endforeach
             </div>
 
             <div class="article-body">
-                {!! Illuminate\Support\Str::markdown($blogPost->contentForLocale()) !!}
+                {!! $blogPost->renderedContentForLocale() !!}
             </div>
 
-            <div class="article-actions">
-                <a class="pill" href="{{ route('blog.index') }}">{{ __('hermes.blog.back_to_overview') }}</a>
-                <a class="pill pill--strong" href="{{ route('home') }}#contact">{{ __('hermes.blog.contact_action') }}</a>
-            </div>
-        </article>
+            <x-user-action-row class="article-actions">
+                <a class="pill" href="{{ $blogIndexUrl }}">{{ __('hermes.blog.back_to_overview') }}</a>
+            </x-user-action-row>
+        </x-user-surface-card>
 
-        <aside class="article-side">
-            <span class="eyebrow">{{ __('hermes.blog.related_eyebrow') }}</span>
-            <h2>{{ __('hermes.blog.related_heading') }}</h2>
-            <p>{{ __('hermes.blog.related_intro') }}</p>
+        <x-user-surface-card tag="aside" class="article-side">
+            <x-user-section-heading
+                :eyebrow="__('hermes.blog.related_eyebrow')"
+                :title="__('hermes.blog.related_heading')"
+                :text="__('hermes.blog.related_intro')"
+            />
 
             <div class="related-list">
                 @forelse ($relatedPosts as $relatedPost)
-                    <article class="related-card">
-                        <div class="article-meta">
-                            <span>{{ $relatedPost->published_at?->translatedFormat('j M Y') }}</span>
-                            <span>{{ __('hermes.blog.reading_time', ['minutes' => $relatedPost->readingTimeInMinutes()]) }}</span>
-                        </div>
+                    <x-user-surface-card class="related-card">
+                        <x-user-inline-meta
+                            :items="[
+                                $relatedPost->published_at?->translatedFormat('j M Y'),
+                                __('hermes.blog.reading_time', ['minutes' => $relatedPost->readingTimeInMinutes()]),
+                            ]"
+                        />
 
                         <h3>{{ $relatedPost->titleForLocale() }}</h3>
                         <p>{{ $relatedPost->excerptForLocale() }}</p>
 
-                        <a class="pill" href="{{ route('blog.show', $relatedPost) }}">{{ __('hermes.blog.read_post') }}</a>
-                    </article>
+                        <x-user-action-row>
+                            <a class="pill" href="{{ route('blog.show', $relatedPost) }}">{{ __('hermes.blog.read_post') }}</a>
+                        </x-user-action-row>
+                    </x-user-surface-card>
                 @empty
-                    <article class="related-card">
-                        <h3>{{ __('hermes.blog.related_empty_title') }}</h3>
-                        <p>{{ __('hermes.blog.related_empty_text') }}</p>
-                    </article>
+                    <x-user-guidance-card
+                        class="related-card"
+                        :eyebrow="__('hermes.blog.related_eyebrow')"
+                        :title="__('hermes.blog.related_empty_title')"
+                        :text="__('hermes.blog.related_empty_text')"
+                    />
                 @endforelse
             </div>
-        </aside>
+        </x-user-surface-card>
     </section>
 </x-layouts.hermes-public>

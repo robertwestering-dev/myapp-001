@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
-use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
+use App\Concerns\ProvidesOrganizationOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQuestionnaireRequest;
 use App\Http\Requests\Admin\UpdateQuestionnaireRequest;
 use App\Models\Questionnaire;
 use App\Models\User;
+use App\Services\SpotlightQuestionnaireService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 class QuestionnaireController extends Controller
 {
+    use ProvidesOrganizationOptions;
+
+    public function __construct(private readonly SpotlightQuestionnaireService $spotlightService) {}
+
     public function index(Request $request): View
     {
         /** @var User $actor */
@@ -33,52 +36,51 @@ class QuestionnaireController extends Controller
                 },
             ])
             ->orderBy('title')
-            ->paginate(15);
+            ->paginate(config('app.per_page'));
 
         return view('admin.questionnaires.index', [
             'canManageLibrary' => $actor->isAdmin(),
+            'organizationOptions' => $this->organizationOptions($actor),
             'questionnaires' => $questionnaires,
-            'spotlightQuestionnaires' => $this->spotlightQuestionnaires($actor),
+            'spotlightQuestionnaires' => $this->spotlightService->get($actor, withCounts: true),
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         return view('admin.questionnaires.form', [
-            'title' => 'Nieuwe questionnaire',
+            'title' => __('hermes.admin.form_titles.new_questionnaire'),
             'intro' => 'Stel een nieuwe standaardvragenlijst samen met categorieen en vragen.',
             'submitLabel' => 'Questionnaire opslaan',
-            'questionnaire' => new Questionnaire(['is_active' => true]),
+            'questionnaire' => new Questionnaire([
+                'is_active' => true,
+                'locale' => config('locales.primary'),
+            ]),
             'isEditing' => false,
         ]);
     }
 
     public function store(StoreQuestionnaireRequest $request): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
-
-        $attributes = $request->validated();
-        $attributes['is_active'] = $request->boolean('is_active');
-
-        $questionnaire = Questionnaire::create($attributes);
+        $questionnaire = Questionnaire::create($request->validated());
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Questionnaire succesvol toegevoegd. Voeg nu categorieen en vragen toe.');
+            ->with('status', __('hermes.admin.questionnaires.created'));
     }
 
-    public function edit(Questionnaire $questionnaire): View
+    public function edit(Request $request, Questionnaire $questionnaire): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         $questionnaire->load([
             'categories.questions' => fn ($query) => $query->orderBy('sort_order'),
         ]);
 
         return view('admin.questionnaires.form', [
-            'title' => 'Questionnaire wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_questionnaire'),
             'intro' => 'Werk de basisgegevens bij en beheer de opbouw van categorieen en vragen.',
             'submitLabel' => 'Wijzigingen opslaan',
             'questionnaire' => $questionnaire,
@@ -88,57 +90,24 @@ class QuestionnaireController extends Controller
 
     public function update(UpdateQuestionnaireRequest $request, Questionnaire $questionnaire): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
-
-        $attributes = $request->validated();
-        $attributes['is_active'] = $request->boolean('is_active');
-
-        $questionnaire->update($attributes);
+        $questionnaire->update($request->validated());
+        $questionnaire->questions()->update([
+            'locale' => $questionnaire->locale,
+        ]);
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Questionnaire succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.questionnaires.updated'));
     }
 
-    public function destroy(Questionnaire $questionnaire): RedirectResponse
+    public function destroy(Request $request, Questionnaire $questionnaire): RedirectResponse
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         $questionnaire->delete();
 
         return redirect()
             ->route('admin.questionnaires.index')
-            ->with('status', 'Questionnaire succesvol verwijderd.');
-    }
-
-    /**
-     * @return Collection<int, Questionnaire>
-     */
-    protected function spotlightQuestionnaires(User $actor): Collection
-    {
-        $spotlightTitles = [
-            SyncAdaptabilityAceQuestionnaire::TITLE,
-            SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
-        ];
-
-        $questionnaires = Questionnaire::query()
-            ->whereIn('title', $spotlightTitles)
-            ->withCount(['categories', 'questions', 'organizationQuestionnaires'])
-            ->with([
-                'organizationQuestionnaires' => function ($query) use ($actor): void {
-                    $query->with('organization:org_id,naam');
-
-                    if (! $actor->isAdmin()) {
-                        $query->where('org_id', $actor->org_id);
-                    }
-                },
-            ])
-            ->orderBy('title')
-            ->get();
-
-        return collect($spotlightTitles)
-            ->map(fn (string $title): ?Questionnaire => $questionnaires->firstWhere('title', $title))
-            ->filter()
-            ->values();
+            ->with('status', __('hermes.admin.questionnaires.deleted'));
     }
 }

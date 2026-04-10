@@ -10,15 +10,21 @@ class StoreQuestionnaireRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() ?? false;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['is_active' => $this->boolean('is_active')]);
     }
 
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')],
+            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')->where('locale', $this->input('locale'))],
             'description' => ['nullable', 'string'],
-            'is_active' => ['nullable', 'boolean'],
+            'locale' => ['required', 'string', Rule::in(Questionnaire::localeOptions())],
+            'is_active' => ['required', 'boolean'],
         ];
     }
 }

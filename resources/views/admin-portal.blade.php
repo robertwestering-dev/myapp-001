@@ -72,6 +72,13 @@
 
             @if ($canManageLibrary)
                 <article class="portal-card">
+                    <h2>{{ __('hermes.admin_portal.strategy_title') }}</h2>
+                    <p>{{ __('hermes.admin_portal.strategy_text') }}</p>
+                    <div class="spotlight-meta">{{ __('hermes.admin_portal.strategy_count', ['count' => 4]) }}</div>
+                    <a href="{{ route('admin.strategy-pages.index') }}" class="pill">{{ __('hermes.admin_portal.strategy_action') }}</a>
+                </article>
+
+                <article class="portal-card">
                     <h2>{{ __('hermes.admin_portal.academy_title') }}</h2>
                     <p>{{ __('hermes.admin_portal.academy_text') }}</p>
                     <div class="spotlight-meta">{{ __('hermes.admin_portal.academy_count', ['count' => $academyCourseCount]) }}</div>
@@ -83,6 +90,13 @@
                     <p>{{ __('hermes.admin_portal.translations_text') }}</p>
                     <div class="spotlight-meta">{{ __('hermes.admin_portal.translations_count', ['count' => $translationCount]) }}</div>
                     <a href="{{ route('admin.translations.index') }}" class="pill">{{ __('hermes.admin_portal.translations_action') }}</a>
+                </article>
+
+                <article class="portal-card">
+                    <h2>{{ __('hermes.admin_portal.assets_title') }}</h2>
+                    <p>{{ __('hermes.admin_portal.assets_text') }}</p>
+                    <div class="spotlight-meta">{{ __('hermes.admin_portal.assets_count', ['count' => $mediaAssetCount]) }}</div>
+                    <a href="{{ route('admin.media-assets.index') }}" class="pill">{{ __('hermes.admin_portal.assets_action') }}</a>
                 </article>
 
                 <article class="portal-card">

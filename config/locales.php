@@ -3,6 +3,12 @@
 return [
     'session_key' => 'locale',
 
+    /**
+     * The locale that is required for primary content fields (e.g. blog posts, questionnaire titles).
+     * Other locales are optional/nullable.
+     */
+    'primary' => 'nl',
+
     'supported' => [
         'nl' => 'NL',
         'en' => 'EN',

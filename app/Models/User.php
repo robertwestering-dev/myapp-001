@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'role', 'password', 'org_id', 'locale'])]
+#[Fillable(['name', 'first_name', 'gender', 'birth_date', 'city', 'country', 'email', 'role', 'password', 'org_id', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -25,7 +25,29 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public const ROLE_MANAGER = 'Beheerder';
 
+    public const ROLE_USER_PRO = 'user_pro';
+
     public const ROLE_USER = 'User';
+
+    public const GENDER_MALE = 'man';
+
+    public const GENDER_FEMALE = 'vrouw';
+
+    public const GENDER_OTHER = 'anders';
+
+    public const COUNTRY_NETHERLANDS = Organization::COUNTRY_NETHERLANDS;
+
+    public const COUNTRY_BELGIUM = Organization::COUNTRY_BELGIUM;
+
+    public const COUNTRY_GERMANY = Organization::COUNTRY_GERMANY;
+
+    public const COUNTRY_FRANCE = Organization::COUNTRY_FRANCE;
+
+    public const COUNTRY_UNITED_KINGDOM = Organization::COUNTRY_UNITED_KINGDOM;
+
+    public const COUNTRY_UNITED_STATES = Organization::COUNTRY_UNITED_STATES;
+
+    public const COUNTRY_OTHER = Organization::COUNTRY_OTHER;
 
     /**
      * Get the attributes that should be cast.
@@ -36,8 +58,37 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'birth_date' => 'date',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function genderOptions(): array
+    {
+        return [
+            self::GENDER_MALE,
+            self::GENDER_FEMALE,
+            self::GENDER_OTHER,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function countryOptions(): array
+    {
+        return Organization::countryOptions();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function localeOptions(): array
+    {
+        return array_keys(config('locales.supported', []));
     }
 
     public function isAdmin(): bool
@@ -60,6 +111,35 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->isAdmin() || $this->org_id === $organizationId;
     }
 
+    /**
+     * Anonymize the user's personal data for statistical purposes.
+     *
+     * Sets remember_token to null to invalidate all "remember me" cookies.
+     * Active sessions on other devices will expire naturally; switching to
+     * the database session driver enables explicit multi-device invalidation.
+     */
+    public function anonymizeForStatistics(): void
+    {
+        $anonymizedIdentifier = (string) $this->getKey();
+
+        $this->forceFill([
+            'name' => $anonymizedIdentifier,
+            'first_name' => $anonymizedIdentifier,
+            'email' => $this->anonymizedEmailAddress(),
+            'email_verified_at' => null,
+            'password' => Str::random(40),
+            'remember_token' => null,
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ])->save();
+    }
+
+    public function anonymizedEmailAddress(): string
+    {
+        return sprintf('deleted-user+%s@hermesresults.com', $this->getKey());
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class, 'org_id', 'org_id');
@@ -68,6 +148,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function questionnaireResponses(): HasMany
     {
         return $this->hasMany(QuestionnaireResponse::class);
+    }
+
+    public function forumThreads(): HasMany
+    {
+        return $this->hasMany(ForumThread::class);
+    }
+
+    public function forumReplies(): HasMany
+    {
+        return $this->hasMany(ForumReply::class);
     }
 
     /**

@@ -20,6 +20,7 @@
         }
 
         input,
+        select,
         textarea {
             width: 100%;
             padding: 15px 16px;
@@ -141,6 +142,15 @@
             <label>
                 <span>Beschrijving</span>
                 <textarea name="description">{{ old('description', $questionnaire->description) }}</textarea>
+            </label>
+
+            <label>
+                <span>Taal</span>
+                <select name="locale" required>
+                    @foreach (config('locales.supported', []) as $localeCode => $localeLabel)
+                        <option value="{{ $localeCode }}" @selected(old('locale', $questionnaire->locale) === $localeCode)>{{ strtoupper($localeCode) }} · {{ $localeLabel }}</option>
+                    @endforeach
+                </select>
             </label>
 
             <label class="checkbox">

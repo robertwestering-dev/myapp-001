@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Concerns\HasTranslations;
 use Database\Factories\AcademyCourseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 
 #[Fillable([
     'slug',
@@ -26,7 +26,7 @@ use Illuminate\Support\Arr;
 class AcademyCourse extends Model
 {
     /** @use HasFactory<AcademyCourseFactory> */
-    use HasFactory;
+    use HasFactory, HasTranslations;
 
     public const THEME_ADAPTABILITY = 'adaptability';
 
@@ -99,11 +99,6 @@ class AcademyCourse extends Model
         return $this->translatedList('contents', $locale);
     }
 
-    public function translation(string $attribute, string $locale): mixed
-    {
-        return Arr::get($this->getAttribute($attribute) ?? [], $locale);
-    }
-
     public function launchUrl(): ?string
     {
         if (! $this->isAvailable()) {
@@ -118,13 +113,6 @@ class AcademyCourse extends Model
         return file_exists(public_path($this->normalizedPath().'/index.html'));
     }
 
-    protected function translatedString(string $attribute, ?string $locale = null): string
-    {
-        $value = $this->translatedValue($attribute, $locale);
-
-        return is_string($value) ? $value : '';
-    }
-
     /**
      * @return array<int, string>
      */
@@ -137,18 +125,6 @@ class AcademyCourse extends Model
         }
 
         return array_values(array_filter($value, fn (mixed $item): bool => is_string($item) && $item !== ''));
-    }
-
-    protected function translatedValue(string $attribute, ?string $locale = null): mixed
-    {
-        /** @var array<string, mixed> $values */
-        $values = $this->getAttribute($attribute) ?? [];
-        $preferredLocale = $locale ?? app()->getLocale();
-        $fallbackLocale = config('app.fallback_locale');
-
-        return $values[$preferredLocale]
-            ?? $values[$fallbackLocale]
-            ?? Arr::first($values);
     }
 
     protected function normalizedPath(): string

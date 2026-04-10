@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             AcademyCourseSeeder::class,
             BlogPostSeeder::class,
             DigitalResilienceQuickScanQuestionnaireSeeder::class,
+            DigitalMirrorQuestionnaireSeeder::class,
+            PositiveFoundationQuestionnaireSeeder::class,
         ]);
 
         User::factory()->create([

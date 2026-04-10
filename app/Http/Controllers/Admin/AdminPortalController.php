@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
-use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
 use App\Actions\Translations\ManageHermesTranslations;
 use App\Http\Controllers\Controller;
 use App\Models\AcademyCourse;
 use App\Models\BlogPost;
+use App\Models\MediaAsset;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\User;
+use App\Services\SpotlightQuestionnaireService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 class AdminPortalController extends Controller
 {
+    public function __construct(private readonly SpotlightQuestionnaireService $spotlightService) {}
+
     public function index(Request $request, ManageHermesTranslations $translations): View
     {
         /** @var User $actor */
@@ -27,48 +28,27 @@ class AdminPortalController extends Controller
             'actor' => $actor,
             'canManageLibrary' => $actor->isAdmin(),
             'lead' => $actor->isAdmin()
-                ? "U bent ingelogd als admin met het account {$actor->email}. Vanuit deze omgeving beheert u organisaties, questionnaires en rapportage over alle organisaties heen."
-                : "U bent ingelogd als beheerder met het account {$actor->email}. Vanuit deze omgeving beheert u uw eigen organisatie, stelt u questionnaires beschikbaar en bekijkt u responses binnen uw scope.",
-            'questionnaireCount' => Questionnaire::query()->count(),
-            'academyCourseCount' => AcademyCourse::query()->count(),
-            'blogPostCount' => BlogPost::query()->count(),
-            'translationCount' => $translations->all()->count(),
-            'scopedAvailabilityCount' => OrganizationQuestionnaire::query()
-                ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
-                    $query->where('org_id', $actor->org_id);
-                })
-                ->count(),
-            'spotlightQuestionnaires' => $this->spotlightQuestionnaires($actor),
+                ? __('hermes.admin.portal.lead_admin', ['email' => $actor->email])
+                : __('hermes.admin.portal.lead_manager', ['email' => $actor->email]),
+            'spotlightQuestionnaires' => $this->spotlightService->get($actor, withCounts: true),
+            ...$this->dashboardCounts($actor, $translations),
         ]);
     }
 
     /**
-     * @return Collection<int, Questionnaire>
+     * @return array<string, int>
      */
-    protected function spotlightQuestionnaires(User $actor): Collection
+    protected function dashboardCounts(User $actor, ManageHermesTranslations $translations): array
     {
-        $spotlightTitles = [
-            SyncAdaptabilityAceQuestionnaire::TITLE,
-            SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
+        return [
+            'questionnaireCount' => Questionnaire::query()->count(),
+            'academyCourseCount' => AcademyCourse::query()->count(),
+            'blogPostCount' => BlogPost::query()->count(),
+            'mediaAssetCount' => MediaAsset::query()->count(),
+            'translationCount' => $translations->all()->count(),
+            'scopedAvailabilityCount' => OrganizationQuestionnaire::query()
+                ->when(! $actor->isAdmin(), fn (Builder $query) => $query->where('org_id', $actor->org_id))
+                ->count(),
         ];
-
-        $questionnaires = Questionnaire::query()
-            ->whereIn('title', $spotlightTitles)
-            ->withCount([
-                'categories',
-                'questions',
-                'organizationQuestionnaires as scoped_organization_questionnaires_count' => function (Builder $query) use ($actor): void {
-                    if (! $actor->isAdmin()) {
-                        $query->where('org_id', $actor->org_id);
-                    }
-                },
-            ])
-            ->orderBy('title')
-            ->get();
-
-        return collect($spotlightTitles)
-            ->map(fn (string $title): ?Questionnaire => $questionnaires->firstWhere('title', $title))
-            ->filter()
-            ->values();
     }
 }

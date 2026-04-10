@@ -39,4 +39,12 @@ class QuestionnaireQuestionFactory extends Factory
             'options' => ['Altijd', 'Soms', 'Nooit'],
         ]);
     }
+
+    public function likertScale(): static
+    {
+        return $this->state(fn () => [
+            'type' => QuestionnaireQuestion::TYPE_LIKERT_SCALE,
+            'options' => ['Helemaal oneens', 'Oneens', 'Neutraal', 'Eens', 'Helemaal eens'],
+        ]);
+    }
 }

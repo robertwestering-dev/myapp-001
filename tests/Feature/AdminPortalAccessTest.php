@@ -17,14 +17,25 @@ test('admins can visit the admin portal', function () {
 
     $response->assertOk()
         ->assertSee('Admin-portal')
-        ->assertSee($admin->email)
         ->assertSee('Welkom terug, beheerder.')
+        ->assertSee('Beheer')
+        ->assertSee('Forum')
+        ->assertSee(route('forum.index', absolute: false), false)
+        ->assertSee(route('admin.users.index', absolute: false), false)
+        ->assertSee(route('admin.organizations.index', absolute: false), false)
+        ->assertSee(route('admin.questionnaires.index', absolute: false), false)
+        ->assertSee(route('admin.questionnaire-responses.index', absolute: false), false)
+        ->assertSee(route('admin.strategy-pages.index', absolute: false), false)
+        ->assertSee(route('admin.media-assets.index', absolute: false), false)
+        ->assertSee(route('admin.academy-courses.index', absolute: false), false)
+        ->assertSee(route('admin.blog-posts.index', absolute: false), false)
+        ->assertSee(route('admin.translations.index', absolute: false), false)
         ->assertSee(SyncAdaptabilityAceQuestionnaire::TITLE)
         ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
         ->assertSee('Baseline assessments')
+        ->assertDontSee('hero__side', false)
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('/?contact=1#contact', false)
-        ->assertSee('Français')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
@@ -35,7 +46,18 @@ test('managers can visit the admin portal', function () {
 
     $response->assertOk()
         ->assertSee('Admin-portal')
-        ->assertSee($manager->email)
+        ->assertSee('Beheer')
+        ->assertSee('Forum')
+        ->assertSee(route('forum.index', absolute: false), false)
+        ->assertSee(route('admin.users.index', absolute: false), false)
+        ->assertSee(route('admin.organizations.index', absolute: false), false)
+        ->assertSee(route('admin.questionnaires.index', absolute: false), false)
+        ->assertSee(route('admin.questionnaire-responses.index', absolute: false), false)
+        ->assertDontSee(route('admin.strategy-pages.index', absolute: false), false)
+        ->assertDontSee(route('admin.media-assets.index', absolute: false), false)
+        ->assertDontSee(route('admin.academy-courses.index', absolute: false), false)
+        ->assertDontSee(route('admin.blog-posts.index', absolute: false), false)
+        ->assertDontSee(route('admin.translations.index', absolute: false), false)
         ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE);
 });
 

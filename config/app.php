@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'per_page' => 15,
+
+    'protected_organization' => env('PROTECTED_ORGANIZATION', 'Hermes Results'),
+
 ];

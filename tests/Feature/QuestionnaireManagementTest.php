@@ -17,15 +17,53 @@ test('admins can view the questionnaire list and create page', function () {
         ->get(route('admin.questionnaires.index'))
         ->assertOk()
         ->assertSee('Questionnaire-overzicht')
+        ->assertSee('admin-status-badge', false)
         ->assertSee('Werkdrukmeting')
         ->assertSee(SyncAdaptabilityAceQuestionnaire::TITLE)
+        ->assertSee(SyncAdaptabilityAceQuestionnaire::ENGLISH_TITLE)
         ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
+        ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::ENGLISH_TITLE)
         ->assertSee('Nieuwe questionnaire');
 
     $this->actingAs($admin)
         ->get(route('admin.questionnaires.create'))
         ->assertOk()
         ->assertSee('Nieuwe questionnaire');
+});
+
+test('default questionnaires are synchronized in dutch and english', function () {
+    (new SyncAdaptabilityAceQuestionnaire)->handle();
+    (new SyncDigitalResilienceQuickScanQuestionnaire)->handle();
+
+    $this->assertDatabaseHas('questionnaires', [
+        'title' => SyncAdaptabilityAceQuestionnaire::TITLE,
+        'locale' => 'nl',
+    ]);
+
+    $this->assertDatabaseHas('questionnaires', [
+        'title' => SyncAdaptabilityAceQuestionnaire::ENGLISH_TITLE,
+        'locale' => 'en',
+    ]);
+
+    $this->assertDatabaseHas('questionnaires', [
+        'title' => SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
+        'locale' => 'nl',
+    ]);
+
+    $this->assertDatabaseHas('questionnaires', [
+        'title' => SyncDigitalResilienceQuickScanQuestionnaire::ENGLISH_TITLE,
+        'locale' => 'en',
+    ]);
+
+    $this->assertDatabaseHas('questionnaire_questions', [
+        'prompt' => 'I generally stay calm and constructive when outcomes are uncertain.',
+        'locale' => 'en',
+    ]);
+
+    $this->assertDatabaseHas('questionnaire_questions', [
+        'prompt' => 'I deliberately set aside time to explore new digital tools, applications, or ways of working.',
+        'locale' => 'en',
+    ]);
 });
 
 test('admins can compose a questionnaire with categories and questions', function () {
@@ -35,6 +73,7 @@ test('admins can compose a questionnaire with categories and questions', functio
         ->post(route('admin.questionnaires.store'), [
             'title' => 'Vitaliteitsscan',
             'description' => 'Meet vitaliteit in meerdere domeinen.',
+            'locale' => 'nl',
             'is_active' => '1',
         ])
         ->assertRedirect();
@@ -116,6 +155,38 @@ test('admins can configure conditional questionnaire questions', function () {
         'display_condition_question_id' => $triggerQuestion->id,
         'display_condition_operator' => QuestionnaireQuestion::DISPLAY_CONDITION_EQUALS,
     ]);
+});
+
+test('admins can add likert scale questions with multiple scale options', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create();
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.questionnaires.questions.store', $questionnaire), [
+            'questionnaire_category_id' => $category->id,
+            'prompt' => 'Ik voel me gesteund door mijn team.',
+            'type' => QuestionnaireQuestion::TYPE_LIKERT_SCALE,
+            'options' => "Helemaal oneens\nOneens\nNeutraal\nEens\nHelemaal eens",
+            'is_required' => '1',
+            'sort_order' => 1,
+        ])
+        ->assertRedirect(route('admin.questionnaires.edit', $questionnaire));
+
+    $question = QuestionnaireQuestion::query()
+        ->where('questionnaire_category_id', $category->id)
+        ->where('type', QuestionnaireQuestion::TYPE_LIKERT_SCALE)
+        ->firstOrFail();
+
+    expect($question->options)->toBe(['Helemaal oneens', 'Oneens', 'Neutraal', 'Eens', 'Helemaal eens']);
+
+    $this->actingAs($admin)
+        ->get(route('admin.questionnaires.edit', $questionnaire))
+        ->assertOk()
+        ->assertSee('Likert-schaal')
+        ->assertSee('Helemaal eens');
 });
 
 test('admins can update and delete questionnaire categories', function () {

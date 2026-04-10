@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Questionnaires\SyncAdaptabilityAceQuestionnaire;
-use App\Actions\Questionnaires\SyncDigitalResilienceQuickScanQuestionnaire;
+use App\Concerns\ProvidesOrganizationOptions;
 use App\Http\Controllers\Controller;
-use App\Models\Organization;
 use App\Models\Questionnaire;
 use App\Models\QuestionnaireCategory;
 use App\Models\QuestionnaireQuestion;
 use App\Models\QuestionnaireResponse;
 use App\Models\QuestionnaireResponseAnswer;
 use App\Models\User;
+use App\Services\SpotlightQuestionnaireService;
+use App\Support\CsvExporter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +21,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionnaireResponseReportController extends Controller
 {
+    use ProvidesOrganizationOptions;
+
+    public function __construct(private readonly SpotlightQuestionnaireService $spotlightService) {}
+
     public function index(Request $request): View
     {
         /** @var User $actor */
@@ -28,24 +32,30 @@ class QuestionnaireResponseReportController extends Controller
 
         $questionnaireId = $request->integer('questionnaire_id');
         $organizationId = $request->integer('org_id');
+        $responseState = $this->normalizeResponseState($request->string('response_state')->value());
         $userId = $request->integer('user_id');
 
-        $responses = $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId)
+        $responses = $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, $responseState)
             ->orderByDesc('submitted_at')
+            ->orderByDesc('last_saved_at')
             ->orderByDesc('id')
-            ->paginate(15)
+            ->paginate(config('app.per_page'))
             ->withQueryString();
 
         return view('admin/questionnaire-responses/index', [
             'responses' => $responses,
-            ...$this->reportFilterData($actor, $questionnaireId, $organizationId, $userId),
+            ...$this->reportFilterData($actor, $questionnaireId, $organizationId, $userId, $responseState),
         ]);
     }
 
-    public function show(QuestionnaireResponse $response): View
+    public function show(Request $request, QuestionnaireResponse $response): View
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
+
+        $response->loadMissing('organizationQuestionnaire:id,org_id');
+
+        abort_unless($actor->canManageOrganization($response->organizationQuestionnaire->org_id), 403);
 
         $response->load([
             'user:id,name,email,org_id',
@@ -53,8 +63,6 @@ class QuestionnaireResponseReportController extends Controller
             'organizationQuestionnaire.questionnaire:id,title',
             'answers.question.category.questionnaire',
         ]);
-
-        abort_unless($actor->canManageOrganization($response->organizationQuestionnaire->org_id), 403);
 
         return view('admin/questionnaire-responses/show', [
             'response' => $response,
@@ -68,6 +76,7 @@ class QuestionnaireResponseReportController extends Controller
 
         $questionnaireId = $request->integer('questionnaire_id');
         $organizationId = $request->integer('org_id');
+        $responseState = $this->normalizeResponseState($request->string('response_state')->value());
         $userId = $request->integer('user_id');
 
         $questionnaire = $this->requireQuestionnaireForExport($request, $questionnaireId);
@@ -77,15 +86,18 @@ class QuestionnaireResponseReportController extends Controller
         }
 
         $questionnaire = $this->loadQuestionnaireStructure($questionnaire);
-        $responses = $this->responsesForStatistics($actor, $questionnaireId, $organizationId, $userId);
 
-        $statistics = $this->buildQuestionStatistics($questionnaire, $responses);
+        $responseCount = $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, $responseState, withDisplayRelations: false)->count();
+        $statistics = $this->buildQuestionStatistics(
+            $questionnaire,
+            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, $responseState, withDisplayRelations: false),
+        );
 
         return view('admin/questionnaire-responses/stats', [
             'questionnaire' => $questionnaire,
-            'responseCount' => $responses->count(),
+            'responseCount' => $responseCount,
             'statistics' => $statistics,
-            ...$this->reportFilterData($actor, $questionnaireId, $organizationId, $userId),
+            ...$this->reportFilterData($actor, $questionnaireId, $organizationId, $userId, $responseState),
         ]);
     }
 
@@ -107,13 +119,13 @@ class QuestionnaireResponseReportController extends Controller
         $fileName = sprintf('questionnaire-responses-%d.csv', $questionnaireId);
 
         return response()->streamDownload(function () use ($actor, $organizationId, $questionnaireId, $userId): void {
-            $handle = fopen('php://output', 'w');
+            $csv = (new CsvExporter)->open();
 
-            if ($handle === false) {
+            if (! $csv->isOpen()) {
                 return;
             }
 
-            fputcsv($handle, [
+            $csv->writeRow([
                 __('hermes.reports.csv.questionnaire'),
                 __('hermes.reports.csv.organization'),
                 __('hermes.reports.csv.user'),
@@ -124,7 +136,7 @@ class QuestionnaireResponseReportController extends Controller
                 __('hermes.reports.csv.answer'),
             ]);
 
-            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId)
+            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, 'completed')
                 ->with([
                     'user:id,name,email,org_id',
                     'organizationQuestionnaire.organization:org_id,naam',
@@ -132,12 +144,13 @@ class QuestionnaireResponseReportController extends Controller
                     'answers.question.category:id,questionnaire_id,title',
                 ])
                 ->orderByDesc('submitted_at')
+                ->orderByDesc('last_saved_at')
                 ->cursor()
-                ->each(function (QuestionnaireResponse $response) use ($handle): void {
+                ->each(function (QuestionnaireResponse $response) use ($csv): void {
                     $answers = $response->answers;
 
                     if ($answers->isEmpty()) {
-                        fputcsv($handle, [
+                        $csv->writeRow([
                             $response->organizationQuestionnaire->questionnaire->title,
                             $response->organizationQuestionnaire->organization->naam,
                             $response->user->name,
@@ -151,8 +164,8 @@ class QuestionnaireResponseReportController extends Controller
                         return;
                     }
 
-                    $answers->each(function ($answer) use ($handle, $response): void {
-                        fputcsv($handle, [
+                    $answers->each(function ($answer) use ($csv, $response): void {
+                        $csv->writeRow([
                             $response->organizationQuestionnaire->questionnaire->title,
                             $response->organizationQuestionnaire->organization->naam,
                             $response->user->name,
@@ -165,7 +178,7 @@ class QuestionnaireResponseReportController extends Controller
                     });
                 });
 
-            fclose($handle);
+            $csv->close();
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
@@ -195,9 +208,9 @@ class QuestionnaireResponseReportController extends Controller
         $fileName = sprintf('questionnaire-responses-summary-%d.csv', $questionnaireId);
 
         return response()->streamDownload(function () use ($actor, $organizationId, $questionnaire, $questions, $questionnaireId, $userId): void {
-            $handle = fopen('php://output', 'w');
+            $csv = (new CsvExporter)->open();
 
-            if ($handle === false) {
+            if (! $csv->isOpen()) {
                 return;
             }
 
@@ -213,18 +226,19 @@ class QuestionnaireResponseReportController extends Controller
                 $header[] = $question->prompt;
             }
 
-            fputcsv($handle, $header);
+            $csv->writeRow($header);
 
-            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId)
+            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, 'completed')
                 ->with([
                     'user:id,name,email,org_id',
                     'organizationQuestionnaire.organization:org_id,naam',
                     'organizationQuestionnaire.questionnaire:id,title',
-                    'answers.question:id,questionnaire_question_id,prompt',
+                    'answers.question:id,prompt',
                 ])
                 ->orderByDesc('submitted_at')
+                ->orderByDesc('last_saved_at')
                 ->cursor()
-                ->each(function (QuestionnaireResponse $response) use ($handle, $questionnaire, $questions): void {
+                ->each(function (QuestionnaireResponse $response) use ($csv, $questionnaire, $questions): void {
                     $answersByQuestion = $response->answers
                         ->mapWithKeys(function ($answer): array {
                             return [
@@ -244,10 +258,10 @@ class QuestionnaireResponseReportController extends Controller
                         $row[] = $answersByQuestion->get($question->id, '');
                     }
 
-                    fputcsv($handle, $row);
+                    $csv->writeRow($row);
                 });
 
-            fclose($handle);
+            $csv->close();
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
@@ -260,6 +274,7 @@ class QuestionnaireResponseReportController extends Controller
 
         $questionnaireId = $request->integer('questionnaire_id');
         $organizationId = $request->integer('org_id');
+        $responseState = $this->normalizeResponseState($request->string('response_state')->value());
         $userId = $request->integer('user_id');
 
         $questionnaire = $this->requireQuestionnaireForExport($request, $questionnaireId);
@@ -269,19 +284,20 @@ class QuestionnaireResponseReportController extends Controller
         }
 
         $questionnaire = $this->loadQuestionnaireStructure($questionnaire);
-        $responses = $this->responsesForStatistics($actor, $questionnaireId, $organizationId, $userId);
-
-        $statistics = $this->buildQuestionStatistics($questionnaire, $responses);
+        $statistics = $this->buildQuestionStatistics(
+            $questionnaire,
+            $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId, $responseState, withDisplayRelations: false),
+        );
         $fileName = sprintf('questionnaire-responses-stats-%d.csv', $questionnaireId);
 
         return response()->streamDownload(function () use ($questionnaire, $statistics): void {
-            $handle = fopen('php://output', 'w');
+            $csv = (new CsvExporter)->open();
 
-            if ($handle === false) {
+            if (! $csv->isOpen()) {
                 return;
             }
 
-            fputcsv($handle, [
+            $csv->writeRow([
                 __('hermes.reports.csv.questionnaire'),
                 __('hermes.reports.csv.category'),
                 __('hermes.reports.csv.question'),
@@ -291,11 +307,11 @@ class QuestionnaireResponseReportController extends Controller
                 __('hermes.reports.csv.count'),
             ]);
 
-            $statistics->each(function (array $categoryStats) use ($handle, $questionnaire): void {
+            $statistics->each(function (array $categoryStats) use ($csv, $questionnaire): void {
                 foreach ($categoryStats['questions'] as $questionStats) {
                     if ($questionStats['options']->isNotEmpty()) {
-                        $questionStats['options']->each(function (array $optionStats) use ($categoryStats, $handle, $questionStats, $questionnaire): void {
-                            fputcsv($handle, [
+                        $questionStats['options']->each(function (array $optionStats) use ($categoryStats, $csv, $questionStats, $questionnaire): void {
+                            $csv->writeRow([
                                 $questionnaire->title,
                                 $categoryStats['category']->title,
                                 $questionStats['question']->prompt,
@@ -309,7 +325,7 @@ class QuestionnaireResponseReportController extends Controller
                         continue;
                     }
 
-                    fputcsv($handle, [
+                    $csv->writeRow([
                         $questionnaire->title,
                         $categoryStats['category']->title,
                         $questionStats['question']->prompt,
@@ -321,13 +337,16 @@ class QuestionnaireResponseReportController extends Controller
                 }
             });
 
-            fclose($handle);
+            $csv->close();
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
     /**
+     * Builds question statistics using chunked processing to avoid loading all
+     * responses into memory at once.
+     *
      * @return Collection<int, array{
      *     category: QuestionnaireCategory,
      *     questions: Collection<int, array{
@@ -342,35 +361,77 @@ class QuestionnaireResponseReportController extends Controller
      */
     protected function buildQuestionStatistics(
         Questionnaire $questionnaire,
-        Collection $responses
+        Builder $responseQuery
     ): Collection {
-        $answers = $responses->flatMap->answers;
-        $responseCount = $responses->count();
+        /** @var array<int, int> $answeredCounts */
+        $answeredCounts = [];
+        /** @var array<int, array<string, int>> $optionCounts */
+        $optionCounts = [];
+        /** @var array<int, array<int, string>> $latestAnswers */
+        $latestAnswers = [];
+        $responseCount = 0;
+
+        $responseQuery
+            ->with(['answers.question:id,type,options'])
+            ->chunk(200, function (Collection $responses) use (
+                &$answeredCounts,
+                &$latestAnswers,
+                &$optionCounts,
+                &$responseCount
+            ): void {
+                $responseCount += $responses->count();
+
+                foreach ($responses as $response) {
+                    foreach ($response->answers as $answer) {
+                        $qid = $answer->questionnaire_question_id;
+                        $answeredCounts[$qid] = ($answeredCounts[$qid] ?? 0) + 1;
+
+                        $formatted = $this->formatAnswerValue($answer);
+
+                        if ($formatted !== '' && count($latestAnswers[$qid] ?? []) < 5) {
+                            $latestAnswers[$qid] ??= [];
+                            if (! in_array($formatted, $latestAnswers[$qid], true)) {
+                                $latestAnswers[$qid][] = $formatted;
+                            }
+                        }
+
+                        $question = $answer->question;
+
+                        if ($question === null) {
+                            continue;
+                        }
+
+                        if (in_array($question->type, [
+                            QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
+                            QuestionnaireQuestion::TYPE_LIKERT_SCALE,
+                        ], true) && $answer->answer !== null) {
+                            $optionCounts[$qid][$answer->answer] = ($optionCounts[$qid][$answer->answer] ?? 0) + 1;
+                        } elseif ($question->type === QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE) {
+                            foreach ($answer->answer_list ?? [] as $option) {
+                                $optionCounts[$qid][$option] = ($optionCounts[$qid][$option] ?? 0) + 1;
+                            }
+                        }
+                    }
+                }
+            });
+
+        $denominator = max($responseCount, 1);
 
         return $questionnaire->categories
-            ->map(function ($category) use ($answers, $responseCount): array {
-                $questions = $category->questions->map(function (QuestionnaireQuestion $question) use ($answers, $responseCount): array {
-                    $questionAnswers = $answers
-                        ->where('questionnaire_question_id', $question->id)
-                        ->values();
-
-                    $answeredCount = $questionAnswers->count();
-                    $denominator = max($responseCount, 1);
+            ->map(function (QuestionnaireCategory $category) use ($answeredCounts, $denominator, $latestAnswers, $optionCounts): array {
+                $questions = $category->questions->map(function (QuestionnaireQuestion $question) use ($answeredCounts, $denominator, $latestAnswers, $optionCounts): array {
+                    $qid = $question->id;
+                    $answeredCount = $answeredCounts[$qid] ?? 0;
                     $options = collect();
 
                     if (in_array($question->type, [
                         QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
                         QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE,
+                        QuestionnaireQuestion::TYPE_LIKERT_SCALE,
                     ], true)) {
                         $options = collect($question->options ?? [])
-                            ->map(function (string $option) use ($question, $questionAnswers, $denominator): array {
-                                $count = $questionAnswers->filter(function ($answer) use ($option, $question): bool {
-                                    if ($question->type === QuestionnaireQuestion::TYPE_SINGLE_CHOICE) {
-                                        return $answer->answer === $option;
-                                    }
-
-                                    return in_array($option, $answer->answer_list ?? [], true);
-                                })->count();
+                            ->map(function (string $option) use ($qid, $optionCounts, $denominator): array {
+                                $count = $optionCounts[$qid][$option] ?? 0;
 
                                 return [
                                     'count' => $count,
@@ -383,12 +444,7 @@ class QuestionnaireResponseReportController extends Controller
                     return [
                         'answered_count' => $answeredCount,
                         'answered_percentage' => (int) round(($answeredCount / $denominator) * 100),
-                        'latest_answers' => $questionAnswers
-                            ->map(fn ($answer): string => $this->formatAnswerValue($answer))
-                            ->filter()
-                            ->unique()
-                            ->take(5)
-                            ->values(),
+                        'latest_answers' => collect($latestAnswers[$qid] ?? [])->values(),
                         'options' => $options,
                         'question' => $question,
                         'type_label' => QuestionnaireQuestion::typeLabels()[$question->type] ?? $question->type,
@@ -410,10 +466,12 @@ class QuestionnaireResponseReportController extends Controller
 
     /**
      * @return array{
+     *     activeFilters: array{org_id?: int, questionnaire_id?: int, response_state?: string, user_id?: int},
      *     organizations: array<int, string>,
      *     orgId: int,
      *     questionnaireId: int,
      *     questionnaires: array<int, string>,
+     *     responseState: string,
      *     selectedUserId: int,
      *     spotlightQuestionnaires: Collection<int, Questionnaire>,
      *     users: array<int, string>
@@ -423,48 +481,76 @@ class QuestionnaireResponseReportController extends Controller
         User $actor,
         int $questionnaireId,
         int $organizationId,
-        int $userId
+        int $userId,
+        string $responseState
     ): array {
         return [
+            'activeFilters' => $this->activeFilters($questionnaireId, $organizationId, $userId, $responseState),
             'organizations' => $this->organizationOptions($actor),
             'orgId' => $organizationId,
             'questionnaireId' => $questionnaireId,
-            'questionnaires' => $this->questionnaireOptions(),
+            'questionnaires' => $this->questionnaireOptions($actor),
+            'responseState' => $responseState,
             'selectedUserId' => $userId,
-            'spotlightQuestionnaires' => $this->spotlightQuestionnaires(),
+            'spotlightQuestionnaires' => $this->spotlightService->getForFilters(),
             'users' => $this->userOptions($actor),
         ];
+    }
+
+    /**
+     * @return array{org_id?: int, questionnaire_id?: int, response_state?: string, user_id?: int}
+     */
+    protected function activeFilters(
+        int $questionnaireId,
+        int $organizationId,
+        int $userId,
+        string $responseState
+    ): array {
+        return array_filter([
+            'questionnaire_id' => $questionnaireId > 0 ? $questionnaireId : null,
+            'org_id' => $organizationId > 0 ? $organizationId : null,
+            'user_id' => $userId > 0 ? $userId : null,
+            'response_state' => $responseState !== 'completed' ? $responseState : null,
+        ], fn (mixed $value): bool => $value !== null);
     }
 
     protected function filteredResponsesQuery(
         User $actor,
         int $questionnaireId,
         int $organizationId,
-        int $userId
+        int $userId,
+        string $responseState,
+        bool $withDisplayRelations = true
     ): Builder {
-        return QuestionnaireResponse::query()
-            ->select(['id', 'organization_questionnaire_id', 'user_id', 'submitted_at', 'created_at'])
-            ->whereNotNull('submitted_at')
-            ->with([
+        $query = QuestionnaireResponse::query()
+            ->select(['id', 'organization_questionnaire_id', 'user_id', 'submitted_at', 'last_saved_at', 'created_at']);
+
+        if ($withDisplayRelations) {
+            $query->with([
                 'user:id,name,email,org_id',
                 'organizationQuestionnaire.organization:org_id,naam',
                 'organizationQuestionnaire.questionnaire:id,title',
-            ])
-            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
-                $query->whereHas('organizationQuestionnaire', function (Builder $query) use ($actor): void {
-                    $query->where('org_id', $actor->org_id);
-                });
+            ]);
+        }
+
+        return $query
+            ->when($responseState === 'completed', function (Builder $query): void {
+                $query->whereNotNull('submitted_at');
             })
-            ->when($questionnaireId > 0, function (Builder $query) use ($questionnaireId): void {
-                $query->whereHas('organizationQuestionnaire', function (Builder $query) use ($questionnaireId): void {
-                    $query->where('questionnaire_id', $questionnaireId);
-                });
+            ->when($responseState === 'draft', function (Builder $query): void {
+                $query->whereNull('submitted_at');
             })
-            ->when($organizationId > 0, function (Builder $query) use ($organizationId): void {
-                $query->whereHas('organizationQuestionnaire', function (Builder $query) use ($organizationId): void {
-                    $query->where('org_id', $organizationId);
-                });
-            })
+            ->when(
+                ! $actor->isAdmin() || $questionnaireId > 0 || $organizationId > 0,
+                function (Builder $query) use ($actor, $questionnaireId, $organizationId): void {
+                    $query->whereHas('organizationQuestionnaire', function (Builder $query) use ($actor, $questionnaireId, $organizationId): void {
+                        $query
+                            ->when(! $actor->isAdmin(), fn (Builder $q) => $q->where('org_id', $actor->org_id))
+                            ->when($questionnaireId > 0, fn (Builder $q) => $q->where('questionnaire_id', $questionnaireId))
+                            ->when($organizationId > 0, fn (Builder $q) => $q->where('org_id', $organizationId));
+                    });
+                }
+            )
             ->when($userId > 0, function (Builder $query) use ($userId): void {
                 $query->where('user_id', $userId);
             });
@@ -486,75 +572,39 @@ class QuestionnaireResponseReportController extends Controller
     protected function loadQuestionnaireStructure(Questionnaire $questionnaire): Questionnaire
     {
         $questionnaire->load([
+            'categories' => fn ($query) => $query->orderBy('sort_order'),
             'categories.questions' => fn ($query) => $query->orderBy('sort_order'),
         ]);
 
         return $questionnaire;
     }
 
-    /**
-     * @return Collection<int, QuestionnaireResponse>
-     */
-    protected function responsesForStatistics(
-        User $actor,
-        int $questionnaireId,
-        int $organizationId,
-        int $userId
-    ): Collection {
-        return $this->filteredResponsesQuery($actor, $questionnaireId, $organizationId, $userId)
-            ->with([
-                'answers.question:id,questionnaire_category_id,prompt,type,options',
-                'answers.question.category:id,questionnaire_id,title',
-            ])
-            ->get();
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    protected function organizationOptions(User $actor): array
+    protected function normalizeResponseState(?string $responseState): string
     {
-        return Organization::query()
-            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
-                $query->where('org_id', $actor->org_id);
-            })
-            ->orderBy('naam')
-            ->pluck('naam', 'org_id')
-            ->all();
+        return in_array($responseState, ['all', 'completed', 'draft'], true)
+            ? $responseState
+            : 'completed';
     }
 
     /**
      * @return array<int, string>
      */
-    protected function questionnaireOptions(): array
+    protected function questionnaireOptions(User $actor): array
     {
         return Questionnaire::query()
+            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
+                $query->whereHas('organizationQuestionnaires', function (Builder $query) use ($actor): void {
+                    $query->where('org_id', $actor->org_id);
+                });
+            })
             ->orderBy('title')
             ->pluck('title', 'id')
             ->all();
     }
 
     /**
-     * @return Collection<int, Questionnaire>
-     */
-    protected function spotlightQuestionnaires(): Collection
-    {
-        $spotlightTitles = [
-            SyncAdaptabilityAceQuestionnaire::TITLE,
-            SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
-        ];
-
-        $questionnaires = Questionnaire::query()
-            ->whereIn('title', $spotlightTitles)
-            ->get(['id', 'title', 'description']);
-
-        return collect($spotlightTitles)
-            ->map(fn (string $title): ?Questionnaire => $questionnaires->firstWhere('title', $title))
-            ->filter()
-            ->values();
-    }
-
-    /**
+     * Returns at most 500 users to keep the filter dropdown manageable.
+     *
      * @return array<int, string>
      */
     protected function userOptions(User $actor): array
@@ -564,6 +614,7 @@ class QuestionnaireResponseReportController extends Controller
                 $query->where('org_id', $actor->org_id);
             })
             ->orderBy('name')
+            ->limit(500)
             ->get(['id', 'name', 'email'])
             ->mapWithKeys(fn (User $user): array => [$user->id => "{$user->name} ({$user->email})"])
             ->all();

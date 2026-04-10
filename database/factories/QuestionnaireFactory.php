@@ -20,6 +20,7 @@ class QuestionnaireFactory extends Factory
         return [
             'title' => 'Questionnaire '.fake()->unique()->company(),
             'description' => fake()->sentence(),
+            'locale' => config('app.locale'),
             'is_active' => true,
         ];
     }

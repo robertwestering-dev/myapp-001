@@ -1,0 +1,74 @@
+<?php
+
+use App\Models\BlogPost;
+
+test('home page exposes seo metadata and structured data', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk()
+        ->assertSee('<title>'.__('hermes.home_people.title').'</title>', false)
+        ->assertSee('<meta name="description" content="'.__('hermes.home_people.meta_description').'">', false)
+        ->assertSee('<link rel="canonical" href="'.route('home').'">', false)
+        ->assertSee('<meta property="og:title" content="'.__('hermes.home_people.title').'">', false)
+        ->assertSee('<meta name="twitter:description" content="'.__('hermes.home_people.meta_description').'">', false)
+        ->assertSee(__('hermes.home_people.hero_title'))
+        ->assertSee(route('organizations.landing', absolute: false), false)
+        ->assertSee('Organisaties')
+        ->assertSee('"@type": "WebSite"', false)
+        ->assertSee('"@type": "Organization"', false);
+});
+
+test('organization page exposes seo metadata and organization messaging', function () {
+    $response = $this->get(route('organizations.landing'));
+
+    $response->assertOk()
+        ->assertSee('<title>'.__('hermes.organizations_page.title').'</title>', false)
+        ->assertSee('<meta name="description" content="'.__('hermes.organizations_page.meta_description').'">', false)
+        ->assertSee('<link rel="canonical" href="'.route('organizations.landing').'">', false)
+        ->assertSee(__('hermes.home.hero_title'))
+        ->assertSee(__('hermes.home.offers_heading'))
+        ->assertSee('Home')
+        ->assertSee('Blog')
+        ->assertSee('Over')
+        ->assertSee('Inspiratiebronnen')
+        ->assertSee('Over ons')
+        ->assertSee('Privacy')
+        ->assertSee('Prijzen')
+        ->assertSee('Organisaties')
+        ->assertSee(route('home', absolute: false), false)
+        ->assertSee('"@type": "WebPage"', false);
+});
+
+test('blog index exposes a non-empty localized heading and seo metadata', function () {
+    $response = $this->get(route('blog.index'));
+
+    $response->assertOk()
+        ->assertSee(__('hermes.blog.summary_title'))
+        ->assertSee('<meta name="description" content="'.__('hermes.blog.meta_description').'">', false)
+        ->assertSee('<link rel="canonical" href="'.route('blog.index').'">', false)
+        ->assertSee('Home')
+        ->assertSee('Blog')
+        ->assertSee('Over')
+        ->assertSee('Inspiratiebronnen')
+        ->assertSee('Over ons')
+        ->assertSee('Privacy')
+        ->assertSee('Prijzen')
+        ->assertSee('Organisaties')
+        ->assertSee('"@type": "Blog"', false);
+});
+
+test('blog article uses the homepage guest header for visitors', function () {
+    $blogPost = BlogPost::factory()->create();
+
+    $response = $this->get(route('blog.show', $blogPost));
+
+    $response->assertOk()
+        ->assertSee('Home')
+        ->assertSee('Blog')
+        ->assertSee('Over')
+        ->assertSee('Inspiratiebronnen')
+        ->assertSee('Over ons')
+        ->assertSee('Privacy')
+        ->assertSee('Prijzen')
+        ->assertSee('Organisaties');
+});

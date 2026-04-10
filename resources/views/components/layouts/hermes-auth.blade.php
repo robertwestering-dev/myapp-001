@@ -7,6 +7,7 @@
     'lead',
     'formTitle',
     'helper',
+    'announcement' => null,
     'points' => [],
 ])
 
@@ -60,6 +61,18 @@
         .page-shell {
             width: min(var(--content), calc(100% - 32px));
             margin: 0 auto;
+        }
+
+        .announcement-bar {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #2d7a4d 0%, #1f5f3b 100%);
+            color: #f7fff9;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            line-height: 1.5;
         }
 
         .topbar {
@@ -167,7 +180,7 @@
         }
 
         .site-footer__inner {
-            min-height: 80px;
+            min-height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -175,6 +188,7 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.95rem;
             color: var(--muted);
+            line-height: 1.2;
         }
 
         .hero-panel,
@@ -365,6 +379,10 @@
     </style>
 </head>
 <body>
+    @if ($announcement)
+        <div class="announcement-bar">{{ $announcement }}</div>
+    @endif
+
     <x-hermes-header>
         <a class="pill" href="{{ $backHref }}">{{ $backLabel }}</a>
     </x-hermes-header>

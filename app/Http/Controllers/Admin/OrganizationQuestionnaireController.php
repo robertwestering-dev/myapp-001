@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\ProvidesOrganizationOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrganizationQuestionnaireRequest;
 use App\Http\Requests\Admin\UpdateOrganizationQuestionnaireRequest;
@@ -10,24 +11,28 @@ use App\Models\OrganizationQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class OrganizationQuestionnaireController extends Controller
 {
-    public function create(Questionnaire $questionnaire): View
+    use ProvidesOrganizationOptions;
+
+    public function create(Request $request, Questionnaire $questionnaire): View
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         return view('admin.organization-questionnaires.form', [
             'availability' => new OrganizationQuestionnaire(['is_active' => true]),
-            'intro' => 'Stel deze standaardquestionnaire beschikbaar voor een organisatie.',
+            'additionalOrganizations' => $this->additionalOrganizationOptions($actor, $questionnaire),
+            'intro' => 'Stel deze questionnaire beschikbaar per organisatie en bepaal per koppeling de periode en activatie.',
             'isEditing' => false,
+            'linkedOrganizations' => $this->linkedOrganizationNames($actor, $questionnaire),
             'organizations' => $this->organizationOptions($actor),
             'questionnaire' => $questionnaire,
             'submitLabel' => 'Beschikbaarheid opslaan',
-            'title' => 'Questionnaire beschikbaar stellen',
+            'title' => __('hermes.admin.form_titles.new_organization_questionnaire'),
         ]);
     }
 
@@ -36,49 +41,48 @@ class OrganizationQuestionnaireController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        $attributes = $request->validated();
+        $request->validated();
 
-        if (! $actor->isAdmin()) {
-            $attributes['org_id'] = $actor->org_id;
+        foreach ($request->selectedOrganizationConfigurations() as $configuration) {
+            OrganizationQuestionnaire::query()->updateOrCreate(
+                [
+                    'questionnaire_id' => $questionnaire->id,
+                    'org_id' => $configuration['org_id'],
+                ],
+                [
+                    'available_from' => $configuration['available_from'],
+                    'available_until' => $configuration['available_until'],
+                    'is_active' => $configuration['is_active'],
+                ],
+            );
         }
-
-        $attributes['is_active'] = $request->boolean('is_active');
-
-        OrganizationQuestionnaire::query()->updateOrCreate(
-            [
-                'questionnaire_id' => $questionnaire->id,
-                'org_id' => $attributes['org_id'],
-            ],
-            [
-                'available_from' => $attributes['available_from'] ?? null,
-                'available_until' => $attributes['available_until'] ?? null,
-                'is_active' => $attributes['is_active'],
-            ],
-        );
 
         return redirect()
             ->route('admin.questionnaires.index')
-            ->with('status', 'Beschikbaarheid succesvol opgeslagen.');
+            ->with('status', __('hermes.admin.organization_questionnaires.saved'));
     }
 
     public function edit(
+        Request $request,
         Questionnaire $questionnaire,
         OrganizationQuestionnaire $organizationQuestionnaire
     ): View {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         abort_unless($organizationQuestionnaire->questionnaire_id === $questionnaire->id, 404);
         abort_unless($actor->canManageOrganization($organizationQuestionnaire->org_id), 403);
 
         return view('admin.organization-questionnaires.form', [
             'availability' => $organizationQuestionnaire,
+            'additionalOrganizations' => $this->additionalOrganizationOptions($actor, $questionnaire, $organizationQuestionnaire),
             'intro' => 'Werk de beschikbaarheid voor deze organisatie bij.',
             'isEditing' => true,
+            'linkedOrganizations' => $this->linkedOrganizationNames($actor, $questionnaire),
             'organizations' => $this->organizationOptions($actor),
             'questionnaire' => $questionnaire,
             'submitLabel' => 'Wijzigingen opslaan',
-            'title' => 'Beschikbaarheid wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_organization_questionnaire'),
         ]);
     }
 
@@ -95,25 +99,24 @@ class OrganizationQuestionnaireController extends Controller
 
         $attributes = $request->validated();
 
-        if (! $actor->isAdmin()) {
-            $attributes['org_id'] = $actor->org_id;
-        }
-
-        $attributes['is_active'] = $request->boolean('is_active');
-
-        $organizationQuestionnaire->update($attributes);
+        $organizationQuestionnaire->update([
+            'available_from' => $attributes['available_from'] ?? null,
+            'available_until' => $attributes['available_until'] ?? null,
+            'is_active' => $attributes['is_active'],
+        ]);
 
         return redirect()
             ->route('admin.questionnaires.index')
-            ->with('status', 'Beschikbaarheid succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.organization_questionnaires.updated'));
     }
 
     public function destroy(
+        Request $request,
         Questionnaire $questionnaire,
         OrganizationQuestionnaire $organizationQuestionnaire
     ): RedirectResponse {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         abort_unless($organizationQuestionnaire->questionnaire_id === $questionnaire->id, 404);
         abort_unless($actor->canManageOrganization($organizationQuestionnaire->org_id), 403);
@@ -122,20 +125,91 @@ class OrganizationQuestionnaireController extends Controller
 
         return redirect()
             ->route('admin.questionnaires.index')
-            ->with('status', 'Beschikbaarheid succesvol verwijderd.');
+            ->with('status', __('hermes.admin.organization_questionnaires.deleted'));
+    }
+
+    public function toggle(
+        Request $request,
+        Questionnaire $questionnaire,
+        Organization $organization,
+    ): RedirectResponse {
+        /** @var User $actor */
+        $actor = $request->user();
+
+        abort_unless($actor->canManageOrganization($organization->org_id), 403);
+
+        $availability = OrganizationQuestionnaire::query()->firstOrNew([
+            'questionnaire_id' => $questionnaire->id,
+            'org_id' => $organization->org_id,
+        ]);
+
+        $willBeActive = ! $availability->exists || ! $availability->is_active;
+
+        if ($willBeActive && ! $questionnaire->is_active) {
+            return back()->withErrors([
+                'availability' => __('hermes.questionnaires.availability_requires_active_questionnaire'),
+            ]);
+        }
+
+        if (! $availability->exists) {
+            $availability->fill([
+                'available_from' => null,
+                'available_until' => null,
+                'is_active' => true,
+            ])->save();
+
+            return redirect()
+                ->route('admin.questionnaires.index')
+                ->with('status', __('hermes.admin.organization_questionnaires.saved'));
+        }
+
+        $availability->update([
+            'is_active' => ! $availability->is_active,
+        ]);
+
+        return redirect()
+            ->route('admin.questionnaires.index')
+            ->with('status', __('hermes.admin.organization_questionnaires.updated'));
     }
 
     /**
      * @return array<int, string>
      */
-    protected function organizationOptions(User $actor): array
+    protected function additionalOrganizationOptions(
+        User $actor,
+        Questionnaire $questionnaire,
+        ?OrganizationQuestionnaire $currentAvailability = null,
+    ): array {
+        $linkedOrganizationIds = $questionnaire->organizationQuestionnaires()
+            ->when(
+                ! $actor->isAdmin(),
+                fn ($query) => $query->where('org_id', $actor->org_id),
+            )
+            ->pluck('org_id')
+            ->filter()
+            ->map(fn (int|string $organizationId): int => (int) $organizationId)
+            ->all();
+
+        return collect($this->organizationOptions($actor))
+            ->reject(fn (string $name, int $organizationId): bool => in_array($organizationId, $linkedOrganizationIds, true))
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function linkedOrganizationNames(User $actor, Questionnaire $questionnaire): array
     {
-        return Organization::query()
-            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
-                $query->where('org_id', $actor->org_id);
-            })
-            ->orderBy('naam')
-            ->pluck('naam', 'org_id')
+        return $questionnaire->organizationQuestionnaires()
+            ->with('organization:org_id,naam')
+            ->when(
+                ! $actor->isAdmin(),
+                fn ($query) => $query->where('org_id', $actor->org_id),
+            )
+            ->get()
+            ->pluck('organization.naam')
+            ->filter()
+            ->values()
             ->all();
     }
 }

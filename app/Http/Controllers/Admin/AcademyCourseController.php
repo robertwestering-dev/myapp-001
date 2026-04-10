@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\HandlesLocalizedPayload;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAcademyCourseRequest;
 use App\Http\Requests\Admin\UpdateAcademyCourseRequest;
@@ -12,12 +13,14 @@ use Illuminate\Http\Request;
 
 class AcademyCourseController extends Controller
 {
+    use HandlesLocalizedPayload;
+
     public function index(): View
     {
         $academyCourses = AcademyCourse::query()
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->paginate(15);
+            ->paginate(config('app.per_page'));
 
         return view('admin.academy-courses.index', [
             'academyCourses' => $academyCourses,
@@ -27,7 +30,7 @@ class AcademyCourseController extends Controller
     public function create(): View
     {
         return view('admin.academy-courses.form', [
-            'title' => 'Nieuwe Academy-cursus',
+            'title' => __('hermes.admin.form_titles.new_academy_course'),
             'intro' => 'Voeg een nieuwe e-learning toe aan de Academy-catalogus voor ingelogde gebruikers.',
             'submitLabel' => 'Academy-cursus opslaan',
             'academyCourse' => new AcademyCourse([
@@ -48,13 +51,13 @@ class AcademyCourseController extends Controller
 
         return redirect()
             ->route('admin.academy-courses.edit', $academyCourse)
-            ->with('status', 'Academy-cursus succesvol toegevoegd.');
+            ->with('status', __('hermes.admin.academy_courses.created'));
     }
 
     public function edit(AcademyCourse $academyCourse): View
     {
         return view('admin.academy-courses.form', [
-            'title' => 'Academy-cursus wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_academy_course'),
             'intro' => 'Werk metadata, vertalingen en publicatie-instellingen van deze e-learning bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'academyCourse' => $academyCourse,
@@ -70,7 +73,7 @@ class AcademyCourseController extends Controller
 
         return redirect()
             ->route('admin.academy-courses.edit', $academyCourse)
-            ->with('status', 'Academy-cursus succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.academy_courses.updated'));
     }
 
     public function confirmDestroy(AcademyCourse $academyCourse): View
@@ -86,7 +89,7 @@ class AcademyCourseController extends Controller
 
         return redirect()
             ->route('admin.academy-courses.index')
-            ->with('status', 'Academy-cursus succesvol verwijderd.');
+            ->with('status', __('hermes.admin.academy_courses.deleted'));
     }
 
     /**
@@ -110,33 +113,5 @@ class AcademyCourseController extends Controller
             'learning_goals' => $this->localizedListPayload($attributes['learning_goals']),
             'contents' => $this->localizedListPayload($attributes['contents']),
         ];
-    }
-
-    /**
-     * @param  array<string, string>  $values
-     * @return array<string, string>
-     */
-    protected function localizedFieldPayload(array $values): array
-    {
-        return collect($values)
-            ->map(fn (string $value): string => trim($value))
-            ->all();
-    }
-
-    /**
-     * @param  array<string, string>  $values
-     * @return array<string, array<int, string>>
-     */
-    protected function localizedListPayload(array $values): array
-    {
-        return collect($values)
-            ->map(function (string $value): array {
-                return collect(preg_split('/\r\n|\r|\n/', $value) ?: [])
-                    ->map(fn (string $line): string => trim($line))
-                    ->filter()
-                    ->values()
-                    ->all();
-            })
-            ->all();
     }
 }

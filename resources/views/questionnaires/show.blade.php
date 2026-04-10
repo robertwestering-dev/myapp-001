@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $organizationQuestionnaire->questionnaire->title }}</title>
-    <x-favicon-links />
-    <style>
+<x-layouts.hermes-dashboard :title="$organizationQuestionnaire->questionnaire->title">
+    <x-slot:head>
+        <style>
         :root {
             --bg: #f4efe6;
             --paper: rgba(255, 255, 255, 0.78);
@@ -125,6 +120,12 @@
             background: linear-gradient(180deg, rgba(30, 71, 61, 0.96), rgba(16, 42, 35, 0.98));
         }
 
+        .pill--neutral {
+            background: linear-gradient(135deg, #8a8f97 0%, #666c74 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
         .locale-switcher {
             display: inline-flex;
             align-items: center;
@@ -181,6 +182,11 @@
             gap: 22px;
         }
 
+        .panel--results {
+            display: grid;
+            gap: 24px;
+        }
+
         .panel--instructions {
             background:
                 linear-gradient(180deg, rgba(32, 69, 58, 0.96), rgba(20, 37, 32, 0.97)),
@@ -195,6 +201,13 @@
         .panel--intro h1,
         .panel--intro .lead,
         .panel--instructions .lead {
+            max-width: none;
+            width: 100%;
+        }
+
+        .panel--intro .user-page-heading,
+        .panel--intro .user-page-heading__body,
+        .panel--intro .user-page-heading p {
             max-width: none;
             width: 100%;
         }
@@ -249,84 +262,171 @@
         }
 
         .panel--instructions .lead,
-        .panel--instructions .muted {
-            color: rgba(246, 242, 235, 0.82);
+        .panel--instructions .muted,
+        .panel--instructions .user-section-heading p,
+        .panel--instructions .user-section-heading h2,
+        .panel--instructions .user-section-heading__eyebrow {
+            color: #fff !important;
+        }
+
+        .panel--instructions .user-section-heading,
+        .panel--instructions .user-section-heading p {
+            max-width: none;
+            width: 100%;
         }
 
         .meta-list,
-        .instruction-grid {
+        .instruction-grid,
+        .results-dimensions {
             display: grid;
             gap: 14px;
         }
 
-        .instruction-grid {
+        .questionnaire-feedback__instruction {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .results-summary-grid,
+        .results-dimension-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .results-summary-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
-        .instruction-card {
-            padding: 18px;
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.08);
+        .results-dimension-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .instruction-card strong,
-        .instruction-card span {
+        .results-dimension-card {
+            display: grid;
+            gap: 14px;
+        }
+
+        .results-dimension-card--recommended {
+            border-color: rgba(217, 106, 43, 0.35);
+            box-shadow: 0 20px 44px rgba(168, 74, 25, 0.12);
+        }
+
+        .results-dimension-card__header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .results-dimension-card__header h3 {
+            margin-bottom: 8px;
+            font-size: 1.08rem;
+        }
+
+        .results-progress {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(22, 33, 29, 0.1);
+            overflow: hidden;
+        }
+
+        .results-progress span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(135deg, #d96a2b 0%, #20453a 100%);
+        }
+
+        .results-badge,
+        .results-next-step {
+            display: inline-flex;
+            width: fit-content;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: rgba(32, 69, 58, 0.08);
+            color: var(--forest);
+        }
+
+        .results-badge--recommended,
+        .results-next-step {
+            background: rgba(217, 106, 43, 0.2);
+            color: #16211d;
+            border: 1px solid rgba(168, 74, 25, 0.2);
+        }
+
+        .questionnaire-feedback--results {
+            background: rgba(217, 106, 43, 0.1);
+            border-color: rgba(168, 74, 25, 0.24);
+            color: var(--ink);
+        }
+
+        .questionnaire-feedback {
+            border-radius: var(--radius-md);
+        }
+
+        .questionnaire-feedback--inline {
             display: block;
         }
 
-        .instruction-card strong {
-            margin-bottom: 6px;
-            font-size: 1rem;
+        .questionnaire-feedback.user-feedback--status {
+            background: rgba(32, 69, 58, 0.14);
+            border-color: rgba(32, 69, 58, 0.24);
+            color: #16211d;
         }
 
-        .instruction-card span {
-            font-family: Arial, Helvetica, sans-serif;
-            color: rgba(246, 242, 235, 0.82);
-        }
-
-        .status,
-        .error-summary {
-            padding: 16px 18px;
-            border-radius: var(--radius-md);
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .status {
-            background: rgba(32, 69, 58, 0.08);
-            border: 1px solid rgba(32, 69, 58, 0.18);
-        }
-
-        .error-summary {
+        .questionnaire-feedback.user-feedback--errors {
             background: rgba(217, 106, 43, 0.1);
-            border: 1px solid rgba(168, 74, 25, 0.2);
-            color: var(--accent-deep);
-        }
-
-        .error-summary div + div {
-            margin-top: 6px;
+            border-color: rgba(168, 74, 25, 0.26);
+            color: #ffd9c8;
         }
 
         .meta-link {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.95rem;
             text-decoration: underline;
             text-underline-offset: 3px;
         }
 
         .progress-row {
+            display: grid;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .progress-summary {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 14px;
             flex-wrap: wrap;
-            margin-bottom: 22px;
         }
 
         .progress-label {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.94rem;
             font-weight: 600;
+            color: var(--muted);
+        }
+
+        .progress-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .progress-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .progress-meta {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.9rem;
             color: var(--muted);
         }
 
@@ -417,10 +517,15 @@
             border-top-color: rgba(168, 74, 25, 0.34);
         }
 
+        .question--invalid label,
+        .question--invalid legend {
+            color: var(--accent-deep);
+        }
+
         label,
         .question legend {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.95rem;
+            font-size: 1.08rem;
             font-weight: 600;
         }
 
@@ -456,6 +561,74 @@
             align-items: center;
             gap: 10px;
             font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+        }
+
+        .option input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            flex: 0 0 22px;
+            accent-color: var(--forest);
+        }
+
+        .likert-scale {
+            display: grid;
+            gap: 14px;
+        }
+
+        .likert-scale__track {
+            display: grid;
+            grid-template-columns: repeat(var(--likert-count, 5), minmax(0, 1fr));
+            gap: 12px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 22px;
+            border: 1px solid rgba(22, 33, 29, 0.12);
+            background:
+                linear-gradient(90deg, rgba(168, 74, 25, 0.08), rgba(255, 255, 255, 0.92) 50%, rgba(32, 69, 58, 0.08)),
+                rgba(255, 255, 255, 0.82);
+        }
+
+        .likert-scale__option {
+            min-width: 0;
+        }
+
+        .likert-scale__option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .likert-scale__card {
+            height: 100%;
+            min-height: 52px;
+            display: grid;
+            align-content: center;
+            justify-items: center;
+            gap: 0;
+            padding: 10px 12px;
+            border-radius: 18px;
+            border: 1px solid rgba(22, 33, 29, 0.12);
+            background: rgba(255, 255, 255, 0.96);
+            text-align: center;
+            transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        .likert-scale__option input:checked + .likert-scale__card {
+            border-color: rgba(47, 122, 87, 0.45);
+            background: rgba(47, 122, 87, 0.25);
+            box-shadow: 0 12px 24px rgba(24, 34, 30, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .likert-scale__label {
+            font-size: 0.88rem;
+            line-height: 1.35;
+            color: var(--ink);
+        }
+
+        .likert-scale__option input:checked + .likert-scale__card .likert-scale__label {
+            color: #1f5b40;
         }
 
         .muted {
@@ -474,19 +647,9 @@
         }
 
         .actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: grid;
             gap: 12px;
-            flex-wrap: wrap;
             margin-top: 8px;
-        }
-
-        .actions__group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
         }
 
         .questionnaire-pill,
@@ -510,6 +673,18 @@
             border-color: transparent;
         }
 
+        .questionnaire-pill--submit {
+            background: linear-gradient(135deg, #2f7a57 0%, #1f5b40 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .ghost-pill--draft {
+            background: linear-gradient(135deg, #8e949c 0%, #676d75 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
         .questionnaire-pill[hidden],
         .ghost-pill[hidden] {
             display: none;
@@ -529,12 +704,6 @@
         .site-footer {
             background: rgba(244, 239, 230, 0.78);
             border-top: 1px solid rgba(22, 33, 29, 0.08);
-        }
-
-        @media (max-width: 920px) {
-            .instruction-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         @media (max-width: 780px) {
@@ -568,20 +737,27 @@
                 padding: 22px;
             }
 
+            .likert-scale__track {
+                grid-template-columns: 1fr;
+            }
+
+            .results-summary-grid,
+            .results-dimension-grid {
+                grid-template-columns: 1fr;
+            }
+
             .actions {
                 align-items: stretch;
             }
 
-            .actions__group,
+            .user-action-row,
             .questionnaire-pill,
             .ghost-pill {
                 width: 100%;
             }
         }
-    </style>
-</head>
-<body>
-    <x-hermes-header :show-booking="false" />
+        </style>
+    </x-slot:head>
 
     @php
         $categories = $organizationQuestionnaire->questionnaire->categories->values();
@@ -590,72 +766,86 @@
                 return $errors->has("answers.{$question->id}");
             });
         });
-        $initialStepIndex = $firstErrorCategoryIndex === false ? 0 : (int) $firstErrorCategoryIndex;
+        $savedCategoryIndex = $initialCategoryId
+            ? $categories->search(fn ($category): bool => $category->id === $initialCategoryId)
+            : false;
+        $initialStepIndex = $firstErrorCategoryIndex === false
+            ? ($savedCategoryIndex === false ? 0 : (int) $savedCategoryIndex)
+            : (int) $firstErrorCategoryIndex;
+        $initialCategory = $categories->get($initialStepIndex);
+        $initialVisibleQuestionCount = $initialCategory?->questions->whereIn('id', $visibleQuestionIds)->count() ?? 0;
+        $initialAnsweredQuestionCount = $initialCategory?->questions
+            ->whereIn('id', $visibleQuestionIds)
+            ->filter(fn ($question) => filled($existingAnswers[$question->id] ?? null))
+            ->count() ?? 0;
+        $initialTotalAnsweredQuestionCount = collect($visibleQuestionIds)
+            ->filter(fn ($questionId): bool => filled($existingAnswers[$questionId] ?? null))
+            ->count();
+        $isCompletedResponse = $response?->submitted_at !== null;
     @endphp
 
-    <main>
         <div class="page">
             <section class="panel panel--intro">
-                <span class="eyebrow">{{ __('hermes.questionnaire.eyebrow') }}</span>
-                <h1>{{ $organizationQuestionnaire->questionnaire->title }}</h1>
-                <p class="lead">{{ $organizationQuestionnaire->questionnaire->description }}</p>
+                <x-user-page-heading
+                    :eyebrow="__('hermes.questionnaire.eyebrow')"
+                    :title="$organizationQuestionnaire->questionnaire->title"
+                    :text="$organizationQuestionnaire->questionnaire->description"
+                />
 
                 <div class="meta-list">
                     @if (session('status'))
-                        <div class="status">{{ session('status') }}</div>
+                        <x-user-feedback class="questionnaire-feedback" :messages="[session('status')]" />
                     @endif
 
+                    @unless ($isCompletedResponse)
+                        <x-user-feedback class="questionnaire-feedback questionnaire-feedback--inline" always-render>
+                            <span class="questionnaire-feedback__instruction">{{ __('hermes.questionnaire.instructions_text') }}</span>
+                            <span data-autosave-status hidden></span>
+                        </x-user-feedback>
+                    @endunless
+
                     @if ($response?->last_saved_at)
-                        <p class="muted">{{ __('hermes.questionnaire.last_saved', ['datetime' => $response->last_saved_at->format('d-m-Y H:i')]) }}</p>
+                        <x-user-inline-meta :items="[__('hermes.questionnaire.last_saved', ['datetime' => $response->last_saved_at->format('d-m-Y H:i')])]" />
                     @endif
 
                     @if ($response?->submitted_at)
-                        <p class="muted">{{ __('hermes.questionnaire.last_completed', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]) }}</p>
+                        <x-user-inline-meta :items="[__('hermes.questionnaire.last_completed', ['datetime' => $response->submitted_at->format('d-m-Y H:i')])]" />
+                        <x-user-inline-meta :items="[__('hermes.questionnaire.completed_locked_draft')]" />
                     @endif
 
                     @if ($resumeUrl)
-                        <p class="muted">
-                            {{ __('hermes.questionnaire.resume_hint') }}
+                        <x-user-inline-meta>
+                            <span>{{ __('hermes.questionnaire.resume_hint') }}</span>
                             <a href="{{ $resumeUrl }}" class="meta-link">{{ __('hermes.questionnaire.resume_link') }}</a>
-                        </p>
+                        </x-user-inline-meta>
                     @endif
 
                     @if ($errors->any())
-                        <div class="error-summary">
-                            @foreach ($errors->all() as $error)
-                                <div>{{ $error }}</div>
-                            @endforeach
-                        </div>
+                        <x-user-feedback variant="errors" class="questionnaire-feedback" :messages="$errors->all()" />
                     @endif
                 </div>
             </section>
 
-            <section class="panel panel--instructions">
-                <span class="eyebrow">{{ __('hermes.questionnaire.instructions') }}</span>
-                <p class="lead">{{ __('hermes.questionnaire.instructions_text') }}</p>
-
-                <div class="instruction-grid">
-                    <div class="instruction-card">
-                        <strong>{{ __('hermes.questionnaire.organization') }}</strong>
-                        <span>{{ $organizationQuestionnaire->organization->naam ?? 'Niet gekoppeld' }}</span>
-                    </div>
-
-                    <div class="instruction-card">
-                        <strong>{{ __('hermes.questionnaire.categories') }}</strong>
-                        <span>{{ __('hermes.questionnaire.categories_count', ['count' => $categories->count()]) }}</span>
-                    </div>
-
-                    <div class="instruction-card">
-                        <strong>{{ __('hermes.questionnaire.save') }}</strong>
-                        <span>{{ __('hermes.questionnaire.save_text') }}</span>
-                    </div>
-                </div>
-            </section>
+            @if ($analysisResult)
+                @include('questionnaires.partials.results', ['analysisResult' => $analysisResult])
+            @endif
 
             <section class="panel">
                 <div class="progress-row">
-                    <div class="progress-label" data-questionnaire-progress-label>
-                        {{ __('hermes.questionnaire.step_of', ['current' => $initialStepIndex + 1, 'total' => max($categories->count(), 1)]) }}
+                    <div class="progress-summary">
+                        <div class="progress-copy">
+                            <div class="progress-label" data-questionnaire-progress-label>
+                                {{ __('hermes.questionnaire.step_of', ['current' => $initialStepIndex + 1, 'total' => max($categories->count(), 1)]) }}
+                            </div>
+                            <div class="progress-title" data-questionnaire-progress-title>{{ $initialCategory?->title }}</div>
+                            <div class="progress-meta" data-questionnaire-progress-meta>
+                                {{ __('hermes.questionnaire.section_progress', ['answered' => $initialAnsweredQuestionCount, 'total' => max($initialVisibleQuestionCount, 1)]) }}
+                            </div>
+                        </div>
+
+                        <div class="progress-meta" data-questionnaire-total-progress>
+                            {{ __('hermes.questionnaire.total_progress', ['answered' => $initialTotalAnsweredQuestionCount, 'total' => max(count($visibleQuestionIds), 1)]) }}
+                        </div>
                     </div>
 
                     <div class="progress-pills" aria-label="Voortgang door de questionnaire">
@@ -673,26 +863,30 @@
                 <form
                     method="POST"
                     action="{{ route('questionnaire-responses.store', $organizationQuestionnaire) }}"
+                    novalidate
                     data-questionnaire-form
                     data-step-total="{{ max($categories->count(), 1) }}"
                     data-initial-step="{{ $initialStepIndex }}"
+                    data-is-completed="{{ $isCompletedResponse ? 'true' : 'false' }}"
                 >
                     @csrf
+                    <input type="hidden" name="current_category_id" value="{{ $initialCategory?->id }}" data-current-category-input>
 
                     @foreach ($categories as $categoryIndex => $category)
                         <section
                             class="step"
                             data-questionnaire-step
                             data-step-index="{{ $categoryIndex }}"
+                            data-step-category-id="{{ $category->id }}"
+                            data-step-title="{{ $category->title }}"
                             @if ($categoryIndex !== $initialStepIndex) hidden @endif
                         >
                             <div class="step__header">
                                 <span class="step__counter">{{ __('hermes.questionnaire.step_of', ['current' => $categoryIndex + 1, 'total' => $categories->count()]) }}</span>
-                                <h2>{{ $category->title }}</h2>
-
-                                @if ($category->description)
-                                    <p class="muted">{{ $category->description }}</p>
-                                @endif
+                                <x-user-section-heading
+                                    :title="$category->title"
+                                    :text="$category->description"
+                                />
                             </div>
 
                             <div class="question-list">
@@ -707,7 +901,7 @@
                                         data-condition-operator="{{ $question->display_condition_operator }}"
                                         data-condition-answer='@json($question->display_condition_answer ?? [])'
                                         data-required="{{ $question->is_required ? 'true' : 'false' }}"
-                                        @hidden(! in_array($question->id, $visibleQuestionIds, true))
+                                        @if (! in_array($question->id, $visibleQuestionIds, true)) hidden @endif
                                     >
                                         <label for="question-{{ $question->id }}">
                                             {{ $question->prompt }}@if ($question->is_required) * @endif
@@ -770,6 +964,26 @@
                                                     </label>
                                                 @endforeach
                                             </fieldset>
+                                        @elseif ($question->type === \App\Models\QuestionnaireQuestion::TYPE_LIKERT_SCALE)
+                                            <fieldset class="likert-scale">
+                                                <div class="likert-scale__track" style="--likert-count: {{ max(count($question->options ?? []), 1) }};">
+                                                    @foreach ($question->options ?? [] as $optionIndex => $option)
+                                                        <label class="likert-scale__option">
+                                                            <input
+                                                                id="question-{{ $question->id }}-option-{{ $optionIndex }}"
+                                                                type="radio"
+                                                                name="answers[{{ $question->id }}]"
+                                                            value="{{ $option }}"
+                                                            @checked($answer === $option)
+                                                            @required($question->is_required && $optionIndex === 0)
+                                                        >
+                                                            <span class="likert-scale__card">
+                                                                <span class="likert-scale__label">{{ $option }}</span>
+                                                            </span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </fieldset>
                                         @elseif ($question->type === \App\Models\QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE)
                                             <fieldset>
                                                 @foreach ($question->options ?? [] as $option)
@@ -798,25 +1012,27 @@
                     @endforeach
 
                     <div class="actions">
-                        <div class="actions__group">
+                        <x-user-action-row>
                             <button type="button" class="ghost-pill" data-previous-step>{{ __('hermes.questionnaire.previous_step') }}</button>
                             <button type="button" class="questionnaire-pill" data-next-step>{{ __('hermes.questionnaire.next_step') }}</button>
-                            <button type="submit" class="ghost-pill" name="intent" value="draft" data-save-draft>{{ __('hermes.questionnaire.save_draft') }}</button>
-                            <button type="submit" class="questionnaire-pill" name="intent" value="submit" data-submit-step>{{ __('hermes.questionnaire.submit') }}</button>
-                        </div>
+                        </x-user-action-row>
 
-                        <a href="{{ route('dashboard') }}" class="ghost-pill">{{ __('hermes.questionnaire.back_to_dashboard') }}</a>
+                        <x-user-action-row align="end">
+                            @unless ($isCompletedResponse)
+                                <button type="submit" class="ghost-pill ghost-pill--draft" name="intent" value="draft" data-save-draft formnovalidate>{{ __('hermes.questionnaire.save_draft') }}</button>
+                            @endunless
+
+                            <button type="submit" class="questionnaire-pill questionnaire-pill--submit" name="intent" value="submit" data-submit-step>{{ __('hermes.questionnaire.submit') }}</button>
+                        </x-user-action-row>
                     </div>
                 </form>
             </section>
         </div>
-    </main>
-
-    <x-hermes-footer />
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('[data-questionnaire-form]');
+            const progressPanel = form?.closest('.panel');
 
             if (! form) {
                 return;
@@ -824,14 +1040,32 @@
 
             const steps = Array.from(form.querySelectorAll('[data-questionnaire-step]'));
             const progressLabel = document.querySelector('[data-questionnaire-progress-label]');
+            const progressTitle = document.querySelector('[data-questionnaire-progress-title]');
+            const progressMeta = document.querySelector('[data-questionnaire-progress-meta]');
+            const totalProgress = document.querySelector('[data-questionnaire-total-progress]');
             const progressPills = Array.from(document.querySelectorAll('[data-progress-pill]'));
             const previousButton = form.querySelector('[data-previous-step]');
             const nextButton = form.querySelector('[data-next-step]');
             const submitButton = form.querySelector('[data-submit-step]');
             const draftButton = form.querySelector('[data-save-draft]');
+            const autosaveStatus = document.querySelector('[data-autosave-status]');
+            const currentCategoryInput = form.querySelector('[data-current-category-input]');
+            const isCompletedResponse = form.dataset.isCompleted === 'true';
             let currentStepIndex = Number(form.dataset.initialStep || 0);
+            let autosaveTimeout = null;
+            let autosaveRequest = null;
+            let isDirty = false;
 
             const normalizeValue = (value) => String(value || '').trim();
+
+            const setAutosaveStatus = (message, isVisible = true) => {
+                if (! autosaveStatus) {
+                    return;
+                }
+
+                autosaveStatus.hidden = ! isVisible || message === '';
+                autosaveStatus.textContent = message;
+            };
 
             const answerValuesForQuestion = (questionId) => {
                 const controls = Array.from(form.querySelectorAll(`[name="answers[${questionId}]"], [name="answers[${questionId}][]"]`));
@@ -854,42 +1088,67 @@
                 return value === '' ? [] : [value];
             };
 
-            const isQuestionVisible = (question) => {
+            const isQuestionVisible = (question, questionMap, visibilityCache, inProgress = new Set()) => {
+                const questionId = question.dataset.questionId;
+
+                if (visibilityCache.has(questionId)) {
+                    return visibilityCache.get(questionId);
+                }
+
                 const dependencyId = question.dataset.conditionQuestionId;
                 const operator = question.dataset.conditionOperator;
 
                 if (! dependencyId || ! operator) {
-                    return question.dataset.visibleDefault !== 'false';
+                    visibilityCache.set(questionId, true);
+
+                    return true;
+                }
+
+                if (inProgress.has(questionId)) {
+                    visibilityCache.set(questionId, false);
+
+                    return false;
+                }
+
+                const dependencyQuestion = questionMap.get(String(dependencyId));
+
+                if (! dependencyQuestion) {
+                    visibilityCache.set(questionId, false);
+
+                    return false;
+                }
+
+                inProgress.add(questionId);
+
+                if (! isQuestionVisible(dependencyQuestion, questionMap, visibilityCache, inProgress)) {
+                    inProgress.delete(questionId);
+                    visibilityCache.set(questionId, false);
+
+                    return false;
                 }
 
                 const expected = JSON.parse(question.dataset.conditionAnswer || '[]');
                 const answerValues = answerValuesForQuestion(dependencyId);
+                let visible = true;
 
                 if (operator === 'answered') {
-                    return answerValues.length > 0;
+                    visible = answerValues.length > 0;
+                } else if (operator === 'not_answered') {
+                    visible = answerValues.length === 0;
+                } else if (operator === 'equals') {
+                    visible = answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0];
+                } else if (operator === 'not_equals') {
+                    visible = ! (answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0]);
+                } else if (operator === 'contains') {
+                    visible = expected.some((value) => answerValues.includes(value));
+                } else if (operator === 'not_contains') {
+                    visible = expected.every((value) => ! answerValues.includes(value));
                 }
 
-                if (operator === 'not_answered') {
-                    return answerValues.length === 0;
-                }
+                inProgress.delete(questionId);
+                visibilityCache.set(questionId, visible);
 
-                if (operator === 'equals') {
-                    return answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0];
-                }
-
-                if (operator === 'not_equals') {
-                    return ! (answerValues.length === 1 && expected.length === 1 && answerValues[0] === expected[0]);
-                }
-
-                if (operator === 'contains') {
-                    return expected.some((value) => answerValues.includes(value));
-                }
-
-                if (operator === 'not_contains') {
-                    return expected.every((value) => ! answerValues.includes(value));
-                }
-
-                return true;
+                return visible;
             };
 
             const clearClientError = (question) => {
@@ -977,9 +1236,11 @@
 
             const syncConditionalQuestions = () => {
                 const questions = Array.from(form.querySelectorAll('[data-question]'));
+                const questionMap = new Map(questions.map((question) => [question.dataset.questionId, question]));
+                const visibilityCache = new Map();
 
                 questions.forEach((question) => {
-                    const shouldShow = isQuestionVisible(question);
+                    const shouldShow = isQuestionVisible(question, questionMap, visibilityCache);
                     question.hidden = ! shouldShow;
 
                     const controls = Array.from(question.querySelectorAll('input, textarea, select'));
@@ -990,11 +1251,27 @@
 
                     if (! shouldShow) {
                         clearClientError(question);
+
+                        return;
                     }
                 });
             };
 
             const visibleSteps = () => steps.filter((step) => Array.from(step.querySelectorAll('[data-question]')).some((question) => ! question.hidden));
+            const hasAnswer = (question) => answerValuesForQuestion(question.dataset.questionId).length > 0;
+
+            const scrollToFormTop = () => {
+                const target = progressPanel || form;
+
+                if (! target) {
+                    return;
+                }
+
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                });
+            };
 
             const validateStep = (step) => {
                 const questions = Array.from(step.querySelectorAll('[data-question]')).filter((question) => ! question.hidden);
@@ -1030,8 +1307,18 @@
                 }
 
                 steps.forEach((step) => {
-                    step.hidden = ! activeSteps.includes(step);
+                    step.hidden = true;
                 });
+
+                const currentStep = activeSteps[currentStepIndex];
+
+                if (currentStep) {
+                    currentStep.hidden = false;
+                }
+
+                if (currentCategoryInput) {
+                    currentCategoryInput.value = currentStep?.dataset.stepCategoryId || '';
+                }
 
                 progressPills.forEach((pill, index) => {
                     const isVisible = activeSteps.includes(steps[index]);
@@ -1040,10 +1327,33 @@
                     pill.classList.toggle('is-complete', isVisible && activeSteps.indexOf(steps[index]) < currentStepIndex);
                 });
 
+                const visibleQuestions = currentStep
+                    ? Array.from(currentStep.querySelectorAll('[data-question]')).filter((question) => ! question.hidden)
+                    : [];
+                const answeredQuestions = visibleQuestions.filter((question) => hasAnswer(question)).length;
+                const allVisibleQuestions = activeSteps.flatMap((step) => Array.from(step.querySelectorAll('[data-question]')).filter((question) => ! question.hidden));
+                const allAnsweredQuestions = allVisibleQuestions.filter((question) => hasAnswer(question)).length;
+
                 if (progressLabel) {
                     progressLabel.textContent = @json(__('hermes.questionnaire.step_of', ['current' => '__CURRENT__', 'total' => '__TOTAL__']))
                         .replace('__CURRENT__', String(currentStepIndex + 1))
                         .replace('__TOTAL__', String(totalSteps));
+                }
+
+                if (progressTitle) {
+                    progressTitle.textContent = currentStep?.dataset.stepTitle || '';
+                }
+
+                if (progressMeta) {
+                    progressMeta.textContent = @json(__('hermes.questionnaire.section_progress', ['answered' => '__ANSWERED__', 'total' => '__TOTAL__']))
+                        .replace('__ANSWERED__', String(answeredQuestions))
+                        .replace('__TOTAL__', String(Math.max(visibleQuestions.length, 1)));
+                }
+
+                if (totalProgress) {
+                    totalProgress.textContent = @json(__('hermes.questionnaire.total_progress', ['answered' => '__ANSWERED__', 'total' => '__TOTAL__']))
+                        .replace('__ANSWERED__', String(allAnsweredQuestions))
+                        .replace('__TOTAL__', String(Math.max(allVisibleQuestions.length, 1)));
                 }
 
                 if (previousButton) {
@@ -1059,8 +1369,83 @@
                 }
 
                 if (draftButton) {
-                    draftButton.hidden = false;
+                    draftButton.hidden = isCompletedResponse;
                 }
+            };
+
+            const buildAutosavePayload = () => {
+                const formData = new FormData(form);
+
+                formData.set('intent', 'autosave');
+
+                if (currentCategoryInput?.value) {
+                    formData.set('current_category_id', currentCategoryInput.value);
+                }
+
+                return formData;
+            };
+
+            const autosave = async () => {
+                if (isCompletedResponse) {
+                    return;
+                }
+
+                if (! isDirty || submitButton?.disabled) {
+                    return;
+                }
+
+                if (autosaveRequest) {
+                    autosaveRequest.abort();
+                }
+
+                const controller = new AbortController();
+
+                autosaveRequest = controller;
+
+                setAutosaveStatus(@json(__('hermes.questionnaire.autosave_saving')));
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: buildAutosavePayload(),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: controller.signal,
+                    });
+
+                    if (! response.ok) {
+                        throw new Error('Autosave failed.');
+                    }
+
+                    const payload = await response.json();
+
+                    isDirty = false;
+                    setAutosaveStatus(payload.message || @json(__('hermes.questionnaire.autosave_saved_generic')));
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
+
+                    setAutosaveStatus(@json(__('hermes.questionnaire.autosave_failed')));
+                }
+            };
+
+            const scheduleAutosave = () => {
+                if (isCompletedResponse) {
+                    return;
+                }
+
+                isDirty = true;
+
+                if (autosaveTimeout) {
+                    window.clearTimeout(autosaveTimeout);
+                }
+
+                autosaveTimeout = window.setTimeout(() => {
+                    autosave();
+                }, 1500);
             };
 
             previousButton?.addEventListener('click', () => {
@@ -1070,6 +1455,7 @@
 
                 currentStepIndex -= 1;
                 renderStep();
+                scrollToFormTop();
             });
 
             nextButton?.addEventListener('click', () => {
@@ -1081,10 +1467,15 @@
 
                 currentStepIndex += 1;
                 renderStep();
+                scrollToFormTop();
             });
 
             form.addEventListener('submit', (event) => {
                 const submitter = event.submitter;
+
+                if (autosaveTimeout) {
+                    window.clearTimeout(autosaveTimeout);
+                }
 
                 if (! submitter || submitter.dataset.submitStep === undefined) {
                     return;
@@ -1106,10 +1497,22 @@
 
             form.addEventListener('change', () => {
                 renderStep();
+                scheduleAutosave();
+            });
+
+            form.addEventListener('input', (event) => {
+                if (! event.target.matches('input, textarea, select')) {
+                    return;
+                }
+
+                renderStep();
+                scheduleAutosave();
             });
 
             renderStep();
+            if (! isCompletedResponse) {
+                setAutosaveStatus(@json(__('hermes.questionnaire.autosave_ready')));
+            }
         });
     </script>
-</body>
-</html>
+</x-layouts.hermes-dashboard>

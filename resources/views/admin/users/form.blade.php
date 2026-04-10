@@ -65,8 +65,38 @@
             </label>
 
             <label>
+                <span>Voornaam</span>
+                <input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}">
+            </label>
+
+            <label>
                 <span>Emailadres</span>
                 <input type="email" name="email" value="{{ old('email', $user->email) }}" required>
+            </label>
+
+            <label>
+                <span>Geslacht</span>
+                <select name="gender">
+                    <option value="">Kies een optie</option>
+                    @foreach (\App\Models\User::genderOptions() as $gender)
+                        <option value="{{ $gender }}" @selected(old('gender', $user->gender) === $gender)>{{ ucfirst($gender) }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                <span>Geboortedatum</span>
+                <input type="date" name="birth_date" value="{{ old('birth_date', $user->birth_date?->toDateString()) }}">
+            </label>
+
+            <label>
+                <span>Woonplaats</span>
+                <input type="text" name="city" value="{{ old('city', $user->city) }}">
+            </label>
+
+            <label>
+                <span>Land</span>
+                <input type="text" name="country" value="{{ old('country', $user->country) }}">
             </label>
 
             <label>

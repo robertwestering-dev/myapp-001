@@ -22,29 +22,51 @@
     </x-slot:heroFacts>
 
     <style>
-        .filters,
         .spotlight-grid,
-        .filters,
         .meta {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
         }
 
-        .filters {
-            align-items: end;
+        .admin-toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
             margin: 28px 0 24px;
         }
 
-        .filters label {
-            min-width: min(100%, 220px);
+        .admin-toolbar--end {
+            align-items: end;
+        }
+
+        .admin-toolbar__group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .admin-filter-field {
             display: grid;
             gap: 8px;
+            min-width: min(100%, 220px);
+        }
+
+        .admin-filter-field__label,
+        .admin-filter-field__description {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.95rem;
         }
 
-        .filters select {
+        .admin-filter-control {
             width: 100%;
             padding: 14px 16px;
             border-radius: 16px;
@@ -52,6 +74,12 @@
             background: rgba(255, 255, 255, 0.76);
             color: var(--ink);
             font: inherit;
+        }
+
+        .admin-filter-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .spotlight-grid {
@@ -146,77 +174,82 @@
     </style>
 
     <section class="content-panel">
-        @if (session('status'))
-            <div class="status">{{ session('status') }}</div>
-        @endif
+        <x-admin-feedback :messages="session('status')" />
+        <x-admin-feedback variant="errors" :messages="$errors->all()" />
 
-        @if ($errors->any())
-            <div class="errors">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
+        <x-admin-toolbar>
+            <form method="GET" action="{{ route('admin.questionnaire-responses.index') }}" class="filters">
+                <x-admin-filter-field
+                    label="Questionnaire"
+                    :description="__('hermes.reports.questionnaire')"
+                >
+                    <select name="questionnaire_id" class="admin-filter-control">
+                        <option value="">{{ __('hermes.reports.all_questionnaires') }}</option>
+                        @foreach ($questionnaires as $id => $title)
+                            <option value="{{ $id }}" @selected($questionnaireId === (int) $id)>{{ $title }}</option>
+                        @endforeach
+                    </select>
+                </x-admin-filter-field>
 
-        <form method="GET" action="{{ route('admin.questionnaire-responses.index') }}" class="filters">
-            <label>
-                <span>Questionnaire</span>
-                <span>{{ __('hermes.reports.questionnaire') }}</span>
-                <select name="questionnaire_id">
-                    <option value="">{{ __('hermes.reports.all_questionnaires') }}</option>
-                    @foreach ($questionnaires as $id => $title)
-                        <option value="{{ $id }}" @selected($questionnaireId === (int) $id)>{{ $title }}</option>
-                    @endforeach
-                </select>
-            </label>
+                <x-admin-filter-field :label="__('hermes.reports.organization')">
+                    <select name="org_id" class="admin-filter-control">
+                        <option value="">{{ __('hermes.reports.all_organizations') }}</option>
+                        @foreach ($organizations as $id => $name)
+                            <option value="{{ $id }}" @selected($orgId === (int) $id)>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </x-admin-filter-field>
 
-            <label>
-                <span>{{ __('hermes.reports.organization') }}</span>
-                <select name="org_id">
-                    <option value="">{{ __('hermes.reports.all_organizations') }}</option>
-                    @foreach ($organizations as $id => $name)
-                        <option value="{{ $id }}" @selected($orgId === (int) $id)>{{ $name }}</option>
-                    @endforeach
-                </select>
-            </label>
+                <x-admin-filter-field :label="__('hermes.reports.user')">
+                    <select name="user_id" class="admin-filter-control">
+                        <option value="">{{ __('hermes.reports.all_users') }}</option>
+                        @foreach ($users as $id => $label)
+                            <option value="{{ $id }}" @selected($selectedUserId === (int) $id)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </x-admin-filter-field>
 
-            <label>
-                <span>{{ __('hermes.reports.user') }}</span>
-                <select name="user_id">
-                    <option value="">{{ __('hermes.reports.all_users') }}</option>
-                    @foreach ($users as $id => $label)
-                        <option value="{{ $id }}" @selected($selectedUserId === (int) $id)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </label>
+                <x-admin-filter-field :label="__('hermes.reports.response_state')">
+                    <select name="response_state" class="admin-filter-control">
+                        <option value="completed" @selected($responseState === 'completed')>{{ __('hermes.reports.state_completed_only') }}</option>
+                        <option value="draft" @selected($responseState === 'draft')>{{ __('hermes.reports.state_draft_only') }}</option>
+                        <option value="all" @selected($responseState === 'all')>{{ __('hermes.reports.state_all') }}</option>
+                    </select>
+                </x-admin-filter-field>
 
-            <button type="submit" class="pill">{{ __('hermes.reports.filter') }}</button>
-            <a href="{{ route('admin.questionnaire-responses.index') }}" class="ghost-pill">{{ __('hermes.reports.reset') }}</a>
-            <a
-                href="{{ route('admin.questionnaire-responses.stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
-                class="ghost-pill"
-            >
-                {{ __('hermes.reports.view_stats') }}
-            </a>
-            <a
-                href="{{ route('admin.questionnaire-responses.export', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
-                class="ghost-pill"
-            >
-                {{ __('hermes.reports.export_detail') }}
-            </a>
-            <a
-                href="{{ route('admin.questionnaire-responses.export-summary', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
-                class="ghost-pill"
-            >
-                {{ __('hermes.reports.export_summary') }}
-            </a>
-            <a
-                href="{{ route('admin.questionnaire-responses.export-stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}"
-                class="ghost-pill"
-            >
-                {{ __('hermes.reports.export_stats') }}
-            </a>
-        </form>
+                <x-admin-filter-actions>
+                    <button type="submit" class="pill">{{ __('hermes.reports.filter') }}</button>
+                    <a href="{{ route('admin.questionnaire-responses.index') }}" class="ghost-pill">{{ __('hermes.reports.reset') }}</a>
+                </x-admin-filter-actions>
+            </form>
+
+            <x-admin-toolbar-group>
+                <a
+                    href="{{ route('admin.questionnaire-responses.stats', $activeFilters) }}"
+                    class="ghost-pill"
+                >
+                    {{ __('hermes.reports.view_stats') }}
+                </a>
+                <a
+                    href="{{ route('admin.questionnaire-responses.export', $activeFilters) }}"
+                    class="ghost-pill"
+                >
+                    {{ __('hermes.reports.export_detail') }}
+                </a>
+                <a
+                    href="{{ route('admin.questionnaire-responses.export-summary', $activeFilters) }}"
+                    class="ghost-pill"
+                >
+                    {{ __('hermes.reports.export_summary') }}
+                </a>
+                <a
+                    href="{{ route('admin.questionnaire-responses.export-stats', $activeFilters) }}"
+                    class="ghost-pill"
+                >
+                    {{ __('hermes.reports.export_stats') }}
+                </a>
+            </x-admin-toolbar-group>
+        </x-admin-toolbar>
 
         <div class="spotlight-grid">
             @foreach ($spotlightQuestionnaires as $spotlightQuestionnaire)
@@ -250,6 +283,7 @@
                         <th>{{ __('hermes.reports.questionnaire') }}</th>
                         <th>{{ __('hermes.reports.organization') }}</th>
                         <th>{{ __('hermes.reports.user') }}</th>
+                        <th>{{ __('hermes.reports.response_state') }}</th>
                         <th>{{ __('hermes.reports.submitted_at') }}</th>
                         <th>{{ __('hermes.reports.action') }}</th>
                     </tr>
@@ -263,38 +297,44 @@
                                 <div>{{ $response->user->name }}</div>
                                 <div class="muted">{{ $response->user->email }}</div>
                             </td>
-                            <td>{{ $response->submitted_at?->format('d-m-Y H:i') ?? 'Niet ingezonden' }}</td>
+                            <td>
+                                <x-admin-status-badge
+                                    :label="$response->isDraft() ? __('hermes.reports.state_draft') : __('hermes.reports.state_completed')"
+                                    :tone="$response->isDraft() ? 'warning' : 'default'"
+                                    uppercase
+                                />
+                            </td>
+                            <td>{{ $response->submitted_at?->format('d-m-Y H:i') ?? $response->last_saved_at?->format('d-m-Y H:i') ?? __('hermes.reports.submitted_at_unknown') }}</td>
                             <td>
                                 <a href="{{ route('admin.questionnaire-responses.show', $response) }}" class="ghost-pill">{{ __('hermes.reports.view_response') }}</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">{{ __('hermes.reports.no_responses_title') }}</td>
+                            <td colspan="6">
+                                <x-admin-empty-state
+                                    class="spotlight-card"
+                                    actions-class="spotlight-card__actions"
+                                    :title="__('hermes.reports.no_responses_title')"
+                                    :description="__('hermes.reports.no_responses_text')"
+                                >
+                                    <x-slot:actions>
+                                        <a href="{{ route('admin.questionnaire-responses.index') }}" class="ghost-pill">{{ __('hermes.reports.reset') }}</a>
+                                        <a href="{{ route('admin.questionnaire-responses.stats', $activeFilters) }}" class="ghost-pill">{{ __('hermes.reports.view_stats') }}</a>
+                                    </x-slot:actions>
+                                </x-admin-empty-state>
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        <div class="meta">
-            <div class="muted">
-                {{ __('hermes.reports.results_range', ['from' => $responses->firstItem() ?? 0, 'to' => $responses->lastItem() ?? 0, 'total' => $responses->total()]) }}
-            </div>
-
-            @if ($responses->hasPages())
-                <nav class="pagination" aria-label="{{ __('hermes.reports.action') }}">
-                    @foreach ($responses->linkCollection() as $link)
-                        @if ($link['url'] === null)
-                            <span class="pagination__current">{{ $link['label'] }}</span>
-                        @elseif ($link['active'])
-                            <span class="pagination__current">{{ $link['label'] }}</span>
-                        @else
-                            <a href="{{ $link['url'] }}" class="pagination__link">{!! $link['label'] !!}</a>
-                        @endif
-                    @endforeach
-                </nav>
-            @endif
-        </div>
+        <x-admin-results-meta
+            :paginator="$responses"
+            :aria-label="__('hermes.reports.action')"
+            link-mode="collection"
+            :range-text="__('hermes.reports.results_range', ['from' => $responses->firstItem() ?? 0, 'to' => $responses->lastItem() ?? 0, 'total' => $responses->total()])"
+        />
     </section>
 </x-layouts.hermes-admin>

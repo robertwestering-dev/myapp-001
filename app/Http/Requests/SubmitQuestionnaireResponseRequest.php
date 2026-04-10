@@ -2,31 +2,42 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\NormalizesAnswers;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\QuestionnaireQuestion;
 use App\Support\Questionnaires\QuestionnaireConditionEvaluator;
 use Closure;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class SubmitQuestionnaireResponseRequest extends FormRequest
 {
+    use NormalizesAnswers;
+
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null;
     }
 
     public function rules(): array
     {
         return [
-            'intent' => ['required', 'string', Rule::in(['draft', 'submit'])],
+            'intent' => ['required', 'string', Rule::in(['draft', 'submit', 'autosave'])],
             'answers' => ['nullable', 'array'],
+            'current_category_id' => ['nullable', 'integer'],
         ];
     }
 
     public function saveAsDraft(): bool
     {
-        return $this->string('intent')->value() === 'draft';
+        return $this->string('intent')->value() !== 'submit';
+    }
+
+    public function isAutosave(): bool
+    {
+        return $this->string('intent')->value() === 'autosave';
     }
 
     /**
@@ -35,51 +46,53 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
     public function after(): array
     {
         return [
-            function ($validator): void {
-                /** @var OrganizationQuestionnaire $organizationQuestionnaire */
-                $organizationQuestionnaire = $this->route('organizationQuestionnaire');
-                $questions = $organizationQuestionnaire->questionnaire
-                    ->loadMissing('categories.questions')
-                    ->questions;
-                $answers = $this->input('answers', []);
-                $conditionEvaluator = app(QuestionnaireConditionEvaluator::class);
-
-                foreach ($questions as $question) {
-                    if (! $conditionEvaluator->isVisible($question, $answers)) {
-                        continue;
-                    }
-
-                    $value = data_get($answers, (string) $question->id);
-
-                    if (! $this->saveAsDraft() && $question->is_required && $this->isEmptyAnswer($value)) {
-                        $validator->errors()->add("answers.{$question->id}", __('hermes.questionnaire.validation.required'));
-
-                        continue;
-                    }
-
-                    if ($this->isEmptyAnswer($value)) {
-                        continue;
-                    }
-
-                    $this->validateAnswerValue($question, $value, $validator);
-                }
+            function (Validator $validator): void {
+                $this->validateAnswers($validator);
             },
         ];
     }
 
-    protected function isEmptyAnswer(mixed $value): bool
+    private function validateAnswers(Validator $validator): void
     {
-        if (is_array($value)) {
-            return collect($value)->filter(fn ($item): bool => trim((string) $item) !== '')->isEmpty();
-        }
+        /** @var OrganizationQuestionnaire $organizationQuestionnaire */
+        $organizationQuestionnaire = $this->route('organizationQuestionnaire');
+        $questions = $organizationQuestionnaire->questionnaire
+            ->loadMissing('categories.questions')
+            ->questions;
+        $answers = $this->input('answers', []);
+        $conditionEvaluator = app(QuestionnaireConditionEvaluator::class);
+        $visibleQuestions = collect($conditionEvaluator->visibleQuestions($questions, $answers))
+            ->keyBy('id');
 
-        return trim((string) $value) === '';
+        foreach ($questions as $question) {
+            if (! $visibleQuestions->has($question->id)) {
+                continue;
+            }
+
+            $value = data_get($answers, (string) $question->id);
+
+            if (! $this->saveAsDraft() && $question->is_required && $this->isEmptyAnswer($value)) {
+                $validator->errors()->add("answers.{$question->id}", __('hermes.questionnaire.validation.required'));
+
+                continue;
+            }
+
+            if ($this->isEmptyAnswer($value)) {
+                continue;
+            }
+
+            if ($this->isAutosave()) {
+                continue;
+            }
+
+            $this->validateAnswerValue($question, $value, $validator);
+        }
     }
 
     protected function validateAnswerValue(
         QuestionnaireQuestion $question,
         mixed $value,
-        mixed $validator
+        Validator $validator
     ): void {
         $key = "answers.{$question->id}";
 
@@ -90,6 +103,7 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
             QuestionnaireQuestion::TYPE_NUMBER,
             QuestionnaireQuestion::TYPE_BOOLEAN,
             QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
+            QuestionnaireQuestion::TYPE_LIKERT_SCALE,
         ], true) && is_array($value)) {
             $validator->errors()->add($key, __('hermes.questionnaire.validation.invalid_format'));
 
@@ -100,7 +114,7 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
             $validator->errors()->add($key, __('hermes.questionnaire.validation.number'));
         }
 
-        if ($question->type === QuestionnaireQuestion::TYPE_DATE && strtotime((string) $value) === false) {
+        if ($question->type === QuestionnaireQuestion::TYPE_DATE && ! Carbon::canBeCreatedFromFormat((string) $value, 'Y-m-d')) {
             $validator->errors()->add($key, __('hermes.questionnaire.validation.date'));
         }
 
@@ -109,8 +123,10 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
         }
 
         if ($question->type === QuestionnaireQuestion::TYPE_SINGLE_CHOICE
-            && ! in_array((string) $value, $question->options ?? [], true)) {
-            $validator->errors()->add($key, __('hermes.questionnaire.validation.single_choice'));
+            || $question->type === QuestionnaireQuestion::TYPE_LIKERT_SCALE) {
+            if (! in_array((string) $value, $question->options ?? [], true)) {
+                $validator->errors()->add($key, __('hermes.questionnaire.validation.single_choice'));
+            }
         }
 
         if ($question->type === QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE) {

@@ -9,16 +9,17 @@ use App\Models\Questionnaire;
 use App\Models\QuestionnaireCategory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class QuestionnaireCategoryController extends Controller
 {
-    public function create(Questionnaire $questionnaire): View
+    public function create(Request $request, Questionnaire $questionnaire): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
 
         return view('admin.questionnaire-categories.form', [
             'questionnaire' => $questionnaire,
-            'title' => 'Nieuwe categorie',
+            'title' => __('hermes.admin.form_titles.new_questionnaire_category'),
             'intro' => 'Voeg een categorie toe aan deze questionnaire.',
             'submitLabel' => 'Categorie opslaan',
             'category' => new QuestionnaireCategory,
@@ -28,23 +29,21 @@ class QuestionnaireCategoryController extends Controller
 
     public function store(StoreQuestionnaireCategoryRequest $request, Questionnaire $questionnaire): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
-
         $questionnaire->categories()->create($request->validated());
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Categorie succesvol toegevoegd.');
+            ->with('status', __('hermes.admin.questionnaire_categories.created'));
     }
 
-    public function edit(Questionnaire $questionnaire, QuestionnaireCategory $category): View
+    public function edit(Request $request, Questionnaire $questionnaire, QuestionnaireCategory $category): View
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
         abort_unless($category->questionnaire_id === $questionnaire->id, 404);
 
         return view('admin.questionnaire-categories.form', [
             'questionnaire' => $questionnaire,
-            'title' => 'Categorie wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_questionnaire_category'),
             'intro' => 'Werk deze categorie bij binnen de questionnaire.',
             'submitLabel' => 'Wijzigingen opslaan',
             'category' => $category,
@@ -57,25 +56,24 @@ class QuestionnaireCategoryController extends Controller
         Questionnaire $questionnaire,
         QuestionnaireCategory $category
     ): RedirectResponse {
-        abort_unless($request->user()?->isAdmin(), 403);
         abort_unless($category->questionnaire_id === $questionnaire->id, 404);
 
         $category->update($request->validated());
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Categorie succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.questionnaire_categories.updated'));
     }
 
-    public function destroy(Questionnaire $questionnaire, QuestionnaireCategory $category): RedirectResponse
+    public function destroy(Request $request, Questionnaire $questionnaire, QuestionnaireCategory $category): RedirectResponse
     {
-        abort_unless(request()->user()?->isAdmin(), 403);
+        $this->authorize('manage', Questionnaire::class);
         abort_unless($category->questionnaire_id === $questionnaire->id, 404);
 
         $category->delete();
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
-            ->with('status', 'Categorie succesvol verwijderd.');
+            ->with('status', __('hermes.admin.questionnaire_categories.deleted'));
     }
 }

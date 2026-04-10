@@ -6,6 +6,7 @@
     :heading="__('hermes.auth.register.heading')"
     :lead="__('hermes.auth.register.lead')"
     :form-title="__('hermes.auth.register.form_title')"
+    :announcement="__('hermes.auth.announcement')"
     :helper="__('hermes.auth.register.helper')"
     :points="[
         __('hermes.auth.register.point_1'),

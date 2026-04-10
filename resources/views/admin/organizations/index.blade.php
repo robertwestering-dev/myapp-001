@@ -5,30 +5,25 @@
     lead="Bekijk alle organisaties en beheer per record direct de gekoppelde contactpersoon."
     menu-active="organizations"
     :show-secondary-menu-items="false"
+    :show-hero="false"
 >
-    <x-slot:heroFacts>
-        <x-hermes-fact
-            :title="$organizations->total()"
-            description="Totaal aantal organisaties"
-        />
-        <x-hermes-fact
-            :title="$organizations->count()"
-            description="Resultaten op deze pagina"
-        />
-        <x-hermes-fact
-            title="CRUD"
-            description="Toevoegen, wijzigen en verwijderen vanuit hetzelfde overzicht"
-        />
-    </x-slot:heroFacts>
-
     <style>
-        .toolbar {
+        .admin-toolbar {
             display: flex;
-            align-items: center;
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
             margin: 28px 0 24px;
+        }
+
+        .admin-toolbar--center {
+            align-items: center;
+        }
+
+        .admin-toolbar__group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .table-wrap {
@@ -129,6 +124,8 @@
         }
 
         .empty {
+            display: grid;
+            gap: 12px;
             padding: 26px;
             border-radius: 24px;
             background: rgba(32, 69, 58, 0.08);
@@ -137,30 +134,21 @@
     </style>
 
     <section class="content-panel">
-        @if (session('status'))
-            <div class="status">{{ session('status') }}</div>
-        @endif
+        <x-admin-feedback :messages="session('status')" />
+        <x-admin-feedback variant="errors" :messages="$errors->all()" />
 
-        @if ($errors->any())
-            <div class="errors">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="toolbar">
+        <x-admin-toolbar align="center">
             <div>
                 <strong>Alle organisaties</strong>
                 <div class="muted">Per organisatie ziet u direct de gekoppelde contactpersoon.</div>
             </div>
 
             @if ($canCreateOrganizations)
-                <div class="actions">
+                <x-admin-toolbar-group class="actions">
                     <a href="{{ route('admin.organizations.create') }}" class="pill">Nieuwe organisatie</a>
-                </div>
+                </x-admin-toolbar-group>
             @endif
-        </div>
+        </x-admin-toolbar>
 
         @if ($organizations->count() > 0)
             <div class="table-wrap">
@@ -178,25 +166,24 @@
                                 <td>{{ $organization->naam }}</td>
                                 <td>{{ $organization->contact?->name ?? 'Geen contactpersoon' }}</td>
                                 <td>
-                                    <div class="actions">
-                                        <a
-                                            href="{{ route('admin.organizations.edit', $organization) }}"
-                                            class="ghost-pill icon-button"
-                                            aria-label="Wijzig {{ $organization->naam }}"
+                                    <x-admin-row-actions>
+                                        <x-admin-icon-link
+                                            :href="route('admin.organizations.edit', $organization)"
+                                            :label="'Wijzig ' . $organization->naam"
                                             title="Wijzigen"
                                         >
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 <path d="M12 20h9"/>
                                                 <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/>
                                             </svg>
-                                        </a>
+                                        </x-admin-icon-link>
 
                                         @if ($canDeleteOrganizations)
-                                            <a
-                                                href="{{ route('admin.organizations.confirm-delete', $organization) }}"
-                                                class="danger-pill icon-button icon-button--danger"
-                                                aria-label="Verwijder {{ $organization->naam }}"
+                                            <x-admin-icon-link
+                                                :href="route('admin.organizations.confirm-delete', $organization)"
+                                                :label="'Verwijder ' . $organization->naam"
                                                 title="Verwijderen"
+                                                variant="danger"
                                             >
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                     <path d="M3 6h18"/>
@@ -205,9 +192,9 @@
                                                     <path d="M10 11v6"/>
                                                     <path d="M14 11v6"/>
                                                 </svg>
-                                            </a>
+                                            </x-admin-icon-link>
                                         @endif
-                                    </div>
+                                    </x-admin-row-actions>
                                 </td>
                             </tr>
                         @endforeach
@@ -215,37 +202,18 @@
                 </table>
             </div>
 
-            <div class="meta">
-                <div class="muted">
-                    Resultaten {{ $organizations->firstItem() }} t/m {{ $organizations->lastItem() }} van {{ $organizations->total() }}
-                </div>
-
-                <div class="pagination" role="navigation" aria-label="Paginering organisaties">
-                    @if ($organizations->onFirstPage())
-                        <span class="pagination__link muted">Vorige</span>
-                    @else
-                        <a href="{{ $organizations->previousPageUrl() }}" class="pagination__link">Vorige</a>
-                    @endif
-
-                    @foreach (range(max(1, $organizations->currentPage() - 1), min($organizations->lastPage(), $organizations->currentPage() + 1)) as $page)
-                        @if ($page === $organizations->currentPage())
-                            <span class="pagination__current">{{ $page }}</span>
-                        @else
-                            <a href="{{ $organizations->url($page) }}" class="pagination__link">{{ $page }}</a>
-                        @endif
-                    @endforeach
-
-                    @if ($organizations->hasMorePages())
-                        <a href="{{ $organizations->nextPageUrl() }}" class="pagination__link">Volgende</a>
-                    @else
-                        <span class="pagination__link muted">Volgende</span>
-                    @endif
-                </div>
-            </div>
+            <x-admin-results-meta :paginator="$organizations" aria-label="Paginering organisaties" />
         @else
-            <div class="empty">
-                Er zijn nog geen organisaties beschikbaar. Voeg de eerste organisatie toe om te starten.
-            </div>
+            <x-admin-empty-state
+                title="Er zijn nog geen organisaties beschikbaar."
+                description="Voeg de eerste organisatie toe om te starten met beheer en koppelingen."
+            >
+                @if ($canCreateOrganizations)
+                    <x-slot:actions>
+                        <a href="{{ route('admin.organizations.create') }}" class="pill">Nieuwe organisatie</a>
+                    </x-slot:actions>
+                @endif
+            </x-admin-empty-state>
         @endif
     </section>
 </x-layouts.hermes-admin>

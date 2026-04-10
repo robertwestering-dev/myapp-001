@@ -25,6 +25,7 @@ class QuestionnaireResponseFactory extends Factory
             'submitted_at' => now(),
             'last_saved_at' => now(),
             'resume_token' => fake()->unique()->sha256(),
+            'current_questionnaire_category_id' => null,
         ];
     }
 

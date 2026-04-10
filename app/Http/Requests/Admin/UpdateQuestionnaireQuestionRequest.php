@@ -13,7 +13,7 @@ class UpdateQuestionnaireQuestionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() ?? false;
     }
 
     public function rules(): array
@@ -57,6 +57,7 @@ class UpdateQuestionnaireQuestionRequest extends FormRequest
                 if (in_array($this->input('type'), [
                     QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
                     QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE,
+                    QuestionnaireQuestion::TYPE_LIKERT_SCALE,
                 ], true)) {
                     $options = collect(preg_split('/\r\n|\r|\n/', (string) $this->input('options')))
                         ->map(fn (?string $option): string => trim((string) $option))
@@ -64,16 +65,16 @@ class UpdateQuestionnaireQuestionRequest extends FormRequest
                         ->values();
 
                     if ($options->count() < 2) {
-                        $validator->errors()->add('options', 'Geef minimaal twee antwoordopties op, ieder op een nieuwe regel.');
+                        $validator->errors()->add('options', __('hermes.admin.questionnaire_questions.validation.min_options'));
                     }
                 }
 
                 if ($this->filled('display_condition_question_id') && ! $this->filled('display_condition_operator')) {
-                    $validator->errors()->add('display_condition_operator', 'Kies een conditieoperator.');
+                    $validator->errors()->add('display_condition_operator', __('hermes.admin.questionnaire_questions.validation.condition_operator_required'));
                 }
 
                 if (! $this->filled('display_condition_question_id') && $this->filled('display_condition_operator')) {
-                    $validator->errors()->add('display_condition_question_id', 'Kies eerst de vraag waarvan deze vraag afhankelijk is.');
+                    $validator->errors()->add('display_condition_question_id', __('hermes.admin.questionnaire_questions.validation.condition_question_required'));
                 }
 
                 if (
@@ -85,7 +86,7 @@ class UpdateQuestionnaireQuestionRequest extends FormRequest
                     ], true)
                     && blank($this->input('display_condition_answer'))
                 ) {
-                    $validator->errors()->add('display_condition_answer', 'Geef minimaal een verwachte waarde op voor deze conditie.');
+                    $validator->errors()->add('display_condition_answer', __('hermes.admin.questionnaire_questions.validation.condition_answer_required'));
                 }
             },
         ];

@@ -23,10 +23,10 @@ class ContactRequestController extends Controller
             config('contact.recipient_address'),
             config('contact.recipient_name'),
         )
-            ->send($mailable);
+            ->queue($mailable);
 
         return redirect()
-            ->to(route('home').'#contact')
+            ->to(route('organizations.landing').'#contact')
             ->with('status', __('hermes.home.contact_success'));
     }
 }

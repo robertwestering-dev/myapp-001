@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\HandlesLocalizedPayload;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBlogPostRequest;
 use App\Http\Requests\Admin\UpdateBlogPostRequest;
@@ -14,6 +15,8 @@ use Illuminate\Support\Carbon;
 
 class BlogPostController extends Controller
 {
+    use HandlesLocalizedPayload;
+
     public function index(): View
     {
         $blogPosts = BlogPost::query()
@@ -21,7 +24,7 @@ class BlogPostController extends Controller
             ->orderByDesc('is_featured')
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->paginate(15);
+            ->paginate(config('app.per_page'));
 
         return view('admin.blog-posts.index', [
             'blogPosts' => $blogPosts,
@@ -31,13 +34,13 @@ class BlogPostController extends Controller
     public function create(): View
     {
         return view('admin.blog-posts.form', [
-            'title' => 'Nieuwe blogpost',
+            'title' => __('hermes.admin.form_titles.new_blog_post'),
             'intro' => 'Publiceer een nieuw artikel voor de publieke Hermes Results blog.',
             'submitLabel' => 'Blogpost opslaan',
             'blogPost' => new BlogPost([
-                'is_published' => true,
+                'is_published' => false,
                 'is_featured' => false,
-                'published_at' => now(),
+                'published_at' => now()->addDay(),
             ]),
             'isEditing' => false,
             'supportedLocales' => config('locales.supported', []),
@@ -53,18 +56,28 @@ class BlogPostController extends Controller
 
         return redirect()
             ->route('admin.blog-posts.edit', $blogPost)
-            ->with('status', 'Blogpost succesvol toegevoegd.');
+            ->with('status', __('hermes.admin.blog_posts.created'));
     }
 
     public function edit(BlogPost $blogPost): View
     {
         return view('admin.blog-posts.form', [
-            'title' => 'Blogpost wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_blog_post'),
             'intro' => 'Werk inhoud, metadata en publicatie-instellingen van deze blogpost bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'blogPost' => $blogPost,
             'isEditing' => true,
             'supportedLocales' => config('locales.supported', []),
+        ]);
+    }
+
+    public function preview(BlogPost $blogPost): View
+    {
+        return view('blog.show', [
+            'blogPost' => $blogPost->load('author'),
+            'blogIndexUrl' => route('admin.blog-posts.edit', $blogPost),
+            'relatedPosts' => collect(),
+            'isPreview' => true,
         ]);
     }
 
@@ -74,7 +87,7 @@ class BlogPostController extends Controller
 
         return redirect()
             ->route('admin.blog-posts.edit', $blogPost)
-            ->with('status', 'Blogpost succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.blog_posts.updated'));
     }
 
     public function confirmDestroy(BlogPost $blogPost): View
@@ -90,7 +103,7 @@ class BlogPostController extends Controller
 
         return redirect()
             ->route('admin.blog-posts.index')
-            ->with('status', 'Blogpost succesvol verwijderd.');
+            ->with('status', __('hermes.admin.blog_posts.deleted'));
     }
 
     /**
@@ -115,17 +128,6 @@ class BlogPostController extends Controller
                 ? (($attributes['published_at'] ?? null) ? Carbon::parse($attributes['published_at']) : now())
                 : null,
         ];
-    }
-
-    /**
-     * @param  array<string, string>  $values
-     * @return array<string, string>
-     */
-    protected function localizedFieldPayload(array $values): array
-    {
-        return collect($values)
-            ->map(fn (string $value): string => trim($value))
-            ->all();
     }
 
     /**

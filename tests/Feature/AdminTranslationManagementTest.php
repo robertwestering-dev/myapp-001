@@ -33,6 +33,8 @@ test('admin can filter translation management overview', function () {
 
     $response->assertOk()
         ->assertSee('Beheer alle Hermes-teksten')
+        ->assertSee('Zoek in content')
+        ->assertSee('Taal')
         ->assertSee('NL')
         ->assertSee('home')
         ->assertSee('hero_title')
@@ -57,6 +59,24 @@ test('admin can search within translation content', function () {
                         && $translation['locale'] === 'nl',
                 );
         });
+});
+
+test('translation overview shows active filters and a clear empty state when nothing matches', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.translations.index', [
+            'locale' => 'nl',
+            'page' => 'home',
+            'element' => 'hero_title',
+            'search' => 'geen-match-waarde',
+        ]))
+        ->assertOk()
+        ->assertSee('Actieve filters')
+        ->assertSee('geen-match-waarde')
+        ->assertSee('Er zijn geen vertaalregels gevonden voor de huidige filters.')
+        ->assertSee('Resultaten 0 t/m 0 van 0')
+        ->assertSee('Reset');
 });
 
 test('admin can update a translation row from the overview flow', function () {

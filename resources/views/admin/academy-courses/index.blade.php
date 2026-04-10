@@ -5,22 +5,8 @@
     lead="Beheer hier alle e-learnings in de Academy. Alleen globale admins kunnen deze bibliotheek zien, publiceren en onderhouden."
     menu-active="academy-courses"
     :show-secondary-menu-items="false"
+    :show-hero="false"
 >
-    <x-slot:heroFacts>
-        <x-hermes-fact
-            :title="$academyCourses->total()"
-            description="Academy-cursussen in de database"
-        />
-        <x-hermes-fact
-            :title="$academyCourses->where('is_active', true)->count()"
-            description="Actieve cursussen op deze pagina"
-        />
-        <x-hermes-fact
-            title="JSON"
-            description="Meertalige content per cursus"
-        />
-    </x-slot:heroFacts>
-
     <style>
         .toolbar,
         .actions,
@@ -71,22 +57,6 @@
 
         tbody tr:last-child td {
             border-bottom: 0;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: rgba(32, 69, 58, 0.09);
-            color: var(--forest);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.84rem;
-        }
-
-        .badge--inactive {
-            background: rgba(168, 74, 25, 0.12);
-            color: var(--accent-deep);
         }
 
         .muted {
@@ -159,9 +129,10 @@
                                 <div class="muted">{{ $academyCourse->summaryForLocale('nl') }}</div>
                             </td>
                             <td>
-                                <span @class(['badge', 'badge--inactive' => ! $academyCourse->is_active])>
-                                    {{ $academyCourse->is_active ? 'Actief' : 'Inactief' }}
-                                </span>
+                                <x-admin-status-badge
+                                    :label="$academyCourse->is_active ? 'Actief' : 'Inactief'"
+                                    :tone="$academyCourse->is_active ? 'default' : 'warning'"
+                                />
                             </td>
                             <td>
                                 <div>{{ $academyCourse->path }}</div>

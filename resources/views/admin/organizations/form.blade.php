@@ -96,7 +96,14 @@
             <div class="grid">
                 <label>
                     <span>Land</span>
-                    <input type="text" name="land" value="{{ old('land', $organization->land) }}" required>
+                    <select name="land" required>
+                        <option value="">Kies een land</option>
+                        @foreach (\App\Models\Organization::countryOptions() as $countryOption)
+                            <option value="{{ $countryOption }}" @selected(old('land', $organization->land) === $countryOption)>
+                                {{ $countryOption }}
+                            </option>
+                        @endforeach
+                    </select>
                 </label>
 
                 <label>

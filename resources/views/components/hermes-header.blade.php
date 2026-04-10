@@ -1,6 +1,7 @@
 @props([
     'href' => route('home'),
     'showBooking' => true,
+    'showContactLink' => true,
 ])
 
 @php
@@ -179,17 +180,19 @@
         </div>
 
         <div class="topbar__actions">
-            <a
-                class="header-utility-link"
-                href="{{ $contactHref }}"
-                aria-label="Ga naar contactformulier"
-                title="Contact"
-            >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M3.75 6.75h16.5a1.5 1.5 0 0 1 1.5 1.5v7.5a2.25 2.25 0 0 1-2.25 2.25H4.5a2.25 2.25 0 0 1-2.25-2.25v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="m3.75 8.25 7.33 5.52a1.5 1.5 0 0 0 1.84 0l7.33-5.52" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
+            @if ($showContactLink)
+                <a
+                    class="header-utility-link"
+                    href="{{ $contactHref }}"
+                    aria-label="Ga naar contactformulier"
+                    title="Contact"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3.75 6.75h16.5a1.5 1.5 0 0 1 1.5 1.5v7.5a2.25 2.25 0 0 1-2.25 2.25H4.5a2.25 2.25 0 0 1-2.25-2.25v-7.5a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="m3.75 8.25 7.33 5.52a1.5 1.5 0 0 0 1.84 0l7.33-5.52" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            @endif
 
             <div class="locale-menu">
                 <button type="button" class="locale-menu__trigger" aria-label="Open taalmenu">

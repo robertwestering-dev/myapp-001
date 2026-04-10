@@ -3,6 +3,7 @@
 namespace App\Support\Questionnaires;
 
 use App\Models\QuestionnaireQuestion;
+use Illuminate\Support\Collection;
 
 class QuestionnaireConditionEvaluator
 {
@@ -16,8 +17,8 @@ class QuestionnaireConditionEvaluator
         }
 
         $answer = data_get($answers, (string) $question->display_condition_question_id);
-        $normalizedAnswer = $this->normalizeAnswer($answer);
-        $expected = $this->normalizeExpected($question->display_condition_answer);
+        $normalizedAnswer = $this->normalizeValue($answer);
+        $expected = $this->normalizeValue($question->display_condition_answer);
 
         return match ($question->display_condition_operator) {
             QuestionnaireQuestion::DISPLAY_CONDITION_EQUALS => count($normalizedAnswer) === 1
@@ -44,50 +45,81 @@ class QuestionnaireConditionEvaluator
      */
     public function visibleQuestionIds(iterable $questions, array $answers): array
     {
-        $visibleQuestionIds = [];
+        return collect($this->visibleQuestions($questions, $answers))
+            ->map(fn (QuestionnaireQuestion $question): int => $question->id)
+            ->all();
+    }
 
-        foreach ($questions as $question) {
-            if ($question instanceof QuestionnaireQuestion && $this->isVisible($question, $answers)) {
-                $visibleQuestionIds[] = $question->id;
-            }
+    /**
+     * @param  array<int|string, mixed>  $answers
+     * @return array<int, QuestionnaireQuestion>
+     */
+    public function visibleQuestions(iterable $questions, array $answers): array
+    {
+        $questionMap = collect($questions)
+            ->filter(fn (mixed $question): bool => $question instanceof QuestionnaireQuestion)
+            ->keyBy(fn (QuestionnaireQuestion $question): string => (string) $question->id);
+        $visibilityCache = [];
+
+        return $questionMap
+            ->filter(function (QuestionnaireQuestion $question) use ($answers, $questionMap, &$visibilityCache): bool {
+                return $this->isQuestionVisible($question, $questionMap, $answers, $visibilityCache);
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Collection<string, QuestionnaireQuestion>  $questionMap
+     * @param  array<int|string, mixed>  $answers
+     * @param  array<string, bool>  $visibilityCache
+     */
+    protected function isQuestionVisible(
+        QuestionnaireQuestion $question,
+        Collection $questionMap,
+        array $answers,
+        array &$visibilityCache
+    ): bool {
+        $cacheKey = (string) $question->id;
+
+        if (array_key_exists($cacheKey, $visibilityCache)) {
+            return $visibilityCache[$cacheKey];
         }
 
-        return $visibleQuestionIds;
+        $dependencyId = $question->display_condition_question_id;
+
+        if ($dependencyId === null || $question->display_condition_operator === null) {
+            return $visibilityCache[$cacheKey] = true;
+        }
+
+        $dependency = $questionMap->get((string) $dependencyId);
+
+        if (! $dependency instanceof QuestionnaireQuestion) {
+            return $visibilityCache[$cacheKey] = false;
+        }
+
+        if (! $this->isQuestionVisible($dependency, $questionMap, $answers, $visibilityCache)) {
+            return $visibilityCache[$cacheKey] = false;
+        }
+
+        return $visibilityCache[$cacheKey] = $this->isVisible($question, $answers);
     }
 
     /**
      * @return array<int, string>
      */
-    protected function normalizeAnswer(mixed $answer): array
+    protected function normalizeValue(mixed $value): array
     {
-        if (is_array($answer)) {
-            return collect($answer)
-                ->map(fn (mixed $value): string => trim((string) $value))
+        if (is_array($value)) {
+            return collect($value)
+                ->map(fn (mixed $item): string => trim((string) $item))
                 ->filter()
                 ->values()
                 ->all();
         }
 
-        $value = trim((string) $answer);
+        $normalized = trim((string) $value);
 
-        return $value === '' ? [] : [$value];
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    protected function normalizeExpected(mixed $expected): array
-    {
-        if (is_array($expected)) {
-            return collect($expected)
-                ->map(fn (mixed $value): string => trim((string) $value))
-                ->filter()
-                ->values()
-                ->all();
-        }
-
-        $value = trim((string) $expected);
-
-        return $value === '' ? [] : [$value];
+        return $normalized === '' ? [] : [$normalized];
     }
 }

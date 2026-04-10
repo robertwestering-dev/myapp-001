@@ -16,6 +16,12 @@ trait ProfileValidationRules
     {
         return [
             'name' => $this->nameRules(),
+            'first_name' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', Rule::in(User::genderOptions())],
+            'birth_date' => ['nullable', 'date'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', Rule::in(User::countryOptions())],
+            'locale' => ['nullable', 'string', Rule::in(User::localeOptions())],
             'email' => $this->emailRules($userId),
         ];
     }

@@ -5,13 +5,8 @@
     lead="Beheer hier alle publieke blogposts die zichtbaar zijn op de nieuwe openbare blogpagina."
     menu-active="blog-posts"
     :show-secondary-menu-items="false"
+    :show-hero="false"
 >
-    <x-slot:heroFacts>
-        <x-hermes-fact :title="$blogPosts->total()" description="Blogposts in de database" />
-        <x-hermes-fact :title="$blogPosts->where('is_published', true)->count()" description="Gepubliceerd op deze pagina" />
-        <x-hermes-fact :title="$blogPosts->where('is_featured', true)->count()" description="Uitgelichte posts op deze pagina" />
-    </x-slot:heroFacts>
-
     <style>
         .toolbar,
         .actions,
@@ -62,22 +57,6 @@
 
         tbody tr:last-child td {
             border-bottom: 0;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: rgba(32, 69, 58, 0.09);
-            color: var(--forest);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 0.84rem;
-        }
-
-        .badge--inactive {
-            background: rgba(168, 74, 25, 0.12);
-            color: var(--accent-deep);
         }
 
         .muted {
@@ -143,9 +122,14 @@
                                 </div>
                             </td>
                             <td>
-                                <span @class(['badge', 'badge--inactive' => ! $blogPost->is_published])>
-                                    {{ $blogPost->is_published ? 'Gepubliceerd' : 'Concept' }}
-                                </span>
+                                <x-admin-status-badge
+                                    :label="match ($blogPost->publicationStatus()) {
+                                        'draft' => 'Concept',
+                                        'scheduled' => 'Gepland',
+                                        default => 'Gepubliceerd',
+                                    }"
+                                    :tone="$blogPost->publicationStatus() === 'published' ? 'default' : 'warning'"
+                                />
 
                                 @if ($blogPost->is_featured)
                                     <div class="muted">Uitgelicht</div>
@@ -159,6 +143,7 @@
                             <td>
                                 <div class="actions">
                                     <a href="{{ route('admin.blog-posts.edit', $blogPost) }}" class="ghost-pill">Wijzigen</a>
+                                    <a href="{{ route('admin.blog-posts.preview', $blogPost) }}" class="ghost-pill" target="_blank" rel="noopener noreferrer">Preview</a>
                                     @if ($blogPost->isPublished())
                                         <a href="{{ route('blog.show', $blogPost) }}" class="ghost-pill" target="_blank" rel="noopener noreferrer">Bekijk</a>
                                     @endif

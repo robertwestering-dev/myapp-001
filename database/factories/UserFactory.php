@@ -27,6 +27,11 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'first_name' => fake()->firstName(),
+            'gender' => fake()->randomElement(User::genderOptions()),
+            'birth_date' => fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
+            'city' => fake()->city(),
+            'country' => fake()->country(),
             'email' => fake()->unique()->safeEmail(),
             'role' => User::ROLE_USER,
             'org_id' => DB::table('organizations')->where('naam', 'Hermes Results')->value('org_id'),
@@ -73,6 +78,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => User::ROLE_MANAGER,
+        ]);
+    }
+
+    public function pro(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_USER_PRO,
         ]);
     }
 }

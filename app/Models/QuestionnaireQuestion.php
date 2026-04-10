@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'questionnaire_category_id',
+    'locale',
     'prompt',
     'help_text',
     'type',
@@ -32,6 +33,8 @@ class QuestionnaireQuestion extends Model
     public const TYPE_SINGLE_CHOICE = 'single_choice';
 
     public const TYPE_MULTIPLE_CHOICE = 'multiple_choice';
+
+    public const TYPE_LIKERT_SCALE = 'likert_scale';
 
     public const TYPE_NUMBER = 'number';
 
@@ -70,6 +73,7 @@ class QuestionnaireQuestion extends Model
             self::TYPE_LONG_TEXT,
             self::TYPE_SINGLE_CHOICE,
             self::TYPE_MULTIPLE_CHOICE,
+            self::TYPE_LIKERT_SCALE,
             self::TYPE_NUMBER,
             self::TYPE_BOOLEAN,
             self::TYPE_DATE,
@@ -86,6 +90,7 @@ class QuestionnaireQuestion extends Model
             self::TYPE_LONG_TEXT => __('hermes.question_types.long_text'),
             self::TYPE_SINGLE_CHOICE => __('hermes.question_types.single_choice'),
             self::TYPE_MULTIPLE_CHOICE => __('hermes.question_types.multiple_choice'),
+            self::TYPE_LIKERT_SCALE => __('hermes.question_types.likert_scale'),
             self::TYPE_NUMBER => __('hermes.question_types.number'),
             self::TYPE_BOOLEAN => __('hermes.question_types.boolean'),
             self::TYPE_DATE => __('hermes.question_types.date'),
@@ -113,12 +118,12 @@ class QuestionnaireQuestion extends Model
     public static function displayConditionOperatorLabels(): array
     {
         return [
-            self::DISPLAY_CONDITION_EQUALS => 'Is gelijk aan',
-            self::DISPLAY_CONDITION_NOT_EQUALS => 'Is niet gelijk aan',
-            self::DISPLAY_CONDITION_CONTAINS => 'Bevat',
-            self::DISPLAY_CONDITION_NOT_CONTAINS => 'Bevat niet',
-            self::DISPLAY_CONDITION_ANSWERED => 'Is ingevuld',
-            self::DISPLAY_CONDITION_NOT_ANSWERED => 'Is niet ingevuld',
+            self::DISPLAY_CONDITION_EQUALS => __('hermes.display_condition_operators.equals'),
+            self::DISPLAY_CONDITION_NOT_EQUALS => __('hermes.display_condition_operators.not_equals'),
+            self::DISPLAY_CONDITION_CONTAINS => __('hermes.display_condition_operators.contains'),
+            self::DISPLAY_CONDITION_NOT_CONTAINS => __('hermes.display_condition_operators.not_contains'),
+            self::DISPLAY_CONDITION_ANSWERED => __('hermes.display_condition_operators.answered'),
+            self::DISPLAY_CONDITION_NOT_ANSWERED => __('hermes.display_condition_operators.not_answered'),
         ];
     }
 

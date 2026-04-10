@@ -103,7 +103,7 @@
 
             <label>
                 <span>Antwoordopties</span>
-                <textarea name="options" placeholder="Alleen voor enkele of meerdere keuzes. Zet elke optie op een nieuwe regel.">{{ old('options', is_array($question->options) ? implode("\n", $question->options) : '') }}</textarea>
+                <textarea name="options" placeholder="Voor enkele keuze, meerdere keuzes of likert-schaal. Zet elke optie op een nieuwe regel.">{{ old('options', is_array($question->options) ? implode("\n", $question->options) : '') }}</textarea>
             </label>
 
             <label>

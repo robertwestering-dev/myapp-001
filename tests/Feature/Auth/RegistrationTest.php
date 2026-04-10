@@ -4,6 +4,7 @@ use App\Mail\NewAccountRegistered;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rules\Password;
@@ -16,12 +17,27 @@ beforeEach(function () {
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
+    $announcement = __('hermes.auth.announcement', locale: 'nl');
+
     $response->assertOk()
         ->assertSee('Hermes Results')
         ->assertSee('Create Access')
         ->assertSee('Create account')
+        ->assertSeeText($announcement)
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
+});
+
+test('registration screen shows the localized announcement in english and german', function () {
+    $this->withSession(['locale' => 'en'])
+        ->get(route('register'))
+        ->assertOk()
+        ->assertSeeText(__('hermes.auth.announcement', locale: 'en'));
+
+    $this->withSession(['locale' => 'de'])
+        ->get(route('register'))
+        ->assertOk()
+        ->assertSeeText(__('hermes.auth.announcement', locale: 'de'));
 });
 
 test('new users can register', function () {
@@ -127,6 +143,12 @@ test('new users must register with a password of at least eight characters when 
 
 test('new users can register with an eight character password when production password defaults apply', function () {
     Notification::fake();
+
+    // Mock the HaveIBeenPwned API so tests are not dependent on an external service.
+    // An empty response body means the password hash is not in the breach database.
+    Http::fake([
+        'api.pwnedpasswords.com/*' => Http::response('', 200),
+    ]);
 
     Password::defaults(fn (): Password => Password::min(8)
         ->mixedCase()

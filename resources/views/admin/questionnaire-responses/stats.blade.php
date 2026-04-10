@@ -213,14 +213,34 @@
                 </select>
             </label>
 
+            <label>
+                <span>{{ __('hermes.reports.response_state') }}</span>
+                <select name="response_state">
+                    <option value="completed" @selected($responseState === 'completed')>{{ __('hermes.reports.state_completed_only') }}</option>
+                    <option value="draft" @selected($responseState === 'draft')>{{ __('hermes.reports.state_draft_only') }}</option>
+                    <option value="all" @selected($responseState === 'all')>{{ __('hermes.reports.state_all') }}</option>
+                </select>
+            </label>
+
             <button type="submit" class="pill">{{ __('hermes.reports.refresh_stats') }}</button>
-            <a href="{{ route('admin.questionnaire-responses.index', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}" class="ghost-pill">
+            <a href="{{ route('admin.questionnaire-responses.index', $activeFilters) }}" class="ghost-pill">
                 {{ __('hermes.reports.back_to_responses') }}
             </a>
-            <a href="{{ route('admin.questionnaire-responses.export-stats', request()->only(['questionnaire_id', 'org_id', 'user_id'])) }}" class="ghost-pill">
+            <a href="{{ route('admin.questionnaire-responses.export-stats', $activeFilters) }}" class="ghost-pill">
                 {{ __('hermes.reports.export_stats') }}
             </a>
         </form>
+
+        @if ($responseCount === 0)
+            <article class="category-card">
+                <h2>{{ __('hermes.reports.no_responses_title') }}</h2>
+                <p class="muted">{{ __('hermes.reports.no_responses_text') }}</p>
+                <div class="filters">
+                    <a href="{{ route('admin.questionnaire-responses.stats', ['questionnaire_id' => $questionnaire->id]) }}" class="ghost-pill">{{ __('hermes.reports.reset') }}</a>
+                    <a href="{{ route('admin.questionnaire-responses.index', $activeFilters) }}" class="ghost-pill">{{ __('hermes.reports.back_to_responses') }}</a>
+                </div>
+            </article>
+        @endif
 
         @forelse ($statistics as $categoryStats)
             <section class="category-section">

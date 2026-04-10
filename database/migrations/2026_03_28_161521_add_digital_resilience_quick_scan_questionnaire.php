@@ -20,7 +20,10 @@ return new class extends Migration
     public function down(): void
     {
         Questionnaire::query()
-            ->where('title', SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
+            ->whereIn('title', [
+                SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
+                SyncDigitalResilienceQuickScanQuestionnaire::ENGLISH_TITLE,
+            ])
             ->delete();
     }
 };

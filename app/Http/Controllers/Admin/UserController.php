@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Concerns\ProvidesOrganizationOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\CsvExporter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -15,13 +17,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
 {
-    public function create(): View
+    use ProvidesOrganizationOptions;
+
+    public function create(Request $request): View
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         return view('admin.users.form', [
-            'title' => 'Nieuwe gebruiker',
+            'title' => __('hermes.admin.form_titles.new_user'),
             'intro' => 'Voeg een nieuwe gebruiker toe aan de applicatie vanuit de admin-omgeving.',
             'submitLabel' => 'Gebruiker toevoegen',
             'user' => new User(['role' => User::ROLE_USER]),
@@ -42,38 +46,52 @@ class UserController extends Controller
             $attributes['org_id'] = $actor->org_id;
         }
 
-        User::create($attributes);
+        $user = User::create($attributes);
+
+        $user->sendEmailVerificationNotification();
 
         return redirect()
             ->route('admin.users.index')
-            ->with('status', 'Gebruiker succesvol toegevoegd.');
+            ->with('status', __('hermes.admin.users.created'));
     }
 
     public function index(Request $request): View
     {
         $search = $request->string('search')->trim()->value();
+        $organization = $request->string('organization')->trim()->value();
+        $role = $request->string('role')->trim()->value();
+        $country = $request->string('country')->trim()->value();
         /** @var User $actor */
         $actor = $request->user();
 
-        $users = $this->usersQuery($actor, $search)
-            ->paginate(15)
+        $organizations = $this->organizationOptions($actor);
+
+        $users = $this->usersQuery($actor, $search, $organization, $role, $country)
+            ->paginate(config('app.per_page'))
             ->withQueryString();
 
         return view('admin.users.index', [
             'search' => $search,
+            'selectedOrganization' => $organization,
+            'selectedRole' => $role,
+            'selectedCountry' => $country,
+            'organizations' => $organizations,
+            'roles' => $this->roleOptions($actor),
+            'countries' => User::countryOptions(),
+            'activeFilters' => $this->activeFilters($search, $organization, $role, $country, $organizations),
             'users' => $users,
         ]);
     }
 
-    public function edit(User $user): View
+    public function edit(Request $request, User $user): View
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         abort_unless($actor->canManageOrganization($user->org_id), 403);
 
         return view('admin.users.form', [
-            'title' => 'Gebruiker wijzigen',
+            'title' => __('hermes.admin.form_titles.edit_user'),
             'intro' => 'Werk de gegevens en rol van deze gebruiker bij.',
             'submitLabel' => 'Wijzigingen opslaan',
             'user' => $user,
@@ -100,13 +118,13 @@ class UserController extends Controller
 
         return redirect()
             ->route('admin.users.index')
-            ->with('status', 'Gebruiker succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.users.updated'));
     }
 
-    public function confirmDestroy(User $user): View
+    public function confirmDestroy(Request $request, User $user): View
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         abort_unless($actor->canManageOrganization($user->org_id), 403);
 
@@ -115,40 +133,58 @@ class UserController extends Controller
         ]);
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(Request $request, User $user): RedirectResponse
     {
         /** @var User $actor */
-        $actor = request()->user();
+        $actor = $request->user();
 
         abort_unless($actor->canManageOrganization($user->org_id), 403);
+
+        $organizationUsingUserAsContact = Organization::query()
+            ->select(['org_id', 'naam'])
+            ->where('contact_id', $user->id)
+            ->first();
+
+        if ($organizationUsingUserAsContact !== null) {
+            return redirect()
+                ->route('admin.users.index')
+                ->withErrors([
+                    'user' => __('hermes.admin.users.delete_is_contact', [
+                        'organization' => $organizationUsingUserAsContact->naam,
+                    ]),
+                ]);
+        }
 
         $user->delete();
 
         return redirect()
             ->route('admin.users.index')
-            ->with('status', 'Gebruiker succesvol verwijderd.');
+            ->with('status', __('hermes.admin.users.deleted'));
     }
 
     public function export(Request $request): StreamedResponse
     {
         $search = $request->string('search')->trim()->value();
+        $organization = $request->string('organization')->trim()->value();
+        $role = $request->string('role')->trim()->value();
+        $country = $request->string('country')->trim()->value();
         $fileName = 'users.csv';
         /** @var User $actor */
         $actor = $request->user();
 
-        return response()->streamDownload(function () use ($actor, $search): void {
-            $handle = fopen('php://output', 'w');
+        return response()->streamDownload(function () use ($actor, $search, $organization, $role, $country): void {
+            $csv = (new CsvExporter)->open();
 
-            if ($handle === false) {
+            if (! $csv->isOpen()) {
                 return;
             }
 
-            fputcsv($handle, ['Naam', 'Emailadres', 'Rol', 'Email verified']);
+            $csv->writeRow(['Naam', 'Emailadres', 'Rol', 'Email verified']);
 
-            $this->usersQuery($actor, $search)
+            $this->usersQuery($actor, $search, $organization, $role, $country)
                 ->cursor()
-                ->each(function (User $user) use ($handle): void {
-                    fputcsv($handle, [
+                ->each(function (User $user) use ($csv): void {
+                    $csv->writeRow([
                         $user->name,
                         $user->email,
                         $user->role,
@@ -156,18 +192,27 @@ class UserController extends Controller
                     ]);
                 });
 
-            fclose($handle);
+            $csv->close();
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
-    protected function usersQuery(User $actor, string $search): Builder
+    protected function usersQuery(User $actor, string $search, string $organization, string $role, string $country): Builder
     {
         return User::query()
             ->select(['id', 'name', 'email', 'role', 'org_id', 'email_verified_at'])
             ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
                 $query->where('org_id', $actor->org_id);
+            })
+            ->when($organization !== '', function (Builder $query) use ($organization): void {
+                $query->where('org_id', $organization);
+            })
+            ->when($role !== '', function (Builder $query) use ($role): void {
+                $query->where('role', $role);
+            })
+            ->when($country !== '', function (Builder $query) use ($country): void {
+                $query->where('country', $country);
             })
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
@@ -182,26 +227,43 @@ class UserController extends Controller
     /**
      * @return array<int, string>
      */
-    protected function organizationOptions(User $actor): array
-    {
-        return Organization::query()
-            ->when(! $actor->isAdmin(), function (Builder $query) use ($actor): void {
-                $query->where('org_id', $actor->org_id);
-            })
-            ->orderBy('naam')
-            ->pluck('naam', 'org_id')
-            ->all();
-    }
-
-    /**
-     * @return array<int, string>
-     */
     protected function roleOptions(User $actor): array
     {
         if ($actor->isAdmin()) {
-            return [User::ROLE_USER, User::ROLE_MANAGER, User::ROLE_ADMIN];
+            return [User::ROLE_USER, User::ROLE_USER_PRO, User::ROLE_MANAGER, User::ROLE_ADMIN];
         }
 
-        return [User::ROLE_USER, User::ROLE_MANAGER];
+        return [User::ROLE_USER, User::ROLE_USER_PRO, User::ROLE_MANAGER];
+    }
+
+    /**
+     * @param  array<int, string>  $organizations
+     * @return array<int, string>
+     */
+    protected function activeFilters(string $search, string $organization, string $role, string $country, array $organizations): array
+    {
+        $filters = [];
+
+        if ($search !== '') {
+            $filters[] = 'Zoekterm: '.$search;
+        }
+
+        if ($organization !== '') {
+            $organizationName = $organizations[$organization] ?? null;
+
+            if ($organizationName !== null) {
+                $filters[] = 'Organisatie: '.$organizationName;
+            }
+        }
+
+        if ($role !== '') {
+            $filters[] = 'Rol: '.$role;
+        }
+
+        if ($country !== '') {
+            $filters[] = 'Land: '.$country;
+        }
+
+        return $filters;
     }
 }

@@ -35,6 +35,7 @@ test('admins can view questionnaire response reports across organizations', func
         ->get(route('admin.questionnaire-responses.index'))
         ->assertOk()
         ->assertSee('Ingevulde questionnaires')
+        ->assertSee('admin-status-badge', false)
         ->assertSee('Werkbeleving')
         ->assertSee('Atlas BV')
         ->assertSee('Anna Gebruiker')
@@ -96,6 +97,27 @@ test('admins can filter questionnaire response reports by questionnaire organiza
         ->assertSee('Werkbeleving')
         ->assertSee('Anna Gebruiker')
         ->assertSee('Resultaten 1 t/m 1 van 1');
+});
+
+test('response report index shows a clear empty state with reset and consistent filter links', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Werkbeleving',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.questionnaire-responses.index', [
+            'questionnaire_id' => $questionnaire->id,
+            'response_state' => 'draft',
+        ]))
+        ->assertOk()
+        ->assertSee(__('hermes.reports.filter'))
+        ->assertSee(__('hermes.reports.export_stats'))
+        ->assertSee(__('hermes.reports.no_responses_title'))
+        ->assertSee(__('hermes.reports.no_responses_text'))
+        ->assertSee('questionnaire_id='.$questionnaire->id, false)
+        ->assertSee('response_state=draft', false)
+        ->assertSee(route('admin.questionnaire-responses.export-stats', absolute: false), false);
 });
 
 test('managers only see responses from their own organization', function () {
@@ -191,6 +213,31 @@ test('response detail page shows stored answers', function () {
         ->assertSee('Goed.');
 });
 
+test('response detail page shows a clear empty state when no answers are stored yet', function () {
+    $admin = User::factory()->admin()->create();
+    $organization = Organization::factory()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Werkbeleving',
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+    ]);
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $response = QuestionnaireResponse::factory()->create([
+        'organization_questionnaire_id' => $availability->id,
+        'user_id' => $user->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.questionnaire-responses.show', $response))
+        ->assertOk()
+        ->assertSee(__('hermes.reports.no_answers_in_response_title'))
+        ->assertSee(__('hermes.reports.no_answers_in_response_text'));
+});
+
 test('regular users cannot access questionnaire response reports', function () {
     $user = User::factory()->create();
 
@@ -247,6 +294,24 @@ test('admins can export questionnaire response data as csv', function () {
         ->toContain('Questionnaire,Organisatie,Gebruiker,Emailadres,"Ingezonden op",Categorie,Vraag,Antwoord')
         ->toContain('Werkbeleving,"Atlas BV","Anna Gebruiker",anna@example.com')
         ->toContain('Algemeen,"Hoe gaat het?",Goed.');
+});
+
+test('empty detailed exports still download with headers only', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Werkbeleving',
+    ]);
+
+    $export = $this->actingAs($admin)
+        ->get(route('admin.questionnaire-responses.export', [
+            'questionnaire_id' => $questionnaire->id,
+            'response_state' => 'draft',
+        ]));
+
+    $export->assertDownload("questionnaire-responses-{$questionnaire->id}.csv");
+
+    expect(trim(ltrim($export->streamedContent(), "\xEF\xBB\xBF")))
+        ->toBe('Questionnaire,Organisatie,Gebruiker,Emailadres,"Ingezonden op",Categorie,Vraag,Antwoord');
 });
 
 test('export requires a selected questionnaire', function () {
@@ -391,6 +456,33 @@ test('admins can export questionnaire response summary data as one row per respo
         ->toContain('Goed.,Soms');
 });
 
+test('empty summary exports still download with headers only', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Werkbeleving',
+    ]);
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Algemeen',
+    ]);
+    QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Hoe gaat het?',
+        'sort_order' => 1,
+    ]);
+
+    $export = $this->actingAs($admin)
+        ->get(route('admin.questionnaire-responses.export-summary', [
+            'questionnaire_id' => $questionnaire->id,
+            'response_state' => 'draft',
+        ]));
+
+    $export->assertDownload("questionnaire-responses-summary-{$questionnaire->id}.csv");
+
+    expect(trim(ltrim($export->streamedContent(), "\xEF\xBB\xBF")))
+        ->toBe('Questionnaire,Organisatie,Gebruiker,Emailadres,"Ingezonden op","Hoe gaat het?"');
+});
+
 test('admins can export questionnaire response statistics per question and option', function () {
     $admin = User::factory()->admin()->create();
     $organization = Organization::factory()->create([
@@ -470,6 +562,38 @@ test('admins can export questionnaire response statistics per question and optio
         ->toContain('Werkbeleving,Algemeen,"Hoeveel energie heeft u?","Enkele keuze",2,Altijd,1')
         ->toContain('Werkbeleving,Algemeen,"Hoeveel energie heeft u?","Enkele keuze",2,Soms,1')
         ->toContain('Werkbeleving,Algemeen,"Hoeveel energie heeft u?","Enkele keuze",2,Nooit,0');
+});
+
+test('empty statistics exports still download question headers and zero counts', function () {
+    $admin = User::factory()->admin()->create();
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Werkbeleving',
+    ]);
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Algemeen',
+    ]);
+    QuestionnaireQuestion::factory()->singleChoice()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Hoeveel energie heeft u?',
+        'sort_order' => 1,
+        'options' => ['Altijd', 'Soms'],
+    ]);
+
+    $export = $this->actingAs($admin)
+        ->get(route('admin.questionnaire-responses.export-stats', [
+            'questionnaire_id' => $questionnaire->id,
+            'response_state' => 'draft',
+        ]));
+
+    $export->assertDownload("questionnaire-responses-stats-{$questionnaire->id}.csv");
+
+    $content = $export->streamedContent();
+
+    expect($content)
+        ->toContain('Questionnaire,Categorie,Vraag,Vraagtype,"Totaal ingevuld",Optie,Aantal')
+        ->toContain('Werkbeleving,Algemeen,"Hoeveel energie heeft u?","Enkele keuze",0,Altijd,0')
+        ->toContain('Werkbeleving,Algemeen,"Hoeveel energie heeft u?","Enkele keuze",0,Soms,0');
 });
 
 test('admins can view questionnaire response statistics in the admin portal', function () {

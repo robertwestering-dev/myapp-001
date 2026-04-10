@@ -6,10 +6,13 @@ use App\Models\Questionnaire;
 use App\Models\QuestionnaireCategory;
 use App\Models\QuestionnaireQuestion;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SyncAdaptabilityAceQuestionnaire
 {
     public const TITLE = 'Adaptability Scan volgens het A.C.E.-model';
+
+    public const ENGLISH_TITLE = 'Adaptability Scan based on the A.C.E. model';
 
     /**
      * @var array<int, string>
@@ -22,64 +25,123 @@ class SyncAdaptabilityAceQuestionnaire
         'Zeer mee eens',
     ];
 
+    /**
+     * @var array<int, string>
+     */
+    protected const AGREEMENT_OPTIONS_ENGLISH = [
+        'Strongly disagree',
+        'Disagree',
+        'Neutral',
+        'Agree',
+        'Strongly agree',
+    ];
+
     public function handle(): Questionnaire
     {
         return DB::transaction(function (): Questionnaire {
-            $questionnaire = Questionnaire::query()->updateOrCreate(
-                ['title' => self::TITLE],
-                [
-                    'description' => 'Deze vragenlijst is geinspireerd op het A.C.E.-model uit Decoding AQ van Ross Thornley. De inhoud is vertaald naar een interne questionnaire voor het analyseren van adaptability en is geen officiele AQai-assessment.',
-                    'is_active' => true,
-                ],
-            );
+            $questionnaireTableHasLocale = Schema::hasColumn('questionnaires', 'locale');
+            $questionTableHasLocale = Schema::hasColumn('questionnaire_questions', 'locale');
+            $lastSyncedQuestionnaire = null;
 
-            $categorySortOrders = [];
-
-            foreach ($this->categories() as $categoryDefinition) {
-                $categorySortOrders[] = $categoryDefinition['sort_order'];
-
-                $category = QuestionnaireCategory::query()->updateOrCreate(
-                    [
-                        'questionnaire_id' => $questionnaire->id,
-                        'sort_order' => $categoryDefinition['sort_order'],
-                    ],
-                    [
-                        'title' => $categoryDefinition['title'],
-                        'description' => $categoryDefinition['description'],
-                    ],
+            foreach ($this->definitions() as $definition) {
+                $questionnaire = Questionnaire::query()->updateOrCreate(
+                    ['title' => $definition['title']],
+                    array_filter([
+                        'description' => $definition['description'],
+                        'locale' => $questionnaireTableHasLocale ? $definition['locale'] : null,
+                        'is_active' => true,
+                    ], fn (mixed $value): bool => $value !== null),
                 );
 
-                $questionSortOrders = [];
+                $categorySortOrders = [];
 
-                foreach ($categoryDefinition['questions'] as $questionDefinition) {
-                    $questionSortOrders[] = $questionDefinition['sort_order'];
+                foreach ($definition['categories'] as $categoryDefinition) {
+                    $categorySortOrders[] = $categoryDefinition['sort_order'];
 
-                    QuestionnaireQuestion::query()->updateOrCreate(
+                    $category = QuestionnaireCategory::query()->updateOrCreate(
                         [
-                            'questionnaire_category_id' => $category->id,
-                            'sort_order' => $questionDefinition['sort_order'],
+                            'questionnaire_id' => $questionnaire->id,
+                            'sort_order' => $categoryDefinition['sort_order'],
                         ],
                         [
-                            'prompt' => $questionDefinition['prompt'],
-                            'help_text' => $questionDefinition['help_text'],
-                            'type' => QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
-                            'options' => self::AGREEMENT_OPTIONS,
-                            'is_required' => true,
+                            'title' => $categoryDefinition['title'],
+                            'description' => $categoryDefinition['description'],
                         ],
                     );
+
+                    $questionSortOrders = [];
+
+                    foreach ($categoryDefinition['questions'] as $questionDefinition) {
+                        $questionSortOrders[] = $questionDefinition['sort_order'];
+
+                        QuestionnaireQuestion::query()->updateOrCreate(
+                            [
+                                'questionnaire_category_id' => $category->id,
+                                'sort_order' => $questionDefinition['sort_order'],
+                            ],
+                            array_filter([
+                                'locale' => $questionTableHasLocale ? ($questionnaire->locale ?? $definition['locale']) : null,
+                                'prompt' => $questionDefinition['prompt'],
+                                'help_text' => $questionDefinition['help_text'],
+                                'type' => QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
+                                'options' => $definition['agreement_options'],
+                                'is_required' => true,
+                            ], fn (mixed $value): bool => $value !== null),
+                        );
+                    }
+
+                    $category->questions()
+                        ->whereNotIn('sort_order', $questionSortOrders)
+                        ->delete();
                 }
 
-                $category->questions()
-                    ->whereNotIn('sort_order', $questionSortOrders)
+                $questionnaire->categories()
+                    ->whereNotIn('sort_order', $categorySortOrders)
                     ->delete();
+
+                $lastSyncedQuestionnaire = $questionnaire;
             }
 
-            $questionnaire->categories()
-                ->whereNotIn('sort_order', $categorySortOrders)
-                ->delete();
-
-            return $questionnaire->fresh(['categories.questions']);
+            return $lastSyncedQuestionnaire?->fresh(['categories.questions']) ?? new Questionnaire;
         });
+    }
+
+    /**
+     * @return array<int, array{
+     *     locale: string,
+     *     title: string,
+     *     description: string,
+     *     agreement_options: array<int, string>,
+     *     categories: array<int, array{
+     *         title: string,
+     *         description: string,
+     *         sort_order: int,
+     *         questions: array<int, array{
+     *             prompt: string,
+     *             help_text: string,
+     *             sort_order: int
+     *         }>
+     *     }>
+     * }>
+     */
+    protected function definitions(): array
+    {
+        return [
+            [
+                'locale' => 'nl',
+                'title' => self::TITLE,
+                'description' => 'Deze vragenlijst is geinspireerd op het A.C.E.-model uit Decoding AQ van Ross Thornley. De inhoud is vertaald naar een interne questionnaire voor het analyseren van adaptability en is geen officiele AQai-assessment.',
+                'agreement_options' => self::AGREEMENT_OPTIONS,
+                'categories' => $this->dutchCategories(),
+            ],
+            [
+                'locale' => 'en',
+                'title' => self::ENGLISH_TITLE,
+                'description' => 'This questionnaire is inspired by the A.C.E. model from Decoding AQ by Ross Thornley. The content has been translated into an internal questionnaire for analysing adaptability and is not an official AQai assessment.',
+                'agreement_options' => self::AGREEMENT_OPTIONS_ENGLISH,
+                'categories' => $this->englishCategories(),
+            ],
+        ];
     }
 
     /**
@@ -94,7 +156,7 @@ class SyncAdaptabilityAceQuestionnaire
      *     }>
      * }>
      */
-    protected function categories(): array
+    protected function dutchCategories(): array
     {
         return [
             [
@@ -189,6 +251,120 @@ class SyncAdaptabilityAceQuestionnaire
                     [
                         'prompt' => 'De systemen, processen en samenwerking om mij heen helpen eerder mee dan dat ze aanpassing vertragen.',
                         'help_text' => 'Beoordeel of de omgeving verandering praktisch ondersteunt.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array{
+     *     title: string,
+     *     description: string,
+     *     sort_order: int,
+     *     questions: array<int, array{
+     *         prompt: string,
+     *         help_text: string,
+     *         sort_order: int
+     *     }>
+     * }>
+     */
+    protected function englishCategories(): array
+    {
+        return [
+            [
+                'title' => 'Ability',
+                'description' => 'Ability is about taking in new knowledge, interpreting signals, and adjusting behaviour in practical ways.',
+                'sort_order' => 1,
+                'questions' => [
+                    [
+                        'prompt' => 'I quickly make new knowledge, tools, or ways of working my own when the situation requires it.',
+                        'help_text' => 'Think of changes in processes, systems, or expectations.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'I recognize early when existing approaches are no longer working well.',
+                        'help_text' => 'Assess how quickly you notice that an adjustment is needed.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'I can come up with multiple ways forward when a plan gets stuck.',
+                        'help_text' => 'This is about flexibility in thinking and acting.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I quickly turn feedback or new information into concrete behavioural change.',
+                        'help_text' => 'Look at what you actually do after feedback or new insights.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'I continue to prioritize effectively when goals, roles, or circumstances change.',
+                        'help_text' => 'Think of situations with pressure, ambiguity, or shifting priorities.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Character',
+                'description' => 'Character is about mindset, emotional resilience, and the willingness to take responsibility during change.',
+                'sort_order' => 2,
+                'questions' => [
+                    [
+                        'prompt' => 'I generally stay calm and constructive when outcomes are uncertain.',
+                        'help_text' => 'Assess how you respond to ambiguity and change.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'I see change more as an opportunity to learn than as a threat.',
+                        'help_text' => 'This is about your default attitude toward change.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'After a setback, I regain my focus and energy relatively quickly.',
+                        'help_text' => 'Think about your ability to recover after stress, mistakes, or disappointment.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I take responsibility for adapting myself, even when not everything is clear yet.',
+                        'help_text' => 'Assess the extent to which you take initiative in changing situations.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'I dare to question existing assumptions or routines when the context calls for it.',
+                        'help_text' => 'Think of the courage to experiment or start a different conversation.',
+                        'sort_order' => 5,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Environment',
+                'description' => 'Environment looks at the context that either supports or hinders adaptability.',
+                'sort_order' => 3,
+                'questions' => [
+                    [
+                        'prompt' => 'In my work environment, it is safe to ask questions, experiment, and discuss mistakes openly.',
+                        'help_text' => 'Assess the level of psychological safety.',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'prompt' => 'I receive enough feedback and perspectives to adapt well to changing situations.',
+                        'help_text' => 'Think of input from colleagues, managers, or customers.',
+                        'sort_order' => 2,
+                    ],
+                    [
+                        'prompt' => 'My team or organization actively supports learning, development, and course correction.',
+                        'help_text' => 'Look at the room for reflection, training, and improvement.',
+                        'sort_order' => 3,
+                    ],
+                    [
+                        'prompt' => 'I have enough autonomy to adjust my approach when the situation requires it.',
+                        'help_text' => 'This is about decision space and freedom to act.',
+                        'sort_order' => 4,
+                    ],
+                    [
+                        'prompt' => 'The systems, processes, and collaboration around me are more likely to help change than to slow it down.',
+                        'help_text' => 'Assess whether the environment supports change in practical terms.',
                         'sort_order' => 5,
                     ],
                 ],

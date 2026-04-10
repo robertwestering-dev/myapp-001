@@ -3,14 +3,13 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\BlogPost;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateBlogPostRequest extends FormRequest
+class UpdateBlogPostRequest extends BaseLocalizedRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() ?? false;
     }
 
     public function rules(): array
@@ -29,27 +28,5 @@ class UpdateBlogPostRequest extends FormRequest
             ...$this->localizedStringRules('excerpt', 500),
             ...$this->localizedStringRules('content'),
         ];
-    }
-
-    /**
-     * @return array<string, array<int, mixed>>
-     */
-    protected function localizedStringRules(string $attribute, ?int $maxLength = null): array
-    {
-        $rules = [
-            $attribute => ['required', 'array'],
-        ];
-
-        foreach (array_keys(config('locales.supported', [])) as $locale) {
-            $fieldRules = ['required', 'string'];
-
-            if ($maxLength !== null) {
-                $fieldRules[] = 'max:'.$maxLength;
-            }
-
-            $rules["{$attribute}.{$locale}"] = $fieldRules;
-        }
-
-        return $rules;
     }
 }
