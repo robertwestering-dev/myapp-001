@@ -103,7 +103,9 @@ test('authenticated users see the same primary menu on the blog as on other user
         ->assertSee(__('hermes.nav.forum'))
         ->assertSee(route('profile.edit', absolute: false), false)
         ->assertSee(__('hermes.dashboard.logout'))
-        ->assertSee('pill pill--neutral', false)
+        ->assertSee('class="pill pill--neutral"', false)
+        ->assertSee('background: linear-gradient(135deg, #8a8f97 0%, #666c74 100%);', false)
+        ->assertSee('font-weight: 400;', false)
         ->assertDontSee('<button type="submit" class="pill pill--strong">'.__('hermes.dashboard.logout').'</button>', false)
         ->assertDontSee(__('hermes.nav.login'))
         ->assertDontSee(__('hermes.header.booking'));

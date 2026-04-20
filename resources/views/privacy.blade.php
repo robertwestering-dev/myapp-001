@@ -232,7 +232,7 @@
                 :title="__('hermes.privacy.contact_card_title')"
                 :text="__('hermes.privacy.contact_card_text')"
                 :action-label="__('hermes.privacy.contact_card_action')"
-                :action-href="route('contact.show').'#contact'"
+                :action-href="route('contact.show')"
             />
         </section>
     </div>

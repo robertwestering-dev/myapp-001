@@ -235,6 +235,18 @@
             box-shadow: 0 12px 28px rgba(141, 63, 24, 0.28);
         }
 
+        .pill--neutral {
+            padding: 12px 22px;
+            border-color: transparent;
+            background: linear-gradient(135deg, #8a8f97 0%, #666c74 100%);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
         .pill--booking {
             border-color: transparent;
             color: #f8f3eb;

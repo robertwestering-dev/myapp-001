@@ -279,6 +279,7 @@ Actuele UX-status:
 - het gedeelde hamburgermenu blijft op smartphone naast het logo staan; het mobiele menu heeft een eigen scrollgebied zodat de pagina achter het menu niet meescrollt
 - de headerknop `Maak een afspraak` wordt alleen op de contactpagina getoond; op alle andere publieke en ingelogde pagina's staat deze knop niet in de header
 - de logoutknop voor ingelogde gebruikers gebruikt in alle headers de neutrale grijze `pill--neutral` variant
+- publieke navigatielinks naar Contact openen `/contact` zonder `#contact`, zodat de pagina bovenaan start
 
 Belangrijke layoutbestanden:
 

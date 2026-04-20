@@ -6,7 +6,7 @@
 
 @php
     $currentLocale = app()->getLocale();
-    $contactHref = route('contact.show', absolute: false).'#contact';
+    $contactHref = route('contact.show', absolute: false);
     $localeNames = [
         'nl' => 'Nederlands',
         'en' => 'English',

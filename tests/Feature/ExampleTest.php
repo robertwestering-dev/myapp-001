@@ -110,6 +110,18 @@ test('public guest pages show the contact navigation link', function (string $ro
     'blog.index',
 ]);
 
+test('public contact links open the contact page at the top', function () {
+    $this->get(route('blog.index'))
+        ->assertOk()
+        ->assertSee('href="'.route('contact.show').'"', false)
+        ->assertDontSee('href="'.route('contact.show').'#contact"', false);
+
+    $this->get(route('privacy.show'))
+        ->assertOk()
+        ->assertSee(route('contact.show'), false)
+        ->assertDontSee(route('contact.show').'#contact', false);
+});
+
 test('authenticated users are redirected to dashboard from the home page', function () {
     $response = $this->actingAs(User::factory()->create())->get(route('home'));
 
