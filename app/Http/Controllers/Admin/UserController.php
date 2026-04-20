@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Support\CsvExporter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +19,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class UserController extends Controller
 {
     use ProvidesOrganizationOptions;
+
+    public function __construct(private readonly AuditLogger $audit) {}
 
     public function create(Request $request): View
     {
@@ -49,6 +52,8 @@ class UserController extends Controller
         $user = User::create($attributes);
 
         $user->sendEmailVerificationNotification();
+
+        $this->audit->log('user.created', "Gebruiker aangemaakt: {$user->name} ({$user->email})", $user);
 
         return redirect()
             ->route('admin.users.index')
@@ -116,6 +121,8 @@ class UserController extends Controller
 
         $user->update($attributes);
 
+        $this->audit->log('user.updated', "Gebruiker bijgewerkt: {$user->name} ({$user->email})", $user);
+
         return redirect()
             ->route('admin.users.index')
             ->with('status', __('hermes.admin.users.updated'));
@@ -154,6 +161,8 @@ class UserController extends Controller
                     ]),
                 ]);
         }
+
+        $this->audit->log('user.deleted', "Gebruiker verwijderd: {$user->name} ({$user->email})", $user);
 
         $user->delete();
 

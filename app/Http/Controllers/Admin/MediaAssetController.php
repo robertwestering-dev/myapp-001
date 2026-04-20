@@ -61,7 +61,7 @@ class MediaAssetController extends Controller
             return MediaAsset::TYPE_VIDEO;
         }
 
-        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true)) {
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
             return MediaAsset::TYPE_IMAGE;
         }
 

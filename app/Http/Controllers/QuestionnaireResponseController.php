@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class QuestionnaireResponseController extends Controller
 {
@@ -30,7 +29,7 @@ class QuestionnaireResponseController extends Controller
         protected QuestionnaireResultsEngine $resultsEngine,
     ) {}
 
-    public function show(Request $request, OrganizationQuestionnaire $organizationQuestionnaire): View
+    public function show(Request $request, OrganizationQuestionnaire $organizationQuestionnaire): View|RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -47,7 +46,15 @@ class QuestionnaireResponseController extends Controller
             ->with('answers')
             ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
             ->where('user_id', $user->id)
+            ->whereNull('submitted_at')
+            ->latest('updated_at')
             ->first();
+
+        if ($response === null && ! $user->isProUser() && $this->hasCompletedResponse($organizationQuestionnaire, $user)) {
+            return redirect()
+                ->route('questionnaires.index')
+                ->with('pro_required_modal', true);
+        }
 
         $questions = $organizationQuestionnaire->questionnaire
             ->categories
@@ -62,12 +69,9 @@ class QuestionnaireResponseController extends Controller
             ->all() ?? [];
         $visibleQuestionIds = $this->conditionEvaluator->visibleQuestionIds($questions, $existingAnswers);
         $initialCategoryId = $response?->current_questionnaire_category_id;
-        $analysisResult = $response?->submitted_at !== null
-            ? $this->resultsEngine->forResponse($response)
-            : null;
 
         return view('questionnaires.show', [
-            'analysisResult' => $analysisResult,
+            'analysisResult' => null,
             'existingAnswers' => $existingAnswers,
             'initialCategoryId' => $initialCategoryId,
             'activeQuestionnaireLocale' => $localeContext['locale'],
@@ -90,11 +94,29 @@ class QuestionnaireResponseController extends Controller
         $response = QuestionnaireResponse::query()
             ->where('user_id', $user->id)
             ->where('resume_token', $token)
+            ->whereNull('submitted_at')
             ->firstOrFail();
 
         $this->ensureAccessible($request, $response->organizationQuestionnaire()->with('questionnaire')->firstOrFail(), $user);
 
         return redirect()->route('questionnaire-responses.show', $response->organization_questionnaire_id);
+    }
+
+    public function results(Request $request, QuestionnaireResponse $response): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($response->user_id === $user->id, 403);
+        abort_unless($response->submitted_at !== null, 404);
+
+        $response->loadMissing('organizationQuestionnaire.questionnaire');
+
+        return view('questionnaires.results', [
+            'analysisResult' => $this->resultsEngine->forResponse($response),
+            'organizationQuestionnaire' => $response->organizationQuestionnaire,
+            'response' => $response,
+        ]);
     }
 
     public function store(
@@ -117,12 +139,20 @@ class QuestionnaireResponseController extends Controller
         $existingResponse = QuestionnaireResponse::query()
             ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
             ->where('user_id', $user->id)
+            ->whereNull('submitted_at')
+            ->latest('updated_at')
             ->first();
 
-        if ($existingResponse?->submitted_at !== null && $isDraft) {
-            throw ValidationException::withMessages([
-                'questionnaire' => __('hermes.questionnaire.already_submitted'),
-            ]);
+        if ($existingResponse === null && ! $user->isProUser() && $this->hasCompletedResponse($organizationQuestionnaire, $user)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => __('hermes.questionnaires.pro_required_message'),
+                ], 403);
+            }
+
+            return redirect()
+                ->route('questionnaires.index')
+                ->with('pro_required_modal', true);
         }
 
         $response = DB::transaction(function () use (
@@ -184,7 +214,7 @@ class QuestionnaireResponseController extends Controller
         }
 
         return redirect()
-            ->route('questionnaire-responses.show', $organizationQuestionnaire)
+            ->route($isDraft ? 'questionnaire-responses.show' : 'questionnaire-responses.results', $isDraft ? $organizationQuestionnaire : $response)
             ->with('status', __($isDraft ? 'hermes.questionnaire.draft_saved_status' : 'hermes.questionnaire.saved_status'));
     }
 
@@ -198,6 +228,15 @@ class QuestionnaireResponseController extends Controller
             $organizationQuestionnaire->questionnaire?->locale === $this->catalog->localeContext($request, $user)['locale'],
             403
         );
+    }
+
+    protected function hasCompletedResponse(OrganizationQuestionnaire $organizationQuestionnaire, User $user): bool
+    {
+        return QuestionnaireResponse::query()
+            ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
+            ->where('user_id', $user->id)
+            ->whereNotNull('submitted_at')
+            ->exists();
     }
 
     /**

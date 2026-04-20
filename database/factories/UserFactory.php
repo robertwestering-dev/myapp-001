@@ -69,14 +69,14 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->withTwoFactor()->state(fn (array $attributes) => [
             'role' => User::ROLE_ADMIN,
         ]);
     }
 
     public function manager(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->withTwoFactor()->state(fn (array $attributes) => [
             'role' => User::ROLE_MANAGER,
         ]);
     }

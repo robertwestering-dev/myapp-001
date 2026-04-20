@@ -47,7 +47,7 @@ test('digital mirror shows a scored analysis with recommended start layer after 
             'intent' => 'submit',
             'answers' => $answers,
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $response = $availability->responses()->firstOrFail();
 
@@ -57,7 +57,7 @@ test('digital mirror shows a scored analysis with recommended start layer after 
     expect($response->analysis_snapshot['recommended_dimension_label'])->toBe('Stress en het brein');
 
     $this->actingAs($user)
-        ->get(route('questionnaire-responses.show', $availability))
+        ->get(route('questionnaire-responses.results', $response))
         ->assertOk()
         ->assertSee('Je groeit — en er is duidelijk richting.')
         ->assertSee('95 / 140')

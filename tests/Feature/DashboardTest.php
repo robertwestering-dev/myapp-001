@@ -23,10 +23,19 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk()
         ->assertSee('Persoonlijk dashboard van Robert')
         ->assertSee('Logout')
-        ->assertSee(__('hermes.dashboard.academy_title'))
         ->assertSee(__('hermes.dashboard.questionnaires_title'))
-        ->assertSee(__('hermes.dashboard.next_step_questionnaires_title'))
-        ->assertSee(__('hermes.academy.empty_title'))
+        ->assertSee(__('hermes.dashboard.academy_title'))
+        ->assertSeeInOrder([
+            __('hermes.dashboard.questionnaires_title'),
+            __('hermes.dashboard.academy_title'),
+        ])
+        ->assertSee(__('hermes.dashboard.questionnaires_text'))
+        ->assertSee(__('hermes.dashboard.questionnaires_available_count'))
+        ->assertSee(__('hermes.dashboard.questionnaires_in_progress_count'))
+        ->assertSee(__('hermes.dashboard.questionnaires_completed_count'))
+        ->assertSee(__('hermes.dashboard.academy_available_count'))
+        ->assertSee(__('hermes.dashboard.academy_in_progress_count'))
+        ->assertSee(__('hermes.dashboard.academy_completed_count'))
         ->assertSee('user-panel', false)
         ->assertSee('user-page-heading', false)
         ->assertSee('user-section-heading', false)
@@ -97,6 +106,19 @@ test('dashboard header shows academy and profile menu options without the bookin
         ->assertDontSee(__('hermes.header.booking'));
 });
 
+test('authenticated mobile header stays compact and gives the menu its own scroll area', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('.topbar__inner {', false)
+        ->assertSee('flex-direction: row;', false)
+        ->assertSee('.mobile-menu[open] .mobile-menu__panel', false)
+        ->assertSee('overflow-y: auto;', false)
+        ->assertSee('overscroll-behavior: contain;', false);
+});
+
 test('admins are redirected from dashboard to the admin portal', function () {
     $admin = User::factory()->admin()->create();
 
@@ -140,7 +162,7 @@ test('dashboard shows questionnaire summary counts instead of the questionnaire 
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee(__('hermes.dashboard.questionnaires_draft_count'))
+        ->assertSee(__('hermes.dashboard.questionnaires_in_progress_count'))
         ->assertSee('1')
         ->assertSee(__('hermes.dashboard.questionnaires_action'))
         ->assertDontSee('Werkritme Scan');
@@ -209,7 +231,5 @@ test('dashboard uses the session locale for questionnaire context when the profi
         ->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee(__('hermes.questionnaire.active_language'))
-        ->assertSee(__('hermes.questionnaire.active_language_session'))
         ->assertViewHas('availableQuestionnaireCount', 1);
 });

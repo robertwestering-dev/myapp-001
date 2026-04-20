@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Services\SuccessfulLoginSummary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
@@ -9,10 +10,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LoginResponse implements LoginResponseContract
 {
+    public function __construct(private readonly SuccessfulLoginSummary $successfulLoginSummary) {}
+
     public function toResponse($request): JsonResponse|Response
     {
         /** @var Request $request */
         $user = $request->user();
+
+        if ($user !== null) {
+            $this->successfulLoginSummary->record($request, $user);
+        }
 
         return redirect()->intended(
             $user?->canAccessAdminPortal()

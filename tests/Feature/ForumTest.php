@@ -3,6 +3,8 @@
 use App\Models\ForumReply;
 use App\Models\ForumThread;
 use App\Models\User;
+use App\Notifications\ForumReplyPosted;
+use Illuminate\Support\Facades\Notification;
 
 test('guests are redirected to login when visiting the forum', function () {
     $this->get(route('forum.index'))
@@ -160,4 +162,37 @@ test('users cannot edit replies from other users', function () {
             'body' => 'Ongeoorloofde wijziging.',
         ])
         ->assertForbidden();
+});
+
+test('thread author receives a notification when someone else replies', function () {
+    Notification::fake();
+
+    $author = User::factory()->create();
+    $thread = ForumThread::factory()->create(['user_id' => $author->getKey()]);
+    $replier = User::factory()->create();
+
+    $this->actingAs($replier)
+        ->post(route('forum-replies.store', $thread), [
+            'body' => "Interessant punt!\n\nIk herken dit vanuit mijn eigen context.",
+        ])
+        ->assertRedirect();
+
+    Notification::assertSentTo($author, ForumReplyPosted::class, function (ForumReplyPosted $notification) use ($thread) {
+        return $notification->thread->is($thread);
+    });
+});
+
+test('thread author does not receive a notification when replying to their own thread', function () {
+    Notification::fake();
+
+    $author = User::factory()->create();
+    $thread = ForumThread::factory()->create(['user_id' => $author->getKey()]);
+
+    $this->actingAs($author)
+        ->post(route('forum-replies.store', $thread), [
+            'body' => 'Eigen aanvulling op mijn thread.',
+        ])
+        ->assertRedirect();
+
+    Notification::assertNothingSent();
 });

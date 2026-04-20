@@ -12,40 +12,54 @@ class QuestionnaireLibraryImporter
 {
     /**
      * @param  array<string, mixed>  $payload
-     * @return array{questionnaires: int}
+     * @return array{questionnaires: int, pruned_questionnaires: int}
      */
-    public function import(array $payload): array
+    public function import(array $payload, bool $prune = false): array
     {
-        $this->guardPayload($payload);
+        $this->guardPayload($payload, $prune);
 
         $importedCount = 0;
+        $prunedCount = 0;
 
-        DB::transaction(function () use ($payload, &$importedCount): void {
+        DB::transaction(function () use ($payload, $prune, &$importedCount, &$prunedCount): void {
+            $questionnaireIdsToKeep = [];
+
             foreach ($payload['questionnaires'] as $questionnaireDefinition) {
-                $this->importQuestionnaire($questionnaireDefinition);
+                $questionnaireIdsToKeep[] = $this->importQuestionnaire($questionnaireDefinition);
                 $importedCount++;
+            }
+
+            if ($prune) {
+                $prunedCount = Questionnaire::query()
+                    ->whereNotIn('id', $questionnaireIdsToKeep)
+                    ->delete();
             }
         });
 
         return [
             'questionnaires' => $importedCount,
+            'pruned_questionnaires' => $prunedCount,
         ];
     }
 
     /**
      * @param  array<string, mixed>  $payload
      */
-    protected function guardPayload(array $payload): void
+    protected function guardPayload(array $payload, bool $prune): void
     {
         if (! isset($payload['questionnaires']) || ! is_array($payload['questionnaires'])) {
             throw new InvalidArgumentException('Het importbestand bevat geen geldige questionnaires-array.');
+        }
+
+        if ($prune && $payload['questionnaires'] === []) {
+            throw new InvalidArgumentException('Prune-import vereist minimaal één questionnaire in het importbestand.');
         }
     }
 
     /**
      * @param  array<string, mixed>  $definition
      */
-    protected function importQuestionnaire(array $definition): void
+    protected function importQuestionnaire(array $definition): int
     {
         $questionnaire = Questionnaire::query()->updateOrCreate(
             [
@@ -132,6 +146,10 @@ class QuestionnaireLibraryImporter
                     'display_condition_answer' => $displayCondition['answer'] ?? null,
                 ]);
         }
+
+        $questionnaire->refresh();
+
+        return $questionnaire->id;
     }
 
     /**

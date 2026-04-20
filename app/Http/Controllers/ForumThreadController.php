@@ -89,13 +89,17 @@ class ForumThreadController extends Controller
      */
     protected function tagCounts(): Collection
     {
-        return Cache::remember('forum:tag_counts', now()->addMinutes(5), function (): Collection {
+        /** @var array<string, int> $cached */
+        $cached = Cache::remember('forum:tag_counts', now()->addMinutes(5), function (): array {
             return ForumThread::query()
                 ->get(['tags'])
                 ->flatMap(fn (ForumThread $forumThread): array => $forumThread->tagList()->all())
                 ->countBy()
                 ->sortDesc()
-                ->take(8);
+                ->take(8)
+                ->all();
         });
+
+        return collect($cached);
     }
 }

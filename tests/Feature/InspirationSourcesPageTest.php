@@ -6,10 +6,10 @@ test('inspiration sources page can be rendered with public navigation and cta', 
     $response->assertOk()
         ->assertSee('Op wiens schouders wij staan')
         ->assertSeeText('Martin Seligman')
+        ->assertSeeText('Gabriele Oettingen')
         ->assertSeeText('Barry O\'Reilly')
         ->assertSeeText('Nick van Dam')
         ->assertSeeText('Viktor Frankl')
-        ->assertSeeText('Ontdek waar jij staat. Doe de gratis weerbaarheidsscan.')
         ->assertSeeTextInOrder([
             'Positieve psychologie',
             'Barry O\'Reilly',
@@ -28,7 +28,7 @@ test('homepage and submenu link to the inspiration sources page', function () {
 
     $response->assertOk()
         ->assertSee(route('inspiration-sources.show', absolute: false), false)
-        ->assertSee('Nieuwsgierig naar de denkers achter Hermes Results?')
+        ->assertSee('Nieuwsgierig naar de denkers?')
         ->assertSee('Bekijk de inspiratiebronnen')
         ->assertSeeInOrder([
             'Inspiratiebronnen',

@@ -23,7 +23,6 @@ class StoreMediaAssetRequest extends FormRequest
                     'png',
                     'webp',
                     'gif',
-                    'svg',
                     'mp4',
                     'mov',
                     'webm',

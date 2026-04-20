@@ -16,8 +16,8 @@ return [
     ],
 
     'host_defaults' => [
-        'hermesresults.com' => 'en',
-        'www.hermesresults.com' => 'en',
+        'hermesresults.com' => 'nl',
+        'www.hermesresults.com' => 'nl',
         'hermesresults.nl' => 'nl',
         'www.hermesresults.nl' => 'nl',
         'hermesresults.eu' => 'de',

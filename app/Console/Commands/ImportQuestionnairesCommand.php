@@ -11,8 +11,9 @@ use JsonException;
 use Throwable;
 
 #[Signature('questionnaires:import
-    {path : Pad naar het JSON-importbestand}')]
-#[Description('Importeer questionnaires uit een JSON-exportbestand')]
+    {path : Pad naar het JSON-importbestand}
+    {--prune : Verwijder questionnaires die niet in het importbestand staan}')]
+#[Description('Importeer questionnaires uit een JSON-exportbestand en synchroniseer optioneel de volledige bibliotheek')]
 class ImportQuestionnairesCommand extends Command
 {
     public function __construct(private readonly QuestionnaireLibraryImporter $importer)
@@ -36,7 +37,7 @@ class ImportQuestionnairesCommand extends Command
         try {
             /** @var array<string, mixed> $payload */
             $payload = json_decode(File::get($path), true, flags: JSON_THROW_ON_ERROR);
-            $result = $this->importer->import($payload);
+            $result = $this->importer->import($payload, prune: (bool) $this->option('prune'));
         } catch (JsonException $exception) {
             $this->error('Importbestand bevat geen geldige JSON.');
             $this->line($exception->getMessage());
@@ -51,6 +52,7 @@ class ImportQuestionnairesCommand extends Command
 
         $this->info('Questionnaire-import afgerond.');
         $this->line('Aantal questionnaires: '.$result['questionnaires']);
+        $this->line('Verwijderde questionnaires: '.$result['pruned_questionnaires']);
 
         return self::SUCCESS;
     }

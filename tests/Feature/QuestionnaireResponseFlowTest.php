@@ -31,7 +31,7 @@ test('users see available questionnaires on the questionnaire library page', fun
         ->assertOk()
         ->assertSee(__('hermes.questionnaires.library_eyebrow'))
         ->assertSee('Werkbeleving')
-        ->assertSee('Open questionnaire')
+        ->assertSee(__('hermes.questionnaires.start_questionnaire'))
         ->assertSee('Nog niet ingevuld');
 });
 
@@ -92,7 +92,7 @@ test('users can submit and revisit questionnaire responses', function () {
                 $choiceQuestion->id => 'Soms',
             ],
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $this->assertDatabaseHas('questionnaire_responses', [
         'organization_questionnaire_id' => $availability->id,
@@ -109,11 +109,12 @@ test('users can submit and revisit questionnaire responses', function () {
         'answer' => 'Soms',
     ]);
 
+    $response = $availability->responses()->firstOrFail();
+
     $this->actingAs($user)
-        ->get(route('questionnaire-responses.show', $availability))
+        ->get(route('questionnaire-responses.results', $response))
         ->assertOk()
-        ->assertSee('Druk maar goed te doen.')
-        ->assertSee('Laatst opgeslagen op')
+        ->assertSee(__('hermes.questionnaire.results.result_intro', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]))
         ->assertSee('Analyse van uw resultaten')
         ->assertSee('Uw antwoorden zijn opgeslagen.');
 });
@@ -422,9 +423,9 @@ test('required questions on earlier questionnaire pages must still be completed 
         ]);
 });
 
-test('completed questionnaire responses are read only and cannot be overwritten', function () {
+test('completed questionnaire responses are preserved when pro users start a new attempt', function () {
     $organization = Organization::factory()->create();
-    $user = User::factory()->create([
+    $user = User::factory()->pro()->create([
         'org_id' => $organization->org_id,
     ]);
     $questionnaire = Questionnaire::factory()->create([
@@ -462,11 +463,12 @@ test('completed questionnaire responses are read only and cannot be overwritten'
     $this->actingAs($user)
         ->get(route('questionnaire-responses.show', $availability))
         ->assertOk()
-        ->assertSee(__('hermes.questionnaire.completed_locked_draft'))
+        ->assertDontSee(__('hermes.questionnaire.completed_locked_draft'))
+        ->assertDontSee('Oorspronkelijk definitief antwoord')
         ->assertDontSee(__('hermes.questionnaire.resume_link'))
-        ->assertDontSee('name="intent" value="draft"', false)
+        ->assertSee('name="intent" value="draft"', false)
         ->assertSee('data-submit-step', false)
-        ->assertSee('data-is-completed="true"', false);
+        ->assertSee('data-is-completed="false"', false);
 
     $this->actingAs($user)
         ->from(route('questionnaire-responses.show', $availability))
@@ -477,20 +479,22 @@ test('completed questionnaire responses are read only and cannot be overwritten'
             ],
         ])
         ->assertRedirect(route('questionnaire-responses.show', $availability))
-        ->assertSessionHasErrors([
-            'questionnaire' => __('hermes.questionnaire.already_submitted'),
-        ]);
+        ->assertSessionHasNoErrors();
 
     $response->refresh();
 
     expect($response->submitted_at)->not->toBeNull();
+    expect(QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->count())->toBe(2);
 
     $this->assertDatabaseHas('questionnaire_response_answers', [
         'questionnaire_question_id' => $question->id,
         'answer' => 'Oorspronkelijk definitief antwoord',
     ]);
 
-    $this->assertDatabaseMissing('questionnaire_response_answers', [
+    $this->assertDatabaseHas('questionnaire_response_answers', [
         'questionnaire_question_id' => $question->id,
         'answer' => 'Poging tot overschrijven',
     ]);

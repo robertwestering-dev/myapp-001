@@ -23,10 +23,10 @@ test('guests can switch the application locale and it is stored in the session',
         ->assertSee(trans('hermes.home_people.hero_title', locale: 'en'));
 });
 
-test('guest visitors on the .com domain receive the english default locale', function () {
+test('guest visitors on the .com domain receive the dutch default locale', function () {
     $this->get('http://hermesresults.com')
         ->assertOk()
-        ->assertSee(trans('hermes.home_people.hero_title', locale: 'en'));
+        ->assertSee(trans('hermes.home_people.hero_title', locale: 'nl'));
 });
 
 test('guest visitors on the .nl domain receive the dutch default locale', function () {
@@ -41,6 +41,36 @@ test('guest visitors on the .eu domain receive the german default locale', funct
         ->assertSee(trans('hermes.home_people.hero_title', locale: 'de'));
 });
 
+test('english and german homepages use the updated localized homepage copy', function () {
+    $this->withSession(['locale' => 'en'])
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee(trans('hermes.home_people.hero_intro', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.hero_intro_extra', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.challenges_eyebrow', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.tools_text', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.inspiration_title', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.inspiration_action', locale: 'en'))
+        ->assertSee(trans('hermes.nav.about', locale: 'en'))
+        ->assertSee(trans('hermes.nav.organizations', locale: 'en'))
+        ->assertDontSee('Nieuwsgierig naar de denkers?')
+        ->assertDontSee('Bekijk de inspiratiebronnen');
+
+    $this->withSession(['locale' => 'de'])
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee(trans('hermes.home_people.hero_intro', locale: 'de'))
+        ->assertSee(trans('hermes.home_people.hero_intro_extra', locale: 'de'))
+        ->assertSee(trans('hermes.home_people.challenges_eyebrow', locale: 'de'))
+        ->assertSee(trans('hermes.home_people.tools_text', locale: 'de'))
+        ->assertSee(trans('hermes.home_people.inspiration_title', locale: 'de'))
+        ->assertSee(trans('hermes.home_people.inspiration_action', locale: 'de'))
+        ->assertSee(trans('hermes.nav.about', locale: 'de'))
+        ->assertSee(trans('hermes.nav.organizations', locale: 'de'))
+        ->assertDontSee('Nieuwsgierig naar de denkers?')
+        ->assertDontSee('Bekijk de inspiratiebronnen');
+});
+
 test('session locale overrides the host default locale', function () {
     $this->withSession([
         'locale' => 'de',
@@ -50,16 +80,16 @@ test('session locale overrides the host default locale', function () {
 });
 
 test('lang query parameter overrides the .com host default and is stored in the session', function () {
-    $response = $this->get('http://hermesresults.com?lang=nl');
+    $response = $this->get('http://hermesresults.com?lang=en');
 
     $response->assertOk()
-        ->assertSee(trans('hermes.home_people.hero_title', locale: 'nl'))
-        ->assertSessionHas('locale', 'nl');
+        ->assertSee(trans('hermes.home_people.hero_title', locale: 'en'))
+        ->assertSessionHas('locale', 'en');
 
-    $this->withSession(['locale' => 'nl'])
+    $this->withSession(['locale' => 'en'])
         ->get('http://hermesresults.com')
         ->assertOk()
-        ->assertSee(trans('hermes.home_people.hero_title', locale: 'nl'));
+        ->assertSee(trans('hermes.home_people.hero_title', locale: 'en'));
 });
 
 test('lang query parameter supports german redirects on the .com domain', function () {

@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'first_name', 'gender', 'birth_date', 'city', 'country', 'email', 'role', 'password', 'org_id', 'locale'])]
+#[Fillable(['name', 'first_name', 'gender', 'birth_date', 'city', 'country', 'email', 'role', 'password', 'org_id', 'locale', 'last_login_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -59,6 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'birth_date' => 'date',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -101,6 +103,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === self::ROLE_MANAGER;
     }
 
+    public function isProUser(): bool
+    {
+        return $this->role === self::ROLE_USER_PRO;
+    }
+
     public function canAccessAdminPortal(): bool
     {
         return $this->isAdmin() || $this->isManager();
@@ -115,8 +122,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * Anonymize the user's personal data for statistical purposes.
      *
      * Sets remember_token to null to invalidate all "remember me" cookies.
-     * Active sessions on other devices will expire naturally; switching to
-     * the database session driver enables explicit multi-device invalidation.
+     * Deletes all active database sessions to immediately invalidate access
+     * on all devices.
      */
     public function anonymizeForStatistics(): void
     {
@@ -133,6 +140,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ])->save();
+
+        DB::table('sessions')->where('user_id', $this->getKey())->delete();
     }
 
     public function anonymizedEmailAddress(): string

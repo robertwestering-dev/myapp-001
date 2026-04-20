@@ -183,6 +183,47 @@
                 border-color: rgba(88, 116, 138, 0.4);
             }
 
+            .home-organization-card .pill--strong {
+                color: #fff;
+                border-color: transparent;
+                background: linear-gradient(135deg, var(--clay) 0%, var(--clay-deep) 100%);
+                box-shadow: 0 12px 28px rgba(141, 63, 24, 0.28);
+            }
+
+            .home-organization-card .pill--strong:hover {
+                background: linear-gradient(135deg, var(--clay) 0%, var(--clay-deep) 80%);
+                border-color: transparent;
+            }
+
+            .home-organization-card--accent {
+                background:
+                    radial-gradient(circle at top right, rgba(214, 179, 122, 0.18), transparent 28%),
+                    linear-gradient(180deg, rgba(30, 71, 61, 0.98), rgba(16, 42, 35, 0.98));
+                border-color: rgba(255, 255, 255, 0.08);
+                color: #f8f1e7;
+            }
+
+            .home-organization-card--accent .user-section-heading__eyebrow,
+            .home-organization-card--accent .user-section-heading h2 {
+                color: #f8f1e7;
+            }
+
+            .home-organization-card--accent .user-section-heading p {
+                color: rgba(248, 241, 231, 0.82);
+            }
+
+            .home-organization-card--accent .pill {
+                background: rgba(255, 255, 255, 0.12);
+                border-color: rgba(255, 255, 255, 0.18);
+                color: #f8f1e7;
+                box-shadow: none;
+            }
+
+            .home-organization-card--accent .pill:hover {
+                background: rgba(255, 255, 255, 0.18);
+                border-color: rgba(255, 255, 255, 0.24);
+            }
+
             .checkbox-field {
                 gap: 10px;
                 align-items: start;
@@ -235,21 +276,22 @@
     </x-slot:head>
 
     <x-slot:headerMenu>
-        <a class="home-menu-item" href="{{ route('home') }}">Home</a>
-        <a class="home-menu-item" href="{{ route('blog.index') }}">Blog</a>
-            <div class="home-menu-dropdown">
-                <a class="home-menu-trigger" href="{{ route('about.show') }}">
-                    Over
-                    <span aria-hidden="true">▾</span>
-                </a>
-                <div class="home-submenu">
-                    <a href="{{ route('inspiration-sources.show') }}">Inspiratiebronnen</a>
-                    <a href="{{ route('about.show') }}">Over ons</a>
-                    <a href="{{ route('pricing.show') }}">Prijzen</a>
-                    <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
-                </div>
+        <a class="home-menu-item" href="{{ route('home') }}">{{ __('hermes.nav.home') }}</a>
+        <a class="home-menu-item" href="{{ route('blog.index') }}">{{ __('hermes.nav.blog') }}</a>
+        <details class="home-menu-dropdown">
+            <summary class="home-menu-trigger">
+                {{ __('hermes.nav.about') }}
+                <span aria-hidden="true">▾</span>
+            </summary>
+            <div class="home-submenu">
+                <a href="{{ route('inspiration-sources.show') }}">{{ __('hermes.nav.inspiration_sources') }}</a>
+                <a href="{{ route('about.show') }}">{{ __('hermes.nav.about_us') }}</a>
+                <a href="{{ route('pricing.show') }}">{{ __('hermes.nav.pricing') }}</a>
+                <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
             </div>
-        <a class="home-menu-item" href="{{ route('organizations.landing') }}">Organisaties</a>
+        </details>
+        <a class="home-menu-item" href="{{ route('organizations.landing') }}">{{ __('hermes.nav.organizations') }}</a>
+        <a class="home-menu-item" href="{{ route('contact.show') }}">{{ __('hermes.nav.contact') }}</a>
     </x-slot:headerMenu>
 
     <div class="home-page">
@@ -285,11 +327,10 @@
         </section>
 
         <section class="home-section">
-            <x-user-section-heading
-                :eyebrow="__('hermes.home_people.challenges_eyebrow')"
-                :title="__('hermes.home_people.path_title')"
-                :text="__('hermes.home_people.path_text')"
-            />
+            <div class="user-section-heading">
+                <span class="user-section-heading__eyebrow">{{ __('hermes.home_people.challenges_eyebrow') }}</span>
+                <p>{{ __('hermes.home_people.challenges_intro') }}</p>
+            </div>
 
             <div class="home-card-grid">
                 <x-user-surface-card variant="soft" class="home-section">
@@ -315,21 +356,22 @@
         </section>
 
         <section id="diensten" class="home-section">
-            <x-user-section-heading
-                :eyebrow="__('hermes.home_people.tools_eyebrow')"
-                :title="__('hermes.home_people.tools_title')"
-                :text="__('hermes.home_people.tools_text')"
-            />
+            <div class="user-section-heading">
+                <span class="user-section-heading__eyebrow">{{ __('hermes.home_people.tools_eyebrow') }}</span>
+                <p>{{ __('hermes.home_people.diensten_bridge_text') }}</p>
+                <h2>{{ __('hermes.home_people.tools_title') }}</h2>
+                <p>{{ __('hermes.home_people.tools_text') }}</p>
+            </div>
 
             <div class="home-tool-grid">
                 <x-user-surface-card variant="soft" class="home-section">
-                    <h3>{{ __('hermes.home_people.tool_1_title') }}</h3>
-                    <p>{{ __('hermes.home_people.tool_1_text') }}</p>
+                    <h3>{{ __('hermes.home_people.tool_2_title') }}</h3>
+                    <p>{{ __('hermes.home_people.tool_2_text') }}</p>
                 </x-user-surface-card>
 
                 <x-user-surface-card variant="soft" class="home-section">
-                    <h3>{{ __('hermes.home_people.tool_2_title') }}</h3>
-                    <p>{{ __('hermes.home_people.tool_2_text') }}</p>
+                    <h3>{{ __('hermes.home_people.tool_1_title') }}</h3>
+                    <p>{{ __('hermes.home_people.tool_1_text') }}</p>
                 </x-user-surface-card>
 
                 <x-user-surface-card variant="soft" class="home-section">
@@ -348,11 +390,6 @@
 
             <div class="home-confidence-grid">
                 <x-user-surface-card variant="soft" class="home-section">
-                    <h3>{{ __('hermes.home_people.confidence_1_title') }}</h3>
-                    <p>{{ __('hermes.home_people.confidence_1_text') }}</p>
-                </x-user-surface-card>
-
-                <x-user-surface-card variant="soft" class="home-section">
                     <h3>{{ __('hermes.home_people.confidence_2_title') }}</h3>
                     <p>{{ __('hermes.home_people.confidence_2_text') }}</p>
                 </x-user-surface-card>
@@ -361,25 +398,46 @@
                     <h3>{{ __('hermes.home_people.confidence_3_title') }}</h3>
                     <p>{{ __('hermes.home_people.confidence_3_text') }}</p>
                 </x-user-surface-card>
+
+                <x-user-surface-card variant="soft" class="home-section">
+                    <h3>{{ __('hermes.home_people.confidence_1_title') }}</h3>
+                    <p>{{ __('hermes.home_people.confidence_1_text') }}</p>
+                </x-user-surface-card>
+
+                <x-user-surface-card variant="soft" class="home-section">
+                    <h3>{{ __('hermes.home_people.confidence_4_title') }}</h3>
+                    <p>{{ __('hermes.home_people.confidence_4_text') }}</p>
+                </x-user-surface-card>
             </div>
         </section>
 
         <section class="home-section home-organization-card">
             <x-user-section-heading
-                eyebrow="Achtergrond en visie"
-                title="Nieuwsgierig naar de denkers achter Hermes Results?"
-                text="Lees op welke wetenschappers, filosofen en praktijkdenkers ons model is gebouwd en waarom juist hun inzichten onze aanpak richting geven."
+                :eyebrow="__('hermes.home_people.inspiration_eyebrow')"
+                :title="__('hermes.home_people.inspiration_title')"
+                :text="__('hermes.home_people.inspiration_text')"
             />
 
             <div class="home-actions">
-                <a href="{{ route('inspiration-sources.show') }}" class="pill">Bekijk de inspiratiebronnen</a>
+                <a href="{{ route('inspiration-sources.show') }}" class="pill">{{ __('hermes.home_people.inspiration_action') }}</a>
             </div>
         </section>
 
         <section class="home-section home-organization-card">
             <x-user-section-heading
+                :eyebrow="__('hermes.home_people.cta_eyebrow')"
+                :title="__('hermes.home_people.cta_title')"
+                :text="__('hermes.home_people.cta_text')"
+            />
+
+            <div class="home-actions">
+                <a href="{{ route('register') }}" class="pill pill--strong">{{ __('hermes.home_people.cta_action') }}</a>
+            </div>
+        </section>
+
+        <section class="home-section home-organization-card home-organization-card--accent">
+            <x-user-section-heading
                 :eyebrow="__('hermes.home_people.organization_eyebrow')"
-                :title="__('hermes.home_people.organization_title')"
                 :text="__('hermes.home_people.organization_text')"
             />
 

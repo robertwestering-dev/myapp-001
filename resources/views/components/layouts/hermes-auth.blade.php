@@ -364,6 +364,10 @@
             .page-shell {
                 grid-template-columns: 1fr;
             }
+
+            .form-panel {
+                order: -1;
+            }
         }
 
         @media (max-width: 720px) {

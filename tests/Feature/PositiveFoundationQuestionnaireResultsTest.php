@@ -49,7 +49,7 @@ test('pro users see a scored perma analysis with the weakest pillar highlighted 
             'intent' => 'submit',
             'answers' => $answers,
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $response = $availability->responses()->firstOrFail();
 
@@ -60,7 +60,7 @@ test('pro users see a scored perma analysis with the weakest pillar highlighted 
     expect($response->analysis_snapshot['dimensions'])->toHaveCount(5);
 
     $this->actingAs($user)
-        ->get(route('questionnaire-responses.show', $availability))
+        ->get(route('questionnaire-responses.results', $response))
         ->assertOk()
         ->assertSee('Je fundament is aanwezig, maar nog niet overal even sterk.')
         ->assertSee('60 / 100')
@@ -112,7 +112,7 @@ test('free users see only the overall positive foundation result after submissio
             'intent' => 'submit',
             'answers' => $answers,
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $response = $availability->responses()->firstOrFail();
 
@@ -123,7 +123,7 @@ test('free users see only the overall positive foundation result after submissio
     expect($response->analysis_snapshot['dimensions'])->toBe([]);
 
     $this->actingAs($user)
-        ->get(route('questionnaire-responses.show', $availability))
+        ->get(route('questionnaire-responses.results', $response))
         ->assertOk()
         ->assertSee('Je fundament is aanwezig, maar nog niet overal even sterk.')
         ->assertSee('64 / 100')

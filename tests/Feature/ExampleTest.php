@@ -12,6 +12,17 @@ test('home page can be rendered', function () {
         ->assertSee(__('hermes.home_people.hero_title'))
         ->assertSee(__('hermes.home_people.hero_primary'))
         ->assertSee(__('hermes.home_people.challenge_1_title'))
+        ->assertSeeInOrder([
+            __('hermes.home_people.tool_2_title'),
+            __('hermes.home_people.tool_1_title'),
+            __('hermes.home_people.tool_3_title'),
+        ])
+        ->assertSeeInOrder([
+            __('hermes.home_people.confidence_2_title'),
+            __('hermes.home_people.confidence_3_title'),
+            __('hermes.home_people.confidence_1_title'),
+        ])
+        ->assertSee('home-organization-card home-organization-card--accent', false)
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('Nederlands')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
@@ -25,6 +36,79 @@ test('guests can see the login and register links on the home page', function ()
         ->assertSee(route('register'))
         ->assertSee('Inloggen');
 });
+
+test('home page includes a mobile navigation menu with submenu links and locale switch', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk()
+        ->assertSee('Open navigatiemenu')
+        ->assertSee('<details class="home-menu-dropdown">', false)
+        ->assertSee('<details class="mobile-menu__submenu">', false)
+        ->assertSee('Inspiratiebronnen')
+        ->assertSee('Over ons')
+        ->assertSee('Prijzen')
+        ->assertSee(__('hermes.footer.privacy'))
+        ->assertSee(route('contact.show', absolute: false), false)
+        ->assertSee('Taal')
+        ->assertSee(route('locale.update'), false)
+        ->assertSee('Nederlands')
+        ->assertSee('English')
+        ->assertSee('Deutsch');
+});
+
+test('contact page can be rendered with the contact form only', function () {
+    $response = $this->get(route('contact.show'));
+
+    $response->assertOk()
+        ->assertSee(__('hermes.contact_page.heading'))
+        ->assertSee(__('hermes.header.booking'))
+        ->assertSee(route('contact.store'), false)
+        ->assertSee(__('hermes.home.contact_submit'))
+        ->assertSee('contact-page', false)
+        ->assertSee('closing__panel', false)
+        ->assertDontSee(__('hermes.home.closing_title'))
+        ->assertDontSee(__('hermes.home.closing_text'))
+        ->assertDontSee(__('hermes.home.hero_primary'));
+});
+
+test('the booking header button is only shown on the contact page for visitors', function (string $routeName, bool $shouldShowBooking) {
+    $response = $this->get(route($routeName));
+
+    $response->assertOk();
+
+    if ($shouldShowBooking) {
+        $response->assertSee(__('hermes.header.booking'));
+
+        return;
+    }
+
+    $response->assertDontSee(__('hermes.header.booking'));
+})->with([
+    'home' => ['home', false],
+    'contact' => ['contact.show', true],
+    'inspiration sources' => ['inspiration-sources.show', false],
+    'about' => ['about.show', false],
+    'pricing' => ['pricing.show', false],
+    'privacy' => ['privacy.show', false],
+    'organizations' => ['organizations.landing', false],
+    'blog' => ['blog.index', false],
+]);
+
+test('public guest pages show the contact navigation link', function (string $routeName) {
+    $this->get(route($routeName))
+        ->assertOk()
+        ->assertSee(route('contact.show', absolute: false), false)
+        ->assertSee(__('hermes.nav.contact'));
+})->with([
+    'home',
+    'contact.show',
+    'inspiration-sources.show',
+    'about.show',
+    'pricing.show',
+    'privacy.show',
+    'organizations.landing',
+    'blog.index',
+]);
 
 test('authenticated users are redirected to dashboard from the home page', function () {
     $response = $this->actingAs(User::factory()->create())->get(route('home'));
@@ -42,13 +126,13 @@ test('authenticated users can still open the homepage when the contact parameter
 test('guests can submit the contact form', function () {
     Mail::fake();
 
-    $this->post(route('contact.store'), [
+    $this->from(route('contact.show').'#contact')->post(route('contact.store'), [
         'name' => 'Ada Lovelace',
         'email' => 'ada@example.com',
         'message' => 'Ik wil meer weten over de quick scan adaptability.',
         'privacy_consent' => '1',
     ])
-        ->assertRedirect(route('organizations.landing').'#contact')
+        ->assertRedirect(route('contact.show').'#contact')
         ->assertSessionHas('status', __('hermes.home.contact_success'));
 
     Mail::assertQueued(ContactFormSubmitted::class, 'robert.van.westering@outlook.com');

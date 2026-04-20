@@ -170,6 +170,10 @@ class BlogPostRenderer
             return $trimmedValue.'px';
         }
 
-        return $trimmedValue;
+        if (preg_match('/^\d+(\.\d+)?(px|em|rem|%|vw|vh|svh|dvh|ch|ex)$/', $trimmedValue) === 1) {
+            return $trimmedValue;
+        }
+
+        return '100%';
     }
 }

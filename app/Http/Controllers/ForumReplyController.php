@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreForumReplyRequest;
 use App\Models\ForumReply;
 use App\Models\ForumThread;
+use App\Notifications\ForumReplyPosted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -17,7 +18,7 @@ class ForumReplyController extends Controller
 
         abort_if($forumThread->is_locked, 403);
 
-        $forumThread->replies()->create([
+        $forumReply = $forumThread->replies()->create([
             'user_id' => $request->user()->getKey(),
             'body' => $request->validated('body'),
         ]);
@@ -25,6 +26,13 @@ class ForumReplyController extends Controller
         $forumThread->forceFill([
             'last_activity_at' => now(),
         ])->save();
+
+        $forumThread->loadMissing('author');
+        $threadAuthor = $forumThread->author;
+        if ($threadAuthor && $threadAuthor->getKey() !== $request->user()->getKey()) {
+            $forumReply->load('author');
+            $threadAuthor->notify(new ForumReplyPosted($forumThread, $forumReply));
+        }
 
         return redirect()
             ->to(route('forum.show', $forumThread).'#reply-form')

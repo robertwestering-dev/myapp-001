@@ -25,6 +25,7 @@ class AvailableQuestionnaireCatalog
                         'submitted_at',
                         'last_saved_at',
                         'resume_token',
+                        'created_at',
                         'updated_at',
                     ])
                     ->where('user_id', $user->id)
@@ -36,10 +37,19 @@ class AvailableQuestionnaireCatalog
             ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->isAvailable())
             ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->questionnaire?->locale === $preferredLocale)
             ->map(function (OrganizationQuestionnaire $organizationQuestionnaire): OrganizationQuestionnaire {
+                $completedResponses = $organizationQuestionnaire->responses
+                    ->whereNotNull('submitted_at')
+                    ->sortByDesc('submitted_at')
+                    ->values();
+
                 $organizationQuestionnaire->setRelation(
                     'currentResponse',
-                    $organizationQuestionnaire->responses->sortByDesc('updated_at')->first(),
+                    $organizationQuestionnaire->responses
+                        ->whereNull('submitted_at')
+                        ->sortByDesc('updated_at')
+                        ->first() ?? $completedResponses->first(),
                 );
+                $organizationQuestionnaire->setRelation('completedResponses', $completedResponses);
                 $organizationQuestionnaire->unsetRelation('responses');
 
                 return $organizationQuestionnaire;

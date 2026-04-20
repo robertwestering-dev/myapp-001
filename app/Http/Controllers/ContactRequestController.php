@@ -25,8 +25,10 @@ class ContactRequestController extends Controller
         )
             ->queue($mailable);
 
+        $previousUrl = strtok(url()->previous(), '#') ?: route('contact.show');
+
         return redirect()
-            ->to(route('organizations.landing').'#contact')
+            ->to($previousUrl.'#contact')
             ->with('status', __('hermes.home.contact_success'));
     }
 }

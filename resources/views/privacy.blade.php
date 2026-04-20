@@ -3,7 +3,7 @@
     :meta-description="__('hermes.privacy.meta_description')"
     :canonical-url="route('privacy.show')"
     :meta-image="asset('images/hermes-results-logo.png')"
-    :show-header-booking="auth()->check()"
+    :show-header-booking="false"
     :show-header-contact-link="auth()->check()"
     :structured-data="[
         '@context' => 'https://schema.org',
@@ -17,19 +17,20 @@
         <x-slot:headerMenu>
             <a class="home-menu-item" href="{{ route('home') }}">Home</a>
             <a class="home-menu-item" href="{{ route('blog.index') }}">Blog</a>
-            <div class="home-menu-dropdown">
-                <a class="home-menu-trigger" href="{{ route('about.show') }}">
+            <details class="home-menu-dropdown">
+                <summary class="home-menu-trigger">
                     Over
                     <span aria-hidden="true">▾</span>
-                </a>
+                </summary>
                 <div class="home-submenu">
                     <a href="{{ route('inspiration-sources.show') }}">Inspiratiebronnen</a>
                     <a href="{{ route('about.show') }}">Over ons</a>
                     <a href="{{ route('pricing.show') }}">Prijzen</a>
                     <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
                 </div>
-            </div>
+            </details>
             <a class="home-menu-item" href="{{ route('organizations.landing') }}">Organisaties</a>
+            <a class="home-menu-item" href="{{ route('contact.show') }}">Contact</a>
         </x-slot:headerMenu>
     @endguest
 
@@ -231,7 +232,7 @@
                 :title="__('hermes.privacy.contact_card_title')"
                 :text="__('hermes.privacy.contact_card_text')"
                 :action-label="__('hermes.privacy.contact_card_action')"
-                :action-href="route('organizations.landing').'#contact'"
+                :action-href="route('contact.show').'#contact'"
             />
         </section>
     </div>

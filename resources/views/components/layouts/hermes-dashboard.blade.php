@@ -557,9 +557,11 @@
 
         @media (max-width: 780px) {
             .topbar__inner {
+                height: 80px;
+                min-height: 80px;
                 padding: 12px 0;
-                align-items: flex-start;
-                flex-direction: column;
+                align-items: center;
+                flex-direction: row;
             }
 
             .user-info-grid--2,
@@ -571,9 +573,10 @@
             }
 
             .topbar__left {
-                width: 100%;
-                flex-wrap: wrap;
-                gap: 10px 14px;
+                min-width: 0;
+                flex: 1;
+                flex-wrap: nowrap;
+                gap: 12px;
             }
 
             .topbar__menu {
@@ -581,8 +584,13 @@
             }
 
             .topbar__actions {
-                width: 100%;
+                width: auto;
                 justify-content: flex-end;
+                flex: 0 0 auto;
+            }
+
+            .brand__logo {
+                height: 46px;
             }
         }
 

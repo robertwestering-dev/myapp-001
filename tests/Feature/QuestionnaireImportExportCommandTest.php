@@ -77,3 +77,56 @@ test('questionnaires can be exported to json and imported again', function () {
 
     File::delete($exportPath);
 });
+
+test('questionnaires import can prune questionnaires that are missing from the import file', function () {
+    $questionnaireToKeep = Questionnaire::factory()->create([
+        'title' => 'Te behouden vragenlijst',
+        'description' => 'Deze vragenlijst blijft bestaan.',
+        'locale' => 'nl',
+        'is_active' => true,
+    ]);
+
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaireToKeep->id,
+        'title' => 'Behoud categorie',
+        'description' => null,
+        'sort_order' => 1,
+    ]);
+
+    QuestionnaireQuestion::factory()->singleChoice()->create([
+        'questionnaire_category_id' => $category->id,
+        'locale' => 'nl',
+        'prompt' => 'Blijft deze vraag bestaan?',
+        'options' => ['Ja', 'Nee'],
+        'sort_order' => 1,
+    ]);
+
+    $questionnaireToDelete = Questionnaire::factory()->create([
+        'title' => 'Verouderde live vragenlijst',
+        'description' => 'Deze vragenlijst moet worden verwijderd.',
+        'locale' => 'nl',
+        'is_active' => true,
+    ]);
+
+    $exportPath = storage_path('app/testing/questionnaires-prune.json');
+
+    Artisan::call('questionnaires:export', [
+        '--questionnaire' => [$questionnaireToKeep->id],
+        '--path' => $exportPath,
+    ]);
+
+    Artisan::call('questionnaires:import', [
+        'path' => $exportPath,
+        '--prune' => true,
+    ]);
+
+    expect(Questionnaire::query()
+        ->whereKey($questionnaireToKeep->id)
+        ->exists())->toBeTrue();
+
+    expect(Questionnaire::query()
+        ->whereKey($questionnaireToDelete->id)
+        ->exists())->toBeFalse();
+
+    File::delete($exportPath);
+});

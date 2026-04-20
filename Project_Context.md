@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-09`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3).
 
 ## Product In Het Kort
 
@@ -70,6 +70,44 @@ Autorisatie:
 - gebruik nooit `request()->user()` in controllers — gebruik altijd `$request->user()` via de methode-parameter
 - vermijd dubbele autorisatie: als een `FormRequest` de autorisatie al regelt via `authorize()`, roep dan geen `$this->authorize()` aan in de controller — `StoreOrganizationRequest` en `UpdateOrganizationRequest` regelen hun eigen autorisatie volledig; de controllers bevatten geen extra checks
 
+Beveiliging:
+
+- `app/Http/Middleware/AddSecurityHeaders.php` voegt op elke response een per-request-nonce toe en stuurt: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` en een strikte `Content-Security-Policy` — geregistreerd als globale web-middleware in `bootstrap/app.php`
+- CSP-policy: `default-src 'self'`, `script-src 'nonce-{nonce}' 'strict-dynamic' 'unsafe-eval'`, `style-src 'self' 'unsafe-inline' https://fonts.bunny.net`, `font-src 'self' https://fonts.bunny.net`, `img-src 'self' data: https:`, `connect-src 'self'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'self'`
+- `'unsafe-eval'` is vereist omdat Livewire v4 intern `new Function()` gebruikt voor `wire:click`/`wire:model` expressie-evaluatie — dit is een bekende beperking; de nonce-bescherming (tegen externe scriptinjectie en inline scripts) blijft volledig intact
+- `Vite::useCspNonce($nonce)` wordt vóór `$next($request)` aangeroepen — Livewire v4 leest de nonce automatisch via `Vite::cspNonce()`
+- `config/livewire.php` heeft `csp_safe => true` — Livewire gebruikt de CSP-veilige Alpine-bundle zonder inline scripts
+- routes `/forum`, `/vragenlijsten`, `/academy` en alle questionnaire-routes vereisen `verified` middleware naast `auth` — onverifieerde gebruikers kunnen deze flows niet bereiken
+- `/contact` is gelimiteerd op `throttle:5,1`, `/locale` op `throttle:30,1`
+- SVG-uploads zijn geblokkeerd in `StoreMediaAssetRequest` — toegestane types: jpg, jpeg, png, webp, gif, mp4, mov, webm, ogg, pdf
+- `User::anonymizeForStatistics()` verwijdert actieve database-sessies van de gebruiker direct na anonimisering
+- sessieversleuteling staat aan (`SESSION_ENCRYPT=true`) en cookies worden alleen via HTTPS verstuurd (`SESSION_SECURE_COOKIE=true` op productie)
+- `BlogPostRenderer::normalizeCssDimension()` accepteert alleen veilige CSS-eenheden (px, em, rem, %, vw, vh, e.d.) — onbekende waarden vallen terug op `100%`
+
+2FA-handhaving:
+
+- `app/Http/Middleware/EnsureTwoFactorEnabled.php` blokkeert toegang tot het admin-portal als `two_factor_confirmed_at` leeg is — admins en beheerders worden doorgestuurd naar `admin.two-factor.notice`
+- de noticepagina staat buiten de 2FA-gate en verwijst door naar `/settings/profile`
+- op de profielpagina kunnen `Admin` en `Beheerder` 2FA in- en uitschakelen via Fortify-actions (`EnableTwoFactorAuthentication`, `ConfirmTwoFactorAuthentication`, `DisableTwoFactorAuthentication`)
+- `UserFactory::admin()` en `UserFactory::manager()` bevatten standaard `withTwoFactor()` zodat tests niet worden geblokkeerd door de middleware
+- admins die 2FA hebben ingesteld, worden na login omgeleid naar `/two-factor-challenge` (Fortify-flow) in plaats van direct naar het portal
+- na het succesvol doorlopen van de 2FA-challenge worden admins en beheerders doorgestuurd naar `admin.portal` via een custom `TwoFactorLoginResponse` (`app/Actions/Fortify/TwoFactorLoginResponse.php`) — gewone gebruikers gaan naar `dashboard`
+- het 2FA-challenge-invoerveld is één enkel tekstveld (niet het split-digit `flux:otp` component) voor maximale bruikbaarheid
+
+Auditlog:
+
+- `app/Models/AdminActivityLog.php` + tabel `admin_activity_logs` — slaat op: `user_id`, `action`, `subject_type`, `subject_id`, `description`, `ip_address`, `timestamps`
+- `app/Services/AuditLogger.php` — injecteerbare service die automatisch de ingelogde gebruiker en het IP-adres registreert
+- `UserController` logt `user.created`, `user.updated`, `user.deleted`
+- `OrganizationController` logt `organization.created`, `organization.updated`, `organization.deleted`
+- auditlogoverzicht beschikbaar op `/admin-portal/audit-logs` — alleen voor globale `Admin`, ondersteunt filteren op actie en omschrijving
+
+Forummeldingen:
+
+- `app/Notifications/ForumReplyPosted.php` — ShouldQueue-notificatie die de thread-auteur een e-mail stuurt bij een nieuwe reactie van een andere gebruiker
+- `ForumReplyController::store()` verstuurt de melding na het aanmaken van de reactie, mits de reageerder ≠ de thread-auteur
+- trilinguale mailteksten in `lang/nl/hermes.php`, `lang/en/hermes.php` en `lang/de/hermes.php` onder `notifications.forum_reply`
+
 Gedeelde FormRequest-logica:
 
 - `app/Http/Requests/Admin/BaseLocalizedRequest.php` is de abstracte basisklasse voor alle FormRequests met meertalige velden
@@ -109,7 +147,9 @@ Services:
 - gebruik `$service->get(User $actor, withCounts: true)` voor index/portalpagina's
 - gebruik `$service->getForFilters()` voor filterkolommen zonder counts
 - `app/Support/Questionnaires/AvailableQuestionnaireCatalog` is de centrale bron voor locale-context bepaling — gebruik `$catalog->localeContext(Request $request, User $user)` in controllers; implementeer deze logica nooit opnieuw in een controller
+- `AvailableQuestionnaireCatalog::forUser()` zet twee virtuele relaties op elk `OrganizationQuestionnaire`-object: `currentResponse` (huidig concept of anders de laatste definitieve inzending) en `completedResponses` (Collection van definitieve inzendingen gesorteerd op `submitted_at` desc) — deze worden via `setRelation()` ingesteld en zijn geen echte Eloquent-relaties
 - `app/Services/BlogPostRenderer` verzorgt alle rendering van blogcontent (Markdown, media-shortcodes) — `BlogPost::renderedContentForLocale()` delegeert aan deze service; voeg rendering-logica nooit direct toe aan het model
+- `app/Services/SuccessfulLoginSummary` registreert na een succesvolle login de vorige loginmoment en de meest recente definitieve questionnaire-inzending in de sessie (sleutel: `SuccessfulLoginSummary::SESSION_KEY`) en werkt `users.last_login_at` bij — wordt aangeroepen vanuit zowel `LoginResponse` als `TwoFactorLoginResponse` zodat het dashboard de eenmalige loginpopup kan tonen
 
 Configuratie-afspraken:
 
@@ -156,6 +196,8 @@ Praktische deployregels:
 - alleen Blade- of vertaalwijzigingen vragen meestal alleen upload plus `optimize:clear` en `view:cache`
 - wijzigingen in `resources/css`, `resources/js` of Vite-afhankelijke UI vragen ook upload van `public/build/`
 - `php artisan storage:link` moet aanwezig zijn voor asset-URLs onder `/storage/...`
+- na elke deploy `composer install --no-dev --optimize-autoloader` draaien zodat dev-packages (zoals `laravel/boost`) uit de autoload-map worden verwijderd — anders geeft de server een `BoostServiceProvider not found` error
+- als de server een `Class "translator" does not exist` error gooit, is de oorzaak altijd een corrupte of verouderde bootstrap-cache; fix: `rm -f bootstrap/cache/*.php && php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache`
 
 Gebruik ook `DEPLOY_HANDLEIDING.md` als checklist per wijzigingstype.
 
@@ -169,7 +211,7 @@ Beoogde domeinen:
 
 Actuele locale-opzet:
 
-- `.com` -> `en`
+- `.com` -> `nl`
 - `.nl` -> `nl`
 - `.eu` -> `de`
 
@@ -193,6 +235,13 @@ Vertaalbestanden:
 - `lang/nl/hermes.php`
 - `lang/en/hermes.php`
 - `lang/de/hermes.php`
+- `lang/fr/hermes.php` — voorbereidend bestand voor een toekomstige Franse locale; `fr` is nog **niet** opgenomen in `config/locales.supported` en dus nog niet actief in de taalswitch
+
+Belangrijke vertaalafspraak:
+
+- bij elke tekstwijziging in een van de vertaalbestanden moeten de corresponderende keys in **alle drie de actieve taalbestanden** (nl, en, de) direct worden bijgewerkt
+- de Nederlandse tekst is altijd leidend; Engels en Duits worden daarop afgestemd
+- dit geldt ook voor volgorde-wijzigingen in lijsten (bijv. `features`-arrays) en het toevoegen of verwijderen van keys
 
 ## Rollen
 
@@ -227,9 +276,13 @@ Actuele UX-status:
 - consistente heading-, card-, feedback-, CTA- en metadata-patronen
 - gedeelde gebruikerscomponenten voor pagina-opbouw, lege staten en actieblokken
 - donkere `accent`-kaarten gebruiken witte titels, tekst en metadata voor leesbaarheid
+- het gedeelde hamburgermenu blijft op smartphone naast het logo staan; het mobiele menu heeft een eigen scrollgebied zodat de pagina achter het menu niet meescrollt
+- de headerknop `Maak een afspraak` wordt alleen op de contactpagina getoond; op alle andere publieke en ingelogde pagina's staat deze knop niet in de header
+- de logoutknop voor ingelogde gebruikers gebruikt in alle headers de neutrale grijze `pill--neutral` variant
 
 Belangrijke layoutbestanden:
 
+- `resources/views/components/hermes-header.blade.php`
 - `resources/views/components/layouts/hermes-dashboard.blade.php`
 - `resources/views/components/layouts/hermes-public.blade.php`
 - `resources/views/components/layouts/hermes-admin.blade.php`
@@ -251,12 +304,27 @@ Het dashboard is een samenvattingsdashboard en niet langer een volledige questio
 
 Het toont:
 
-- Academy samenvatting
 - questionnaire samenvatting
+- Academy samenvatting
 - aantal beschikbare questionnaires
+- aantal lopende questionnaires
 - aantal afgeronde questionnaires
-- aantal conceptquestionnaires
-- duidelijke vervolgstappen richting Academy en vragenlijsten
+- aantal beschikbare Academy-items
+- aantal lopende Academy-items
+- aantal afgeronde Academy-items
+
+Actuele dashboardstatus:
+
+- het eerste hoofdblok is `Questionnaires`, daarna volgt `Academy`
+- het blok `Questionnaires` toont alleen titel, korte introductietekst, drie statustegels (`Beschikbaar`, `Lopend`, `Afgerond`) en een actieknop
+- de extra dashboardtekst over concepten en de regel met de actieve questionnairetaal zijn verwijderd uit het blok `Questionnaires`
+- het blok `Academy` toont titel, korte introductietekst, drie statustegels (`Beschikbaar`, `Lopend`, `Afgerond`) en een actieknop
+- de Academy-tegels hebben exact dezelfde hoogte als de Questionnaires-tegels
+- de oude sectie `Volgende stap` met guidance-kaarten is volledig verwijderd
+- na elke succesvolle login van een gewone gebruiker wordt op het dashboard een eenmalige popup getoond met naam, vorige login en de laatst ingevulde zelftest
+- `users.last_login_at` bewaart de meest recente succesvolle login; de popup gebruikt de vorige waarde voordat deze wordt bijgewerkt
+- de laatste zelftest in de popup is de nieuwste definitieve `QuestionnaireResponse` van de gebruiker
+- als de laatste zelftest op of vóór de datum van vandaag min drie maanden is afgerond, toont de popup een oproep om die zelftest opnieuw te doen en voortgang te volgen
 
 De oude losse questionnairelijst op dashboard is verwijderd; die flow zit nu op `/vragenlijsten`.
 
@@ -269,6 +337,7 @@ Actuele status van deze pagina:
 - de titel `Bibliotheek` staat binnen de buitenste lijstcontainer
 - de pagina toont beschikbare questionnaires als kaarten
 - per kaart zijn status, conceptbadge en starten- of hervatten-actie zichtbaar
+- per kaart worden eerdere definitieve inzendingen getoond met datum/tijd en een link naar de resultaten van die specifieke inzending
 - dashboard en library gebruiken dezelfde cataloguslogica
 - de oude regel onder `Bibliotheek` met de actieve taal is verwijderd
 - statusmeldingen op deze pagina worden ook gebruikt als veilige fallback na een taalwissel vanaf een questionnaire-detailpagina
@@ -293,6 +362,8 @@ De invulflow ondersteunt:
 - autosave
 - handmatig concept opslaan
 - hervatten van concepten
+- meerdere definitieve inzendingen per gebruiker per questionnaire
+- resultaten en analyse bekijken per afzonderlijke inzending
 - conditionele vervolgvragen
 - definitief indienen
 - questionnaire-specifieke resultaatanalyse na definitieve inzending
@@ -301,9 +372,15 @@ Belangrijke statusafspraken:
 
 - een response is `concept` zolang `submitted_at` leeg is
 - een response is definitief zodra hij is ingediend
+- per gebruiker en organization-questionnaire mag meer dan één definitieve response bestaan
+- gewone gebruikers met rol `User` mogen een questionnaire één keer definitief invullen
+- gebruikers met rol `user_pro` mogen dezelfde questionnaire meerdere keren definitief invullen
+- als een gewone `User` een al afgeronde questionnaire opnieuw wil openen, wordt hij teruggestuurd naar `/vragenlijsten` met een sluitbare PRO-popup
+- de invulpagina gebruikt alleen de nieuwste conceptresponse; afgeronde responses openen via de aparte resultatenroute
 - conceptresponses blijven uitgesloten van admin-exports
 - afgeronde responses mogen niet ongemerkt terugvallen naar draft
 - na definitieve inzending wordt een `analysis_snapshot` op de response opgeslagen
+- definitieve inzendingen worden niet meer heropend als invulformulier; de gebruiker wordt doorgestuurd naar de resultaatpagina van die specifieke response
 
 Belangrijke databasevelden:
 
@@ -357,6 +434,7 @@ Standaardquestionnaires die nu aanwezig zijn:
 - `Quick scan digitale weerbaarheid` (`nl`)
 - `Digital resilience quick scan` (`en`)
 - `De digitale spiegel` (`nl`)
+- `Positief fundament` (`nl`)
 
 Deze worden gesynchroniseerd via de bestaande sync-actions en migraties voor gelokaliseerde standaardquestionnaires.
 
@@ -399,6 +477,11 @@ Specifieke implementatie die nu aanwezig is:
 
 - `De digitale spiegel` heeft eigen scoringslogica en resultaatduiding
 - deze analyse gebruikt omgekeerde items, dimensiescores, totaalscore, profielduiding en aanbevolen vervolgstap
+- `Positief fundament` heeft eigen PERMA-scoringslogica en resultaatduiding
+- deze analyse berekent vijf pijlerscores (`P`, `E`, `R`, `M`, `A`), een totaalscore (`20-100`), een overall profiel en een prioritaire vervolgstap op basis van de laagste pijlerscore
+- bij gelijke laagste pijlerscores geldt prioriteit `P > E > M > R > A`
+- gratis `User` ziet alleen overall score, overall profiel en een globale CTA
+- `user_pro` ziet daarnaast alle vijf pijlerscores, pijlerbadges, adviesteksten en de aanbevolen startpijler
 
 ## Questionnaire Import/Export
 
@@ -407,7 +490,8 @@ Er is een lokale JSON import/export-flow voor de questionnaire-bibliotheek.
 Beschikbare Artisan-commando's:
 
 - `php artisan questionnaires:export`
-- `php artisan questionnaires:import`
+- `php artisan questionnaires:import` — standaard additive import; questionnaires die niet in het importbestand staan blijven behouden
+- `php artisan questionnaires:import --prune` — synchroniseert de volledige bibliotheek: questionnaires die niet in het importbestand staan worden verwijderd; vereist minimaal één questionnaire in het importbestand
 
 De export bevat:
 
@@ -464,6 +548,7 @@ Belangrijke functionele afspraken:
 - het forum gebruikt dezelfde Hermes-dashboardnavigatie als Academy, vragenlijsten en profiel
 - discussies en reacties zijn zichtbaar voor alle ingelogde gebruikers
 - nieuwe reacties verversen de activiteitssortering van een discussie
+- de thread-auteur ontvangt een e-mailmelding (`ForumReplyPosted`) als iemand anders reageert — notificatie wordt asynchroon verstuurd via de queue
 
 ## Blog
 
@@ -499,6 +584,7 @@ Professionalisering die al is doorgevoerd:
 - sitemap via aparte controller/view
 - gerelateerde artikelen
 - admin previewflow
+- blog tagcounts worden als simpele array gecachet en bij een ongeldige cachewaarde automatisch opnieuw opgebouwd
 
 ## Homepage
 
@@ -516,6 +602,18 @@ Actuele status:
 
 Zie ook `BLOG_MARKDOWN_HANDLEIDING.md`.
 
+## Contact
+
+De contactpagina is publiek toegankelijk via `/contact`.
+
+Actuele status:
+
+- de pagina gebruikt de publieke Hermes-homepagestijl
+- de pagina staat in de publieke navigatie voor bezoekers
+- de pagina toont het contactformulier uit het `Call to action`-blok van `/voor-organisaties`; de linker CTA-tekst en Calendly-knop zijn op de contactpagina verwijderd
+- het contactformulier gebruikt dezelfde `POST /contact` flow als het bestaande organisatieformulier
+- na versturen keert de gebruiker terug naar de pagina waar het formulier stond, met fragment `#contact`
+
 ## Profiel
 
 Er is één centrale profielpagina op `/settings/profile`.
@@ -531,6 +629,7 @@ De gebruiker kan daar wijzigen:
 - land
 - voorkeurstaal
 - wachtwoord
+- twee-factor-authenticatie (alleen zichtbaar voor `Admin` en `Beheerder`)
 
 Actuele profielafspraken:
 
@@ -562,6 +661,11 @@ Gedrag bij profielwijziging:
 - als e-mail wijzigt, wordt `email_verified_at` leeggemaakt
 - daarna wordt automatisch een nieuwe verificatiemail verstuurd
 - de actieve taal wordt ook in de sessie gezet
+
+Verificatiemail opnieuw sturen:
+
+- de knop "Klik hier om de verificatiemail opnieuw te sturen" is een `wire:click="resendVerificationEmail"` knop, geen losse form POST
+- gebruik altijd `wire:click` voor acties binnen Livewire-components — een `<form method="POST">` binnen een Livewire-component wordt door Livewire onderschept en bereikt de server niet als HTTP-request
 
 ## Account Verwijderen / Anonimiseren
 
@@ -597,6 +701,7 @@ Actuele beheerdelen:
 - vertaalbeheer
 - Academy-beheer
 - assetbeheer
+- auditlog
 
 Alleen globale `Admin`:
 
@@ -604,6 +709,7 @@ Alleen globale `Admin`:
 - Academy-beheer
 - vertaalbeheer
 - blogbeheer
+- auditlog
 - interne strategiepagina's met Nederlandse conceptcopy voor homepage, B2B, pricing en privacy
 - interne publieke previewpagina's van die strategiecopy, alleen zichtbaar voor globale admins
 
@@ -676,6 +782,11 @@ Belangrijke recente migraties:
 - `2026_04_08_182458_add_analysis_snapshot_to_questionnaire_responses_table.php`
 - `2026_04_08_185711_make_org_id_nullable_on_organization_questionnaires_table.php`
 - `2026_04_09_053803_convert_global_questionnaire_availabilities_to_per_organization_records.php`
+- `2026_04_11_065853_create_admin_activity_logs_table.php`
+- `2026_04_09_111411_add_positive_foundation_questionnaire.php`
+- `2026_04_11_065853_create_admin_activity_logs_table.php`
+- `2026_04_19_141151_allow_multiple_questionnaire_responses_per_user.php`
+- `2026_04_19_150511_add_last_login_at_to_users_table.php`
 
 Status:
 
@@ -688,8 +799,10 @@ Gebruikersroutes:
 
 - `/`
 - `/inspiratiebronnen`
+- `/contact`
 - `/dashboard`
 - `/vragenlijsten`
+- `/questionnaires/results/{response}`
 - `/academy`
 - `/forum`
 - `/settings/profile`
@@ -707,14 +820,18 @@ Admin-routes:
 - `/admin-portal/academy-courses`
 - `/admin-portal/blog-posts`
 - `/admin-portal/media-assets`
+- `/admin-portal/audit-logs`
+- `/admin-portal/two-factor-notice`
 
 ## Belangrijke Bestanden
 
 Gebruikersomgeving:
 
+- `resources/views/contact.blade.php`
 - `resources/views/dashboard.blade.php`
 - `resources/views/questionnaires/index.blade.php`
 - `resources/views/questionnaires/show.blade.php`
+- `resources/views/questionnaires/results.blade.php`
 - `resources/views/academy/index.blade.php`
 - `resources/views/forum/index.blade.php`
 - `resources/views/forum/show.blade.php`
@@ -739,6 +856,7 @@ Questionnaire back-end:
 - `app/Support/Questionnaires/QuestionnaireConditionEvaluator.php`
 - `app/Support/Questionnaires/Results/QuestionnaireResultsEngine.php`
 - `app/Support/Questionnaires/Results/DigitalMirrorQuestionnaireResponseAnalyzer.php`
+- `app/Support/Questionnaires/Results/PositiveFoundationQuestionnaireResponseAnalyzer.php`
 - `app/Models/Questionnaire.php`
 - `app/Models/QuestionnaireQuestion.php`
 - `app/Models/QuestionnaireResponse.php`
@@ -764,10 +882,25 @@ Admin, blog en assets:
 Services en autorisatie:
 
 - `app/Services/SpotlightQuestionnaireService.php`
+- `app/Services/AuditLogger.php`
+- `app/Services/SuccessfulLoginSummary.php`
+- `app/Actions/Fortify/LoginResponse.php`
+- `app/Actions/Fortify/TwoFactorLoginResponse.php`
 - `app/Policies/QuestionnairePolicy.php`
 - `app/Policies/BlogPostPolicy.php`
 - `app/Policies/ForumThreadPolicy.php`
 - `app/Policies/ForumReplyPolicy.php`
+
+Notificaties:
+
+- `app/Notifications/ForumReplyPosted.php`
+
+Middleware:
+
+- `app/Http/Middleware/AddSecurityHeaders.php`
+- `app/Http/Middleware/EnsureTwoFactorEnabled.php`
+- `app/Http/Middleware/EnsureUserIsAdmin.php`
+- `app/Http/Middleware/EnsureUserIsGlobalAdmin.php`
 
 Gedeelde logica:
 

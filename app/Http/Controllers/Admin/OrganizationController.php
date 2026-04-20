@@ -7,12 +7,15 @@ use App\Http\Requests\Admin\StoreOrganizationRequest;
 use App\Http\Requests\Admin\UpdateOrganizationRequest;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class OrganizationController extends Controller
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     public function index(Request $request): View
     {
         /** @var User $actor */
@@ -51,7 +54,9 @@ class OrganizationController extends Controller
 
     public function store(StoreOrganizationRequest $request): RedirectResponse
     {
-        Organization::create($request->validated());
+        $organization = Organization::create($request->validated());
+
+        $this->audit->log('organization.created', "Organisatie aangemaakt: {$organization->naam}", $organization);
 
         return redirect()
             ->route('admin.organizations.index')
@@ -78,6 +83,8 @@ class OrganizationController extends Controller
     public function update(UpdateOrganizationRequest $request, Organization $organization): RedirectResponse
     {
         $organization->update($request->validated());
+
+        $this->audit->log('organization.updated', "Organisatie bijgewerkt: {$organization->naam}", $organization);
 
         return redirect()
             ->route('admin.organizations.index')
@@ -112,6 +119,8 @@ class OrganizationController extends Controller
                 ->route('admin.organizations.index')
                 ->withErrors(['organization' => __('hermes.admin.organizations.delete_has_users')]);
         }
+
+        $this->audit->log('organization.deleted', "Organisatie verwijderd: {$organization->naam}", $organization);
 
         $organization->delete();
 

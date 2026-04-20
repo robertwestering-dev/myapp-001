@@ -171,9 +171,9 @@ test('autosave accepts temporarily invalid in-progress answers without failing',
     ]);
 });
 
-test('autosave is rejected for completed questionnaire responses', function () {
+test('pro users can autosave a new draft attempt after a completed questionnaire', function () {
     $organization = Organization::factory()->create();
-    $user = User::factory()->create([
+    $user = User::factory()->pro()->create([
         'org_id' => $organization->org_id,
     ]);
     $questionnaire = Questionnaire::factory()->create([
@@ -216,25 +216,176 @@ test('autosave is rejected for completed questionnaire responses', function () {
                 $question->id => 'Nieuwe autosave poging',
             ],
         ])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors([
-            'questionnaire',
-        ]);
+        ->assertOk()
+        ->assertJsonStructure(['message', 'last_saved_at']);
 
     $this->assertDatabaseHas('questionnaire_response_answers', [
         'questionnaire_question_id' => $question->id,
         'answer' => 'Bewaard antwoord',
     ]);
 
-    $this->assertDatabaseMissing('questionnaire_response_answers', [
+    $this->assertDatabaseHas('questionnaire_response_answers', [
         'questionnaire_question_id' => $question->id,
         'answer' => 'Nieuwe autosave poging',
     ]);
+
+    expect(QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->count())->toBe(2);
+});
+
+test('pro users can submit the same questionnaire multiple times and view every result', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->pro()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Herhaalbare scan',
+    ]);
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Start',
+    ]);
+    $question = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Wat is uw focus?',
+        'is_required' => true,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    Carbon::setTestNow(Carbon::parse('2026-04-18 09:00:00'));
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [
+                $question->id => 'Eerste meting',
+            ],
+        ])
+        ->assertRedirect();
+
+    $firstResponse = QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->firstOrFail();
+
+    Carbon::setTestNow(Carbon::parse('2026-04-19 10:30:00'));
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [
+                $question->id => 'Tweede meting',
+            ],
+        ])
+        ->assertRedirect();
+
+    Carbon::setTestNow();
+
+    $responses = QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->orderBy('submitted_at')
+        ->get();
+
+    expect($responses)->toHaveCount(2);
+
+    $this->actingAs($user)
+        ->get(route('questionnaires.index'))
+        ->assertOk()
+        ->assertSee(__('hermes.questionnaires.completed_history_title'))
+        ->assertSee('Ingevuld op 18-04-2026 09:00')
+        ->assertSee('Ingevuld op 19-04-2026 10:30')
+        ->assertSee(route('questionnaire-responses.results', $firstResponse), false)
+        ->assertSee(route('questionnaire-responses.results', $responses->last()), false);
+
+    $this->actingAs($user)
+        ->get(route('questionnaire-responses.show', $availability))
+        ->assertOk()
+        ->assertDontSee('Eerste meting')
+        ->assertDontSee('Tweede meting');
+
+    $this->actingAs($user)
+        ->get(route('questionnaire-responses.results', $firstResponse))
+        ->assertOk()
+        ->assertSee('Herhaalbare scan')
+        ->assertSee(__('hermes.questionnaire.results.generic_title'));
+});
+
+test('regular users need pro to repeat a completed questionnaire', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Eenmalige scan',
+    ]);
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'title' => 'Start',
+    ]);
+    $question = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Wat is uw focus?',
+        'is_required' => true,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    QuestionnaireResponse::factory()->create([
+        'organization_questionnaire_id' => $availability->id,
+        'user_id' => $user->id,
+        'submitted_at' => now()->subDay(),
+    ])->answers()->create([
+        'questionnaire_question_id' => $question->id,
+        'answer' => 'Eerste meting',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('questionnaire-responses.show', $availability))
+        ->assertRedirect(route('questionnaires.index'))
+        ->assertSessionHas('pro_required_modal');
+
+    $this->actingAs($user)
+        ->withSession(['pro_required_modal' => true])
+        ->get(route('questionnaires.index'))
+        ->assertOk()
+        ->assertSee(__('hermes.questionnaires.pro_required_title'))
+        ->assertSee(__('hermes.questionnaires.pro_required_message'))
+        ->assertSee(__('hermes.questionnaires.pro_required_close'));
+
+    $this->actingAs($user)
+        ->postJson(route('questionnaire-responses.store', $availability), [
+            'intent' => 'autosave',
+            'current_category_id' => $category->id,
+            'answers' => [
+                $question->id => 'Tweede poging',
+            ],
+        ])
+        ->assertForbidden()
+        ->assertJsonPath('message', __('hermes.questionnaires.pro_required_message'));
+
+    expect(QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->count())->toBe(1);
 });
 
 test('conditional questions only become required when their display rule matches', function () {
     $organization = Organization::factory()->create();
-    $user = User::factory()->create([
+    $user = User::factory()->pro()->create([
         'org_id' => $organization->org_id,
     ]);
     $questionnaire = Questionnaire::factory()->create();
@@ -270,7 +421,7 @@ test('conditional questions only become required when their display rule matches
                 $triggerQuestion->id => 'Nee',
             ],
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $this->assertDatabaseMissing('questionnaire_response_answers', [
         'questionnaire_question_id' => $followUpQuestion->id,
@@ -297,7 +448,7 @@ test('conditional questions only become required when their display rule matches
                 $followUpQuestion->id => 'Meer begeleiding bij prioriteiten.',
             ],
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability));
+        ->assertRedirect();
 
     $this->assertDatabaseHas('questionnaire_response_answers', [
         'questionnaire_question_id' => $followUpQuestion->id,
@@ -352,7 +503,7 @@ test('hidden conditional follow-up chains do not validate or persist stale answe
                 $nestedFollowUpQuestion->id => 'Ook deze waarde mag niet worden opgeslagen.',
             ],
         ])
-        ->assertRedirect(route('questionnaire-responses.show', $availability))
+        ->assertRedirect()
         ->assertSessionHasNoErrors();
 
     $this->assertDatabaseMissing('questionnaire_response_answers', [

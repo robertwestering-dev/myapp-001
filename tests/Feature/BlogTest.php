@@ -3,6 +3,7 @@
 use App\Models\BlogPost;
 use App\Models\MediaAsset;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 test('guests can visit the public blog index and only see published posts', function () {
     $publishedPost = BlogPost::factory()->featured()->create([
@@ -63,6 +64,25 @@ test('visitors can filter the public blog on tag', function () {
         ->assertDontSee('Team artikel');
 });
 
+test('public blog rebuilds invalid cached tag counts', function () {
+    Cache::put('blog:tag_counts', 'stale-invalid-value');
+
+    BlogPost::factory()->create([
+        'tags' => ['Digitale weerbaarheid'],
+        'title' => [
+            'nl' => 'Artikel met tag',
+            'en' => 'Article with tag',
+            'de' => 'Artikel mit Tag',
+        ],
+    ]);
+
+    $this->get(route('blog.index'))
+        ->assertOk()
+        ->assertSee('Digitale weerbaarheid');
+
+    expect(Cache::get('blog:tag_counts'))->toBeArray();
+});
+
 test('authenticated users see the same primary menu on the blog as on other user pages', function () {
     $user = User::factory()->create();
     $blogPost = BlogPost::factory()->create([
@@ -83,7 +103,10 @@ test('authenticated users see the same primary menu on the blog as on other user
         ->assertSee(__('hermes.nav.forum'))
         ->assertSee(route('profile.edit', absolute: false), false)
         ->assertSee(__('hermes.dashboard.logout'))
-        ->assertDontSee(__('hermes.nav.login'));
+        ->assertSee('pill pill--neutral', false)
+        ->assertDontSee('<button type="submit" class="pill pill--strong">'.__('hermes.dashboard.logout').'</button>', false)
+        ->assertDontSee(__('hermes.nav.login'))
+        ->assertDontSee(__('hermes.header.booking'));
 });
 
 test('published blog posts have a public detail page and drafts do not', function () {

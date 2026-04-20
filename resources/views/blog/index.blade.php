@@ -3,7 +3,7 @@
     :meta-description="$activeTag !== '' ? __('hermes.blog.meta_topic', ['topic' => $activeTag]) : __('hermes.blog.meta_description')"
     :canonical-url="$activeTag !== '' ? route('blog.index', ['tag' => $activeTag]) : $blogIndexUrl"
     :meta-image="$blogPosts->first()?->cover_image_url"
-    :show-header-booking="auth()->check()"
+    :show-header-booking="false"
     :show-header-contact-link="auth()->check()"
     :structured-data="[
         '@context' => 'https://schema.org',
@@ -17,19 +17,20 @@
         <x-slot:headerMenu>
             <a class="home-menu-item" href="{{ route('home') }}">Home</a>
             <a class="home-menu-item" href="{{ route('blog.index') }}">Blog</a>
-            <div class="home-menu-dropdown">
-                <a class="home-menu-trigger" href="{{ route('about.show') }}">
+            <details class="home-menu-dropdown">
+                <summary class="home-menu-trigger">
                     Over
                     <span aria-hidden="true">▾</span>
-                </a>
+                </summary>
                 <div class="home-submenu">
                     <a href="{{ route('inspiration-sources.show') }}">Inspiratiebronnen</a>
                     <a href="{{ route('about.show') }}">Over ons</a>
                     <a href="{{ route('pricing.show') }}">Prijzen</a>
                     <a href="{{ route('privacy.show') }}">{{ __('hermes.footer.privacy') }}</a>
                 </div>
-            </div>
+            </details>
             <a class="home-menu-item" href="{{ route('organizations.landing') }}">Organisaties</a>
+            <a class="home-menu-item" href="{{ route('contact.show') }}">Contact</a>
         </x-slot:headerMenu>
     @endguest
 

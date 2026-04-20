@@ -6,7 +6,7 @@
     'ogType' => 'website',
     'structuredData' => null,
     'forceGuestNavigation' => false,
-    'showHeaderBooking' => true,
+    'showHeaderBooking' => false,
     'showHeaderContactLink' => true,
 ])
 
@@ -166,6 +166,12 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .home-menu-trigger::-webkit-details-marker {
+            display: none;
         }
 
         .home-submenu {
@@ -193,7 +199,8 @@
         }
 
         .home-menu-dropdown:hover .home-submenu,
-        .home-menu-dropdown:focus-within .home-submenu {
+        .home-menu-dropdown:focus-within .home-submenu,
+        .home-menu-dropdown[open] .home-submenu {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
@@ -534,17 +541,18 @@
 
         @media (max-width: 780px) {
             .topbar__inner {
-                height: auto;
+                height: 80px;
                 min-height: 80px;
                 padding: 12px 0;
-                align-items: flex-start;
-                flex-direction: column;
+                align-items: center;
+                flex-direction: row;
             }
 
             .topbar__left {
-                width: 100%;
-                flex-wrap: wrap;
-                gap: 10px 14px;
+                min-width: 0;
+                flex: 1;
+                flex-wrap: nowrap;
+                gap: 12px;
             }
 
             .topbar__menu {
@@ -552,8 +560,13 @@
             }
 
             .topbar__actions {
-                width: 100%;
+                width: auto;
                 justify-content: flex-end;
+                flex: 0 0 auto;
+            }
+
+            .brand__logo {
+                height: 46px;
             }
         }
     </style>
@@ -579,7 +592,7 @@
                     <a href="{{ route('home') }}#diensten">{{ __('hermes.nav.services') }}</a>
                     <a href="{{ route('blog.index') }}">{{ __('hermes.nav.blog') }}</a>
                     <a href="{{ route('academy.index') }}">{{ __('hermes.nav.academy') }}</a>
-                    <a href="{{ route('home') }}#contact">{{ __('hermes.nav.contact') }}</a>
+                    <a href="{{ route('contact.show') }}">{{ __('hermes.nav.contact') }}</a>
                 @endif
             @endisset
         </x-slot:menu>
@@ -588,7 +601,7 @@
             @if (auth()->check() && ! $forceGuestNavigation)
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="pill pill--strong">{{ __('hermes.dashboard.logout') }}</button>
+                    <button type="submit" class="pill pill--neutral">{{ __('hermes.dashboard.logout') }}</button>
                 </form>
             @else
                 <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.nav.login') }}</a>

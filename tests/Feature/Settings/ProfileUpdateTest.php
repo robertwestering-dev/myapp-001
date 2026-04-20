@@ -4,6 +4,7 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Fortify\Features;
 use Livewire\Livewire;
 
 test('profile page is displayed', function () {
@@ -232,6 +233,42 @@ test('profile page shows verification resend guidance for unverified email addre
         ->assertOk()
         ->assertSee(__('hermes.settings.profile.verification.badge_unverified'))
         ->assertSee(__('hermes.settings.profile.verification.resend'));
+});
+
+test('verification notification can be resent from the profile page', function () {
+    Notification::fake();
+
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)
+        ->post(route('verification.send'))
+        ->assertRedirect(route('profile.edit'));
+
+    Notification::assertSentTo($user->fresh(), VerifyEmail::class);
+});
+
+test('admin can enable two factor authentication from the profile page', function () {
+    $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
+
+    $user = User::factory()->create([
+        'role' => User::ROLE_ADMIN,
+        'two_factor_secret' => null,
+        'two_factor_recovery_codes' => null,
+        'two_factor_confirmed_at' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::settings.profile')
+        ->call('enableTwoFactor')
+        ->assertHasNoErrors()
+        ->assertSee('2FA is ingeschakeld. Scan nu de QR-code en bevestig met je verificatiecode.')
+        ->assertSee('Sla ook deze herstelcodes meteen op.')
+        ->assertSee('<code', false)
+        ->assertSee('2FA bevestigen');
+
+    expect($user->fresh()->two_factor_secret)->not->toBeNull();
+    expect($user->fresh()->two_factor_confirmed_at)->toBeNull();
 });
 
 test('anonymize confirmation modal is shown on the profile page', function () {

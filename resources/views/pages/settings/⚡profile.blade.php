@@ -6,6 +6,9 @@ use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -29,19 +32,21 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
 
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->first_name = Auth::user()->first_name;
-        $this->gender = Auth::user()->gender;
-        $this->birth_date = Auth::user()->birth_date?->toDateString();
-        $this->city = Auth::user()->city;
-        $this->country = Auth::user()->country;
-        $this->locale = Auth::user()->locale;
-        $this->email = Auth::user()->email;
+        $user = $this->currentUser();
+
+        $this->name = $user->name;
+        $this->first_name = $user->first_name;
+        $this->gender = $user->gender;
+        $this->birth_date = $user->birth_date?->toDateString();
+        $this->city = $user->city;
+        $this->country = $user->country;
+        $this->locale = $user->locale;
+        $this->email = $user->email;
     }
 
     public function updateProfileInformation(): void
     {
-        $user = Auth::user();
+        $user = $this->currentUser();
 
         if ($this->locale === '') {
             $this->locale = null;
@@ -56,6 +61,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
         }
 
         $user->save();
+        Auth::setUser($user->fresh());
 
         if ($user->wasChanged('email')) {
             $user->sendEmailVerificationNotification();
@@ -79,7 +85,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
             'password' => $this->passwordRules(),
         ]);
 
-        Auth::user()->update([
+        $this->currentUser()->update([
             'password' => $validated['password'],
         ]);
 
@@ -88,32 +94,110 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
         $this->dispatch('password-updated');
     }
 
-    public function resendVerificationNotification(): void
+    public string $twoFactorCode = '';
+
+    public function enableTwoFactor(EnableTwoFactorAuthentication $enable): void
     {
-        $user = Auth::user();
+        $user = $this->currentUser();
 
-        if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
+        $enable($user);
+        Auth::setUser($user->fresh());
+        Session::flash('status', 'two-factor-authentication-enabled');
+        $this->dispatch('two-factor-updated');
+    }
 
-            return;
+    public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirm): void
+    {
+        $user = $this->currentUser();
+
+        $confirm($user, $this->twoFactorCode);
+        Auth::setUser($user->fresh());
+        $this->twoFactorCode = '';
+        Session::flash('status', 'two-factor-authentication-confirmed');
+        $this->dispatch('two-factor-updated');
+    }
+
+    public function disableTwoFactor(DisableTwoFactorAuthentication $disable): void
+    {
+        $user = $this->currentUser();
+
+        $disable($user);
+        Auth::setUser($user->fresh());
+        Session::flash('status', 'two-factor-authentication-disabled');
+        $this->dispatch('two-factor-updated');
+    }
+
+    #[Computed]
+    public function twoFactorEnabled(): bool
+    {
+        return ! is_null($this->currentUser()->two_factor_secret);
+    }
+
+    #[Computed]
+    public function twoFactorPendingConfirmation(): bool
+    {
+        return $this->twoFactorEnabled && ! $this->twoFactorConfirmed;
+    }
+
+    #[Computed]
+    public function twoFactorConfirmed(): bool
+    {
+        return ! is_null($this->currentUser()->two_factor_confirmed_at);
+    }
+
+    #[Computed]
+    public function twoFactorQrCode(): ?string
+    {
+        if (! $this->twoFactorEnabled) {
+            return null;
         }
 
-        $user->sendEmailVerificationNotification();
+        return $this->currentUser()->twoFactorQrCodeSvg();
+    }
 
-        Session::flash('status', 'verification-link-sent');
+    #[Computed]
+    public function recoveryCodes(): array
+    {
+        if (! $this->twoFactorEnabled) {
+            return [];
+        }
+
+        return $this->currentUser()->recoveryCodes();
+    }
+
+    public function resendVerificationEmail(): void
+    {
+        $user = $this->currentUser();
+
+        if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+            Session::flash('status', 'verification-link-sent');
+        }
     }
 
     #[Computed]
     public function hasUnverifiedEmail(): bool
     {
-        return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
+        $user = $this->currentUser();
+
+        return $user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail();
     }
 
     #[Computed]
     public function showDeleteUser(): bool
     {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
+        $user = $this->currentUser();
+
+        return ! $user instanceof MustVerifyEmail
+            || ($user instanceof MustVerifyEmail && $user->hasVerifiedEmail());
+    }
+
+    private function currentUser(): User
+    {
+        /** @var User $user */
+        $user = Auth::user()->fresh();
+
+        return $user;
     }
 }; ?>
 
@@ -237,6 +321,32 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
             border-top: 1px solid rgba(22, 33, 29, 0.12);
         }
 
+        .tfa-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(22, 33, 29, 0.18);
+            background: rgba(255, 255, 255, 0.72);
+            color: #16211d;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tfa-btn--primary {
+            background: #20453a;
+            border-color: #20453a;
+            color: #fff;
+        }
+
+        .tfa-btn--danger {
+            color: #b14d1a;
+            border-color: rgba(177, 77, 26, 0.3);
+        }
+
         @media (max-width: 780px) {
             .profile-card {
                 padding: 28px;
@@ -295,7 +405,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
                         @if ($this->hasUnverifiedEmail)
                             <div class="verification-block">
                                 <p class="verification-note">{{ __('hermes.settings.profile.verification.notice') }}</p>
-                                <button type="button" class="verification-link" wire:click.prevent="resendVerificationNotification">
+                                <button type="button" wire:click="resendVerificationEmail" class="verification-link">
                                     {{ __('hermes.settings.profile.verification.resend') }}
                                 </button>
 
@@ -405,6 +515,90 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
                     </x-user-action-row>
                 </form>
             </section>
+
+            @if (Auth::user()->canAccessAdminPortal())
+                <section class="profile-section">
+                    <div class="profile-heading">
+                        <h2>Twee-factor-authenticatie (2FA)</h2>
+                        <p>Beveilig je beheerdersaccount extra met een tijdgebonden verificatiecode via een authenticator-app zoals Google Authenticator of Authy.</p>
+                    </div>
+
+                    @if (session('status') === 'two-factor-authentication-enabled')
+                        <x-user-feedback
+                            variant="status"
+                            class="mt-4"
+                            :messages="['2FA is ingeschakeld. Scan nu de QR-code en bevestig met je verificatiecode.']"
+                        />
+                    @endif
+
+                    @if (session('status') === 'two-factor-authentication-confirmed')
+                        <x-user-feedback
+                            variant="status"
+                            class="mt-4"
+                            :messages="['2FA is bevestigd en actief op jouw account.']"
+                        />
+                    @endif
+
+                    @if (session('status') === 'two-factor-authentication-disabled')
+                        <x-user-feedback
+                            variant="status"
+                            class="mt-4"
+                            :messages="['2FA is uitgeschakeld voor jouw account.']"
+                        />
+                    @endif
+
+                    @if ($this->twoFactorConfirmed)
+                        <div class="verification-block" style="background: rgba(34,197,94,0.07); border-color: rgba(34,197,94,0.2); margin-top: 20px;">
+                            <p class="verification-note" style="color: #166534; font-weight: 700;">2FA is actief en bevestigd op jouw account.</p>
+                        </div>
+                        <div class="verification-block" style="margin-top: 16px;">
+                            <p class="verification-note">Bewaar deze herstelcodes op een veilige plek. Je kunt hiermee nog inloggen als je tijdelijk geen toegang hebt tot je authenticator-app.</p>
+                            <div style="display: grid; gap: 8px; margin-top: 8px;">
+                                @foreach ($this->recoveryCodes as $recoveryCode)
+                                    <code style="display: inline-flex; width: fit-content; padding: 8px 12px; border-radius: 12px; background: rgba(22, 33, 29, 0.06); color: #16211d;">{{ $recoveryCode }}</code>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button type="button" class="tfa-btn tfa-btn--danger" wire:click="disableTwoFactor" wire:confirm="Weet je zeker dat je 2FA wilt uitschakelen?">
+                                2FA uitschakelen
+                            </button>
+                        </div>
+                    @elseif ($this->twoFactorPendingConfirmation)
+                        <div class="verification-block" style="margin-top: 20px;">
+                            <p class="verification-note">Scan de QR-code hieronder met je authenticator-app en voer daarna de zescijferige code in. 2FA wordt pas actief zodra deze bevestiging gelukt is.</p>
+                        </div>
+                        <div style="margin-top: 20px; max-width: 200px;">
+                            {!! $this->twoFactorQrCode !!}
+                        </div>
+                        <div class="verification-block" style="margin-top: 16px;">
+                            <p class="verification-note">Sla ook deze herstelcodes meteen op. Zodra 2FA bevestigd is, kun je hiermee nog inloggen als je je toestel niet bij de hand hebt.</p>
+                            <div style="display: grid; gap: 8px; margin-top: 8px;">
+                                @foreach ($this->recoveryCodes as $recoveryCode)
+                                    <code style="display: inline-flex; width: fit-content; padding: 8px 12px; border-radius: 12px; background: rgba(22, 33, 29, 0.06); color: #16211d;">{{ $recoveryCode }}</code>
+                                @endforeach
+                            </div>
+                        </div>
+                        <form wire:submit="confirmTwoFactor" class="profile-form" style="margin-top: 16px; max-width: 320px;">
+                            <div class="field">
+                                <label for="twoFactorCode">Verificatiecode</label>
+                                <input id="twoFactorCode" wire:model="twoFactorCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" required>
+                                @error('twoFactorCode') <span class="field-error">{{ $message }}</span> @enderror
+                            </div>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+                                <button type="submit" class="tfa-btn tfa-btn--primary">2FA bevestigen</button>
+                                <button type="button" class="tfa-btn" wire:click="disableTwoFactor">Annuleren</button>
+                            </div>
+                        </form>
+                    @else
+                        <div style="margin-top: 20px;">
+                            <button type="button" class="tfa-btn tfa-btn--primary" wire:click="enableTwoFactor">
+                                2FA inschakelen
+                            </button>
+                        </div>
+                    @endif
+                </section>
+            @endif
 
             @if ($this->showDeleteUser)
                 <div class="profile-delete">
