@@ -11,7 +11,9 @@
     @endif
 
     <div class="user-page-heading__body">
-        <h1>{{ $title }}</h1>
+        @if ($title)
+            <h1>{{ $title }}</h1>
+        @endif
 
         @if ($text)
             <p>{{ $text }}</p>

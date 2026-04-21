@@ -130,6 +130,13 @@ return [
                 'help' => 'Ihre bevorzugte Sprache wird sofort auf Dashboard, Fragebögen, Academy, Profil und soweit möglich auch auf öffentliche Bereiche wie den Blog angewendet.',
                 'session_note' => 'Nach dem Speichern wird diese Sprache direkt in Ihrer Sitzung gespeichert und für die weitere Navigation verwendet.',
             ],
+            'pro_upgrade' => [
+                'badge' => 'Pro werden',
+                'title' => 'Upgrade dich auf PRO',
+                'pro_title' => 'Du bist Pro',
+                'text' => 'Als Pro erhältst du Zugang zu allen Assessments, allen E-Learnings und den dazugehörigen Arbeitsbüchern. Außerdem kannst du als Pro deinen Fortschritt in deinem eigenen Dashboard verfolgen',
+                'action' => 'Ich möchte Pro werden',
+            ],
             'password' => [
                 'title' => 'Passwort ändern',
                 'intro' => 'Aktualisieren Sie unten Ihr Passwort. Ihr neues Passwort ist direkt nach dem Speichern aktiv.',
@@ -1051,6 +1058,16 @@ return [
         'contact_title' => 'Nicht sicher, welches Paket passt?',
         'contact_text' => 'Kein Problem. Senden Sie eine Nachricht, und wir schauen gemeinsam, was am besten zu Ihrer Situation passt.',
         'contact_cta' => 'Kontakt aufnehmen',
+    ],
+    'pro_upgrade_page' => [
+        'title' => 'Pro-Upgrade | Hermes Results',
+        'meta_description' => 'Führen Sie vorübergehend kostenlos ein Upgrade auf Hermes Results Pro durch und erhalten Sie Zugang zu allen Assessments, E-Learnings und Arbeitsbüchern.',
+        'eyebrow' => 'Pro-Upgrade',
+        'hero_title' => 'Upgrade dich auf PRO',
+        'hero_intro' => 'Bald können Sie Ihren Pro-Zugang aktivieren und alles erhalten, was Sie brauchen, um gezielt an Ihrer digitalen Widerstandsfähigkeit zu arbeiten.',
+        'temporary_tagline' => 'Für alle, die wirklich wachsen möchten, jetzt vorübergehend KOSTENLOS',
+        'free_label' => 'KOSTENLOS',
+        'upgraded_status' => 'Ihr Konto wurde auf Pro aktualisiert.',
     ],
     'question_types' => [
         'short_text' => 'Kurzer Text',

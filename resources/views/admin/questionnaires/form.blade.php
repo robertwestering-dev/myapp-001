@@ -158,6 +158,11 @@
                 <span>Questionnaire is actief in de bibliotheek</span>
             </label>
 
+            <label class="checkbox">
+                <input type="checkbox" name="pro_only" value="1" @checked(old('pro_only', $questionnaire->pro_only))>
+                <span>Alleen toegankelijk voor PRO-gebruikers (rol 'User' ziet de questionnaire, maar kan hem niet starten)</span>
+            </label>
+
             <div class="form-actions">
                 <button type="submit" class="pill">{{ $submitLabel }}</button>
                 <a href="{{ route('admin.questionnaires.index') }}" class="ghost-pill">Terug naar overzicht</a>

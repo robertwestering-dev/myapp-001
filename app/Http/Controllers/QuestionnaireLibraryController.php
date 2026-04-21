@@ -21,6 +21,7 @@ class QuestionnaireLibraryController extends Controller
             'activeQuestionnaireLocale' => $localeContext['locale'],
             'activeQuestionnaireLocaleLabel' => $localeContext['label'],
             'activeQuestionnaireLocaleSource' => $localeContext['source'],
+            'user' => $user,
         ]);
     }
 }

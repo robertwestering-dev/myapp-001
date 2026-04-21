@@ -85,6 +85,16 @@
                 background: rgba(22, 33, 29, 0.42);
             }
 
+            .questionnaire-card--pro-only {
+                opacity: 0.5;
+                pointer-events: none;
+                filter: grayscale(0.4);
+            }
+
+            .questionnaire-card--pro-only .questionnaire-card__pro-badge {
+                pointer-events: auto;
+            }
+
             .questionnaire-modal__body {
                 display: grid;
                 gap: 18px;
@@ -126,30 +136,39 @@
             @endif
 
             @forelse ($availableQuestionnaires as $availableQuestionnaire)
-                @php($currentResponse = $availableQuestionnaire->currentResponse)
-                <x-user-surface-card variant="soft" class="questionnaire-card">
+                @php
+                    $currentResponse = $availableQuestionnaire->currentResponse;
+                    $isProOnly = $availableQuestionnaire->questionnaire->pro_only;
+                    $isLockedForUser = $isProOnly && $user->role === \App\Models\User::ROLE_USER;
+                @endphp
+                <x-user-surface-card variant="soft" class="questionnaire-card {{ $isLockedForUser ? 'questionnaire-card--pro-only' : '' }}">
                     <div class="questionnaire-card__header">
                         <strong>{{ $availableQuestionnaire->questionnaire->localized_title ?? $availableQuestionnaire->questionnaire->title }}</strong>
+                        @if ($isProOnly)
+                            <x-admin-status-badge label="PRO" tone="warning" uppercase />
+                        @endif
                         @if ($currentResponse?->isDraft())
                             <x-admin-status-badge :label="__('hermes.dashboard.draft_badge')" tone="warning" uppercase />
                         @endif
                     </div>
                     <div class="questionnaire-card__description">{{ ($availableQuestionnaire->questionnaire->localized_description ?? $availableQuestionnaire->questionnaire->description) ?: __('hermes.dashboard.description_fallback') }}</div>
-                    <x-user-action-row class="questionnaire-card__actions">
-                        <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">
-                            {{ $currentResponse?->isDraft() ? __('hermes.dashboard.resume_draft') : __('hermes.questionnaires.start_questionnaire') }}
-                        </a>
-                    </x-user-action-row>
-                    <div class="questionnaire-card__meta">
-                        @if ($currentResponse?->submitted_at)
-                            <span>{{ __('hermes.dashboard.last_completed', ['datetime' => $currentResponse->submitted_at->format('d-m-Y H:i')]) }}</span>
-                        @elseif ($currentResponse?->last_saved_at)
-                            <span>{{ __('hermes.dashboard.draft_saved', ['datetime' => $currentResponse->last_saved_at->format('d-m-Y H:i')]) }}</span>
-                            <span>{{ __('hermes.dashboard.resume_ready') }}</span>
-                        @else
-                            <span>{{ __('hermes.dashboard.not_completed') }}</span>
-                        @endif
-                    </div>
+                    @unless ($isLockedForUser)
+                        <x-user-action-row class="questionnaire-card__actions">
+                            <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">
+                                {{ $currentResponse?->isDraft() ? __('hermes.dashboard.resume_draft') : __('hermes.questionnaires.start_questionnaire') }}
+                            </a>
+                        </x-user-action-row>
+                        <div class="questionnaire-card__meta">
+                            @if ($currentResponse?->submitted_at)
+                                <span>{{ __('hermes.dashboard.last_completed', ['datetime' => $currentResponse->submitted_at->format('d-m-Y H:i')]) }}</span>
+                            @elseif ($currentResponse?->last_saved_at)
+                                <span>{{ __('hermes.dashboard.draft_saved', ['datetime' => $currentResponse->last_saved_at->format('d-m-Y H:i')]) }}</span>
+                                <span>{{ __('hermes.dashboard.resume_ready') }}</span>
+                            @else
+                                <span>{{ __('hermes.dashboard.not_completed') }}</span>
+                            @endif
+                        </div>
+                    @endunless
                     @if ($availableQuestionnaire->completedResponses->isNotEmpty())
                         <div class="questionnaire-card__history">
                             <div class="questionnaire-card__history-title">{{ __('hermes.questionnaires.completed_history_title') }}</div>

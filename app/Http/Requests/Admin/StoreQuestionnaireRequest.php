@@ -15,7 +15,10 @@ class StoreQuestionnaireRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['is_active' => $this->boolean('is_active')]);
+        $this->merge([
+            'is_active' => $this->boolean('is_active'),
+            'pro_only' => $this->boolean('pro_only'),
+        ]);
     }
 
     public function rules(): array
@@ -25,6 +28,7 @@ class StoreQuestionnaireRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'locale' => ['required', 'string', Rule::in(Questionnaire::localeOptions())],
             'is_active' => ['required', 'boolean'],
+            'pro_only' => ['required', 'boolean'],
         ];
     }
 }

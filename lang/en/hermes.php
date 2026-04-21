@@ -130,6 +130,13 @@ return [
                 'help' => 'Your preferred language is immediately applied to the dashboard, questionnaires, Academy, profile, and where possible also to public sections such as the blog.',
                 'session_note' => 'After saving, this language is immediately stored in your session and used for further navigation.',
             ],
+            'pro_upgrade' => [
+                'badge' => 'Become a pro',
+                'title' => 'Upgrade yourself to PRO',
+                'pro_title' => 'You are a Pro',
+                'text' => 'As a Pro, you get access to all assessments, all e-learning, and the related workbooks. As a Pro, you can also track your progress in your own dashboard',
+                'action' => 'I want to become Pro',
+            ],
             'password' => [
                 'title' => 'Change password',
                 'intro' => 'Update your password below. Your new password becomes active immediately after saving.',
@@ -1090,6 +1097,16 @@ return [
         'contact_title' => 'Not sure which package fits you?',
         'contact_text' => 'No problem. Send a message and we will look together at what fits your situation best.',
         'contact_cta' => 'Get in touch',
+    ],
+    'pro_upgrade_page' => [
+        'title' => 'Pro upgrade | Hermes Results',
+        'meta_description' => 'Temporarily upgrade to Hermes Results Pro for free and get access to all assessments, e-learning, and workbooks.',
+        'eyebrow' => 'Pro upgrade',
+        'hero_title' => 'Upgrade yourself to PRO',
+        'hero_intro' => 'Soon you can activate your Pro access and get everything you need to work on your digital resilience with focus.',
+        'temporary_tagline' => 'For people who really want to grow, now temporarily FREE',
+        'free_label' => 'FREE',
+        'upgraded_status' => 'Your account has been upgraded to Pro.',
     ],
     'question_types' => [
         'short_text' => 'Short text',

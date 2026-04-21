@@ -178,6 +178,11 @@
                     flex-direction: column;
                 }
             }
+
+            .academy-card--pro-only {
+                opacity: 0.5;
+                filter: grayscale(0.4);
+            }
         </style>
     </x-slot:head>
 
@@ -192,9 +197,10 @@
 
                 <div class="academy-grid__cards">
                     @forelse ($courses as $course)
+                        @php($isLockedForUser = $course->pro_only && $user->role === \App\Models\User::ROLE_USER)
                         <x-user-surface-card
                             variant="soft"
-                            class="academy-card academy-card--{{ $course->theme }}"
+                            class="academy-card academy-card--{{ $course->theme }} {{ $isLockedForUser ? 'academy-card--pro-only' : '' }}"
                             id="academy-course-{{ $course->slug }}"
                         >
                             <div class="academy-card__title-row">
@@ -205,10 +211,15 @@
                                     />
                                 </div>
 
-                                <x-admin-status-badge
-                                    :label="$course->isAvailable() ? __('hermes.academy.status_available') : __('hermes.academy.status_pending')"
-                                    :tone="$course->isAvailable() ? 'default' : 'warning'"
-                                />
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    @if ($course->pro_only)
+                                        <x-admin-status-badge label="PRO" tone="warning" uppercase />
+                                    @endif
+                                    <x-admin-status-badge
+                                        :label="$course->isAvailable() ? __('hermes.academy.status_available') : __('hermes.academy.status_pending')"
+                                        :tone="$course->isAvailable() ? 'default' : 'warning'"
+                                    />
+                                </div>
                             </div>
 
                             <p>{{ $course->summaryForLocale() }}</p>
@@ -253,7 +264,7 @@
                                     </div>
                                 </details>
 
-                                @if ($course->launchUrl())
+                                @if ($course->launchUrl() && ! $isLockedForUser)
                                     <a href="{{ $course->launchUrl() }}" class="pill" target="_blank" rel="noopener noreferrer">
                                         {{ __('hermes.academy.open_course') }}
                                     </a>

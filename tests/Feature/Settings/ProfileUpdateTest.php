@@ -26,11 +26,18 @@ test('profile page is displayed', function () {
         ->assertDontSee('/settings/appearance', false)
         ->assertSee('user-panel', false)
         ->assertSee('user-page-heading', false)
-        ->assertSee(__('hermes.settings.profile.personal.title'))
+        ->assertDontSee(__('hermes.settings.profile.personal.title'))
+        ->assertDontSee(__('hermes.settings.profile.personal.intro'))
         ->assertSee(__('hermes.settings.profile.password.title'))
         ->assertSee(__('hermes.settings.profile.verification.title'))
-        ->assertSee(__('hermes.settings.profile.locale.badge'))
-        ->assertSee(__('hermes.settings.profile.verification.badge_verified'))
+        ->assertDontSee(__('hermes.settings.profile.locale.badge'))
+        ->assertDontSee(__('hermes.settings.profile.pro_upgrade.badge'))
+        ->assertSee(__('hermes.settings.profile.pro_upgrade.title'))
+        ->assertDontSee(__('hermes.settings.profile.pro_upgrade.pro_title'))
+        ->assertSee(__('hermes.settings.profile.pro_upgrade.text'))
+        ->assertSee(__('hermes.settings.profile.pro_upgrade.action'))
+        ->assertSee('/pro-upgrade', false)
+        ->assertDontSee(__('hermes.settings.profile.verification.badge_verified'))
         ->assertSee('user-info-grid', false)
         ->assertSee('user-info-card', false)
         ->assertSee('user-action-row', false)
@@ -47,6 +54,23 @@ test('profile page is displayed', function () {
         ->assertDontSee('Delete your account and all of its resources')
         ->assertDontSee('Delete account');
 });
+
+test('profile pro block hides the upgrade cta for non user roles', function (string $role) {
+    $this->actingAs(User::factory()->create([
+        'role' => $role,
+    ]));
+
+    $this->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee(__('hermes.settings.profile.pro_upgrade.pro_title'))
+        ->assertDontSee(__('hermes.settings.profile.pro_upgrade.title'))
+        ->assertDontSee(__('hermes.settings.profile.pro_upgrade.action'))
+        ->assertDontSee('/pro-upgrade', false);
+})->with([
+    User::ROLE_USER_PRO,
+    User::ROLE_MANAGER,
+    User::ROLE_ADMIN,
+]);
 
 test('profile information can be updated and sends a verification mail when email changes', function () {
     Notification::fake();
@@ -231,7 +255,7 @@ test('profile page shows verification resend guidance for unverified email addre
     $this->actingAs($user)
         ->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee(__('hermes.settings.profile.verification.badge_unverified'))
+        ->assertDontSee(__('hermes.settings.profile.verification.badge_unverified'))
         ->assertSee(__('hermes.settings.profile.verification.resend'));
 });
 

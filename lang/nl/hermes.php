@@ -154,6 +154,13 @@ return [
                 'help' => 'Uw voorkeurstaal wordt direct toegepast op dashboard, vragenlijsten, Academy, profiel en waar mogelijk ook publieke onderdelen zoals de blog.',
                 'session_note' => 'Na opslaan wordt deze taal direct in uw sessie gezet en gebruikt voor uw verdere navigatie.',
             ],
+            'pro_upgrade' => [
+                'badge' => 'Wordt een pro',
+                'title' => 'Upgrade jezelf naar PRO',
+                'pro_title' => 'Je bent een Pro',
+                'text' => 'Als Pro krijg je toegang tot alle assessments, alle e-learning en de bijbehorende werkboeken. Ook kun je als Pro je voortgang volgen in je eigen dashboard',
+                'action' => 'Ik wil Pro worden',
+            ],
             'password' => [
                 'title' => 'Wachtwoord wijzigen',
                 'intro' => 'Werk hieronder uw wachtwoord bij. Uw nieuwe wachtwoord wordt direct actief na opslaan.',
@@ -1112,6 +1119,16 @@ return [
         'contact_title' => 'Niet zeker welk pakket bij je past?',
         'contact_text' => 'Geen probleem. Stuur een bericht en we kijken samen wat het beste aansluit bij jouw situatie.',
         'contact_cta' => 'Neem contact op',
+    ],
+    'pro_upgrade_page' => [
+        'title' => 'Pro-upgrade | Hermes Results',
+        'meta_description' => 'Upgrade tijdelijk gratis naar Hermes Results Pro en krijg toegang tot alle assessments, e-learning en werkboeken.',
+        'eyebrow' => 'Pro-upgrade',
+        'hero_title' => 'Upgrade jezelf naar PRO',
+        'hero_intro' => 'Activeer straks je Pro-toegang en krijg alles wat je nodig hebt om gericht aan je digitale weerbaarheid te werken.',
+        'temporary_tagline' => 'Voor wie echt wil groeien, nu tijdelijk GRATIS',
+        'free_label' => 'GRATIS',
+        'upgraded_status' => 'Je account is opgewaardeerd naar Pro.',
     ],
     'question_types' => [
         'short_text' => 'Korte tekst',

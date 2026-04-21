@@ -18,6 +18,24 @@ class OrganizationQuestionnaireController extends Controller
 {
     use ProvidesOrganizationOptions;
 
+    public function index(Request $request, Questionnaire $questionnaire): View
+    {
+        /** @var User $actor */
+        $actor = $request->user();
+
+        $linkages = $questionnaire->organizationQuestionnaires()
+            ->with('organization:org_id,naam')
+            ->when(! $actor->isAdmin(), fn ($query) => $query->where('org_id', $actor->org_id))
+            ->orderBy('org_id')
+            ->get();
+
+        return view('admin.organization-questionnaires.availability-index', [
+            'questionnaire' => $questionnaire,
+            'linkages' => $linkages,
+            'canManageLibrary' => $actor->isAdmin(),
+        ]);
+    }
+
     public function create(Request $request, Questionnaire $questionnaire): View
     {
         /** @var User $actor */
@@ -58,7 +76,7 @@ class OrganizationQuestionnaireController extends Controller
         }
 
         return redirect()
-            ->route('admin.questionnaires.index')
+            ->route('admin.questionnaires.availability.index', $questionnaire)
             ->with('status', __('hermes.admin.organization_questionnaires.saved'));
     }
 
@@ -106,7 +124,7 @@ class OrganizationQuestionnaireController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.questionnaires.index')
+            ->route('admin.questionnaires.availability.index', $questionnaire)
             ->with('status', __('hermes.admin.organization_questionnaires.updated'));
     }
 
@@ -124,7 +142,7 @@ class OrganizationQuestionnaireController extends Controller
         $organizationQuestionnaire->delete();
 
         return redirect()
-            ->route('admin.questionnaires.index')
+            ->route('admin.questionnaires.availability.index', $questionnaire)
             ->with('status', __('hermes.admin.organization_questionnaires.deleted'));
     }
 
@@ -159,7 +177,7 @@ class OrganizationQuestionnaireController extends Controller
             ])->save();
 
             return redirect()
-                ->route('admin.questionnaires.index')
+                ->route('admin.questionnaires.availability.index', $questionnaire)
                 ->with('status', __('hermes.admin.organization_questionnaires.saved'));
         }
 
@@ -168,7 +186,7 @@ class OrganizationQuestionnaireController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.questionnaires.index')
+            ->route('admin.questionnaires.availability.index', $questionnaire)
             ->with('status', __('hermes.admin.organization_questionnaires.updated'));
     }
 

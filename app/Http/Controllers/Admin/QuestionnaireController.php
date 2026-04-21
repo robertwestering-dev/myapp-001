@@ -97,6 +97,20 @@ class QuestionnaireController extends Controller
             ->with('status', __('hermes.admin.questionnaires.updated'));
     }
 
+    public function toggle(Request $request, Questionnaire $questionnaire): RedirectResponse
+    {
+        $this->authorize('manage', Questionnaire::class);
+
+        $questionnaire->update(['is_active' => ! $questionnaire->is_active]);
+
+        return redirect()
+            ->route('admin.questionnaires.index')
+            ->with('status', $questionnaire->is_active
+                ? __('hermes.admin.questionnaires.activated')
+                : __('hermes.admin.questionnaires.deactivated')
+            );
+    }
+
     public function destroy(Request $request, Questionnaire $questionnaire): RedirectResponse
     {
         $this->authorize('manage', Questionnaire::class);

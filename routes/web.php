@@ -25,6 +25,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ForumReplyController;
 use App\Http\Controllers\ForumThreadController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\ProUpgradeController;
 use App\Http\Controllers\QuestionnaireLibraryController;
 use App\Http\Controllers\QuestionnaireResponseController;
 use App\Http\Middleware\EnsureTwoFactorEnabled;
@@ -49,6 +50,8 @@ Route::get('/sitemap.xml', BlogSitemapController::class)->name('sitemap');
 Route::view('/inspiratiebronnen', 'inspiration-sources')->name('inspiration-sources.show');
 Route::view('/over-ons', 'about')->name('about.show');
 Route::view('/prijzen', 'pricing')->name('pricing.show');
+Route::view('/pro-upgrade', 'pro-upgrade')->name('pro-upgrade.show');
+Route::post('/pro-upgrade', ProUpgradeController::class)->middleware('auth')->name('pro-upgrade.store');
 Route::view('/privacy', 'privacy')->name('privacy.show');
 Route::view('/voor-organisaties', 'organizations')->name('organizations.landing');
 Route::view('/contact', 'contact')->name('contact.show');
@@ -185,6 +188,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                         Route::get('/{questionnaire}/edit', [QuestionnaireController::class, 'edit'])->name('edit');
                         Route::put('/{questionnaire}', [QuestionnaireController::class, 'update'])->name('update');
                         Route::delete('/{questionnaire}', [QuestionnaireController::class, 'destroy'])->name('destroy');
+                        Route::post('/{questionnaire}/toggle', [QuestionnaireController::class, 'toggle'])->name('toggle');
 
                         Route::get('/{questionnaire}/categories/create', [QuestionnaireCategoryController::class, 'create'])->name('categories.create');
                         Route::post('/{questionnaire}/categories', [QuestionnaireCategoryController::class, 'store'])->name('categories.store');
@@ -198,6 +202,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                         Route::put('/{questionnaire}/questions/{question}', [QuestionnaireQuestionController::class, 'update'])->name('questions.update');
                         Route::delete('/{questionnaire}/questions/{question}', [QuestionnaireQuestionController::class, 'destroy'])->name('questions.destroy');
 
+                        Route::get('/{questionnaire}/availability', [OrganizationQuestionnaireController::class, 'index'])->name('availability.index');
                         Route::get('/{questionnaire}/availability/create', [OrganizationQuestionnaireController::class, 'create'])->name('availability.create');
                         Route::post('/{questionnaire}/availability', [OrganizationQuestionnaireController::class, 'store'])->name('availability.store');
                         Route::get('/{questionnaire}/availability/{organizationQuestionnaire}/edit', [OrganizationQuestionnaireController::class, 'edit'])->name('availability.edit');

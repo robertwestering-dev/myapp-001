@@ -126,11 +126,11 @@ class LocalizedQuestionnaireContent
             SyncPositiveFoundationQuestionnaire::TITLE => [
                 'en' => [
                     'title' => SyncPositiveFoundationQuestionnaire::ENGLISH_TITLE,
-                    'description' => 'This PERMA questionnaire maps the positive foundation through positive emotion, engagement, relationships, meaning, and accomplishment.',
+                    'description' => 'This questionnaire maps the positive foundation through positive emotion, engagement, relationships, meaning, and accomplishment.',
                 ],
                 'de' => [
                     'title' => SyncPositiveFoundationQuestionnaire::GERMAN_TITLE,
-                    'description' => 'Dieser PERMA-Fragebogen erfasst das positive Fundament anhand von positiver Emotion, Engagement, Beziehungen, Sinn und Erfüllung.',
+                    'description' => 'Dieser Fragebogen erfasst das positive Fundament anhand von positiver Emotion, Engagement, Beziehungen, Sinn und Erfüllung.',
                 ],
             ],
             default => [],

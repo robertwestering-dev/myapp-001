@@ -21,6 +21,7 @@ class StoreAcademyCourseRequest extends BaseLocalizedRequest
             'estimated_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
+            'pro_only' => ['nullable', 'boolean'],
             ...$this->localizedStringRules('title', 255, primaryOnly: false),
             ...$this->localizedStringRules('audience', primaryOnly: false),
             ...$this->localizedStringRules('goal', primaryOnly: false),

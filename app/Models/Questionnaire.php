@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-#[Fillable(['title', 'description', 'is_active', 'locale'])]
+#[Fillable(['title', 'description', 'is_active', 'pro_only', 'locale'])]
 class Questionnaire extends Model
 {
     /** @use HasFactory<QuestionnaireFactory> */
@@ -20,6 +20,7 @@ class Questionnaire extends Model
     {
         return [
             'is_active' => 'boolean',
+            'pro_only' => 'boolean',
         ];
     }
 

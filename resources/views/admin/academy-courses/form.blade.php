@@ -141,6 +141,11 @@
                     <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $academyCourse->is_active))>
                     <span>Actief tonen in de Academy</span>
                 </label>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" name="pro_only" value="1" @checked(old('pro_only', $academyCourse->pro_only))>
+                    <span>Alleen toegankelijk voor PRO-gebruikers</span>
+                </label>
             </div>
 
             <div class="locale-grid">

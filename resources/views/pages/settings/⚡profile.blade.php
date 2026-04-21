@@ -347,6 +347,12 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
             border-color: rgba(177, 77, 26, 0.3);
         }
 
+        .profile-upgrade-card__action {
+            justify-self: start;
+            margin-top: 6px;
+            text-decoration: none;
+        }
+
         @media (max-width: 780px) {
             .profile-card {
                 padding: 28px;
@@ -360,15 +366,10 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
 
     <x-pages::settings.layout
         :eyebrow="__('hermes.settings.shell.nav_profile')"
-        :heading="__('hermes.settings.profile.personal.title')"
-        :subheading="__('hermes.settings.profile.personal.intro')"
     >
         <section class="profile-card user-panel">
             <x-user-info-grid columns="2" class="mt-6">
                 <x-user-info-card
-                    :badge="$this->hasUnverifiedEmail
-                        ? __('hermes.settings.profile.verification.badge_unverified')
-                        : __('hermes.settings.profile.verification.badge_verified')"
                     :title="__('hermes.settings.profile.verification.title')"
                     :text="$this->hasUnverifiedEmail
                         ? __('hermes.settings.profile.verification.help_unverified')
@@ -376,11 +377,15 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
                     :tone="$this->hasUnverifiedEmail ? 'warning' : 'default'"
                 />
 
-                <x-user-info-card
-                    :badge="__('hermes.settings.profile.locale.badge')"
-                    :title="__('hermes.settings.profile.locale.title')"
-                    :text="__('hermes.settings.profile.locale.help')"
-                />
+                <article class="user-info-card profile-upgrade-card">
+                    <strong>{{ $this->currentUser()->role === User::ROLE_USER ? __('hermes.settings.profile.pro_upgrade.title') : __('hermes.settings.profile.pro_upgrade.pro_title') }}</strong>
+                    <p>{{ __('hermes.settings.profile.pro_upgrade.text') }}</p>
+                    @if ($this->currentUser()->role === User::ROLE_USER)
+                        <a href="{{ route('pro-upgrade.show') }}" class="pill profile-upgrade-card__action">
+                            {{ __('hermes.settings.profile.pro_upgrade.action') }}
+                        </a>
+                    @endif
+                </article>
             </x-user-info-grid>
 
             <form wire:submit="updateProfileInformation" class="profile-form">

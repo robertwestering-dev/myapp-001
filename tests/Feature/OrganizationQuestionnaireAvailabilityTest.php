@@ -24,7 +24,7 @@ test('managers can make a questionnaire available for their own organization', f
             'available_until' => '2026-05-01',
             'is_active' => '1',
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $this->assertDatabaseHas('organization_questionnaires', [
         'questionnaire_id' => $questionnaire->id,
@@ -67,7 +67,7 @@ test('admins can configure and update questionnaire availability for any organiz
                 $organization->org_id => '1',
             ],
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $availability = OrganizationQuestionnaire::query()
         ->where('questionnaire_id', $questionnaire->id)
@@ -80,7 +80,7 @@ test('admins can configure and update questionnaire availability for any organiz
             'available_until' => '2026-05-12',
             'is_active' => '0',
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $availability->refresh();
 
@@ -116,7 +116,7 @@ test('admins can update a questionnaire availability for a specific organization
             'available_until' => '2026-05-12',
             'is_active' => '0',
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $availability->refresh();
 
@@ -149,7 +149,7 @@ test('admins can make a questionnaire available for multiple organizations in on
                 $firstOrganization->org_id => '1',
             ],
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $this->assertDatabaseHas('organization_questionnaires', [
         'questionnaire_id' => $questionnaire->id,
@@ -195,9 +195,9 @@ test('admins can still open the create screen to add extra organization links af
     ]);
 
     $this->actingAs($admin)
-        ->get(route('admin.questionnaires.index'))
+        ->get(route('admin.questionnaires.availability.index', $questionnaire))
         ->assertOk()
-        ->assertSee('Extra organisaties koppelen');
+        ->assertSee('Organisatie koppelen');
 
     $this->actingAs($admin)
         ->get(route('admin.questionnaires.availability.create', $questionnaire))
@@ -218,7 +218,7 @@ test('admins can still open the create screen to add extra organization links af
                 $secondOrganization->org_id => '1',
             ],
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $this->assertDatabaseHas('organization_questionnaires', [
         'questionnaire_id' => $questionnaire->id,
@@ -277,7 +277,7 @@ test('admins can add extra organizations from the edit page with their own dates
                 $secondOrganization->org_id => '1',
             ],
         ])
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $this->assertDatabaseHas('organization_questionnaires', [
         'questionnaire_id' => $questionnaire->id,
@@ -410,16 +410,13 @@ test('edit page shows a clear message when no extra organizations are available 
         ->assertSee('Tweede Org');
 });
 
-test('questionnaire index shows availability as one row per organization with dates and actions', function () {
+test('availability index shows all linked organizations with dates and actions', function () {
     $admin = User::factory()->admin()->create();
     $firstOrganization = Organization::factory()->create([
         'naam' => 'Atlas Org',
     ]);
     $secondOrganization = Organization::factory()->create([
         'naam' => 'Beacon Org',
-    ]);
-    $thirdOrganization = Organization::factory()->create([
-        'naam' => 'Comet Org',
     ]);
     $questionnaire = Questionnaire::factory()->create([
         'title' => 'Beschikbaarheidsmatrix',
@@ -442,22 +439,24 @@ test('questionnaire index shows availability as one row per organization with da
     ]);
 
     $this->actingAs($admin)
-        ->get(route('admin.questionnaires.index'))
+        ->get(route('admin.questionnaires.availability.index', $questionnaire))
         ->assertOk()
         ->assertSee('Beschikbaarheidsmatrix')
         ->assertSee('Atlas Org')
         ->assertSee('Beacon Org')
-        ->assertSee('Comet Org')
         ->assertSee('10-04-2026')
         ->assertSee('10-05-2026')
         ->assertSee('01-06-2026')
-        ->assertSee('Niet gekoppeld')
-        ->assertSee('title="Wijzigen"', false)
-        ->assertSee('title="Verwijderen"', false)
-        ->assertSee('title="Activeren"', false)
-        ->assertSee('title="Deactiveren"', false)
         ->assertSee(route('admin.questionnaires.availability.edit', [$questionnaire, $firstAvailability]), false)
         ->assertSee(route('admin.questionnaires.availability.edit', [$questionnaire, $secondAvailability]), false);
+
+    $this->actingAs($admin)
+        ->get(route('admin.questionnaires.index'))
+        ->assertOk()
+        ->assertSee('Beschikbaarheidsmatrix')
+        ->assertSee(route('admin.questionnaires.availability.index', $questionnaire), false)
+        ->assertDontSee('Atlas Org')
+        ->assertDontSee('Beacon Org');
 });
 
 test('admins can activate and deactivate questionnaire availability directly from the index', function () {
@@ -469,7 +468,7 @@ test('admins can activate and deactivate questionnaire availability directly fro
 
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.availability.toggle', [$questionnaire, $organization]))
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $availability = OrganizationQuestionnaire::query()
         ->where('questionnaire_id', $questionnaire->id)
@@ -480,7 +479,7 @@ test('admins can activate and deactivate questionnaire availability directly fro
 
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.availability.toggle', [$questionnaire, $organization]))
-        ->assertRedirect(route('admin.questionnaires.index'));
+        ->assertRedirect(route('admin.questionnaires.availability.index', $questionnaire));
 
     $availability->refresh();
 

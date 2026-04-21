@@ -106,6 +106,7 @@ class AcademyCourseController extends Controller
             'estimated_minutes' => $attributes['estimated_minutes'],
             'sort_order' => $attributes['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active'),
+            'pro_only' => $request->boolean('pro_only'),
             'title' => $this->localizedFieldPayload($attributes['title']),
             'audience' => $this->localizedFieldPayload($attributes['audience']),
             'goal' => $this->localizedFieldPayload($attributes['goal']),

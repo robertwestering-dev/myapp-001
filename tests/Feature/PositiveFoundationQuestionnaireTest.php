@@ -101,8 +101,8 @@ test('positive foundation renders english content for english users while keepin
         ->get(route('questionnaires.index'))
         ->assertOk()
         ->assertSee(SyncPositiveFoundationQuestionnaire::ENGLISH_TITLE)
-        ->assertSee('This PERMA questionnaire maps the positive foundation')
-        ->assertDontSee('Deze PERMA-vragenlijst brengt het positieve fundament');
+        ->assertSee('This questionnaire maps the positive foundation')
+        ->assertDontSee('Deze vragenlijst brengt het positieve fundament');
 
     $this->actingAs($user)
         ->get(route('questionnaire-responses.show', $availability))
@@ -141,9 +141,9 @@ test('positive foundation renders german content for german users while keeping 
         ->get(route('questionnaires.index'))
         ->assertOk()
         ->assertSee(SyncPositiveFoundationQuestionnaire::GERMAN_TITLE)
-        ->assertSee('Dieser PERMA-Fragebogen erfasst das positive Fundament')
-        ->assertDontSee('This PERMA questionnaire maps the positive foundation')
-        ->assertDontSee('Deze PERMA-vragenlijst brengt het positieve fundament');
+        ->assertSee('Dieser Fragebogen erfasst das positive Fundament')
+        ->assertDontSee('This questionnaire maps the positive foundation')
+        ->assertDontSee('Deze vragenlijst brengt het positieve fundament');
 
     $this->actingAs($user)
         ->get(route('questionnaire-responses.show', $availability))
