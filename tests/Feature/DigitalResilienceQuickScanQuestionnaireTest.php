@@ -18,8 +18,9 @@ test('the digital resilience quick scan questionnaire is available in the questi
         'Digitaal leergedrag in de praktijk',
         'Wendbaarheid in digitale verandering',
     ]);
-    expect($questionnaire?->categories->sum(fn ($category) => $category->questions->count()))->toBe(15);
-    expect($questionnaire?->categories->every(fn ($category) => $category->questions->count() === 5))->toBeTrue();
+    expect($questionnaire?->categories->sum(fn ($category) => $category->questions->count()))->toBe(30);
+    expect($questionnaire?->categories->every(fn ($category) => $category->questions->where('locale', 'nl')->count() === 5))->toBeTrue();
+    expect($questionnaire?->categories->every(fn ($category) => $category->questions->where('locale', 'en')->count() === 5))->toBeTrue();
 });
 
 test('seeding the digital resilience quick scan questionnaire twice does not create duplicates', function () {
@@ -33,5 +34,5 @@ test('seeding the digital resilience quick scan questionnaire twice does not cre
 
     expect(Questionnaire::query()->where('title', SyncDigitalResilienceQuickScanQuestionnaire::TITLE)->count())->toBe(1);
     expect($questionnaire->categories_count)->toBe(3);
-    expect($questionnaire->questions_count)->toBe(15);
+    expect($questionnaire->questions_count)->toBe(30);
 });

@@ -30,6 +30,15 @@ test('questionnaires can be exported to json and imported again', function () {
         'sort_order' => 1,
     ]);
 
+    QuestionnaireQuestion::factory()->singleChoice()->create([
+        'questionnaire_category_id' => $category->id,
+        'locale' => 'en',
+        'prompt' => 'Do you need more depth?',
+        'help_text' => 'Choose yes or no.',
+        'options' => ['Yes', 'No'],
+        'sort_order' => 1,
+    ]);
+
     QuestionnaireQuestion::factory()->create([
         'questionnaire_category_id' => $category->id,
         'locale' => 'nl',
@@ -64,11 +73,14 @@ test('questionnaires can be exported to json and imported again', function () {
         ->firstOrFail();
 
     expect($importedQuestionnaire->categories)->toHaveCount(1);
-    expect($importedQuestionnaire->categories->first()->questions)->toHaveCount(2);
+    expect($importedQuestionnaire->categories->first()->questions)->toHaveCount(3);
+    expect($importedQuestionnaire->categories->first()->questions->where('locale', 'en')->first()?->prompt)
+        ->toBe('Do you need more depth?');
 
     $importedFollowUpQuestion = $importedQuestionnaire->categories
         ->first()
         ->questions
+        ->where('locale', 'nl')
         ->firstWhere('sort_order', 2);
 
     expect($importedFollowUpQuestion->display_condition_operator)->toBe(QuestionnaireQuestion::DISPLAY_CONDITION_EQUALS);

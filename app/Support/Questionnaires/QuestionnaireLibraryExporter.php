@@ -76,6 +76,7 @@ class QuestionnaireLibraryExporter
     protected function mapQuestion(QuestionnaireQuestion $question): array
     {
         return [
+            'locale' => $question->locale,
             'prompt' => $question->prompt,
             'help_text' => $question->help_text,
             'type' => $question->type,
@@ -98,6 +99,7 @@ class QuestionnaireLibraryExporter
         return [
             'category_sort_order' => $question->displayConditionQuestion->category?->sort_order,
             'question_sort_order' => $question->displayConditionQuestion->sort_order,
+            'locale' => $question->displayConditionQuestion->locale,
             'operator' => $question->display_condition_operator,
             'answer' => $question->display_condition_answer,
         ];

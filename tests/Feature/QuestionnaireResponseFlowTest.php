@@ -252,7 +252,7 @@ test('users cannot access questionnaires from another organization or unavailabl
         ->assertForbidden();
 });
 
-test('users cannot access questionnaires in a different language than their active profile language', function () {
+test('users can access the same questionnaire in their active profile language', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->create([
         'org_id' => $organization->org_id,
@@ -260,6 +260,23 @@ test('users cannot access questionnaires in a different language than their acti
     ]);
     $questionnaire = Questionnaire::factory()->create([
         'locale' => 'nl',
+    ]);
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+    ]);
+    $englishQuestion = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'locale' => 'en',
+        'prompt' => 'How are you doing at work?',
+        'is_required' => true,
+        'sort_order' => 1,
+    ]);
+    QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'locale' => 'nl',
+        'prompt' => 'Hoe gaat het op uw werk?',
+        'is_required' => true,
+        'sort_order' => 1,
     ]);
 
     $availability = OrganizationQuestionnaire::factory()->create([
@@ -272,7 +289,23 @@ test('users cannot access questionnaires in a different language than their acti
 
     $this->actingAs($user)
         ->get(route('questionnaire-responses.show', $availability))
-        ->assertForbidden();
+        ->assertOk()
+        ->assertSee('How are you doing at work?')
+        ->assertDontSee('Hoe gaat het op uw werk?');
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [
+                $englishQuestion->id => 'Pretty good.',
+            ],
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('questionnaire_responses', [
+        'organization_questionnaire_id' => $availability->id,
+        'user_id' => $user->id,
+    ]);
 });
 
 test('questionnaire view shows when session locale is leading for users without a profile locale', function () {
@@ -302,7 +335,7 @@ test('questionnaire view shows when session locale is leading for users without 
         ->assertDontSee(__('hermes.questionnaire.active_language_session'));
 });
 
-test('switching to an unavailable locale from a questionnaire page redirects to the questionnaire overview', function () {
+test('switching locale from a questionnaire page keeps the same questionnaire page', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->create([
         'org_id' => $organization->org_id,
@@ -324,7 +357,7 @@ test('switching to an unavailable locale from a questionnaire page redirects to 
         ->post(route('locale.update'), [
             'locale' => 'en',
         ])
-        ->assertRedirect(route('questionnaires.index'));
+        ->assertRedirect(route('questionnaire-responses.show', $availability));
 
     $this->followRedirects(
         $this->from(route('questionnaire-responses.show', $availability))
@@ -334,7 +367,7 @@ test('switching to an unavailable locale from a questionnaire page redirects to 
             ])
     )
         ->assertOk()
-        ->assertSee(__('hermes.questionnaire.locale_switch_unavailable'));
+        ->assertSee(__('hermes.questionnaire.instructions_text'));
 });
 
 test('required questionnaire questions must be answered with valid values', function () {

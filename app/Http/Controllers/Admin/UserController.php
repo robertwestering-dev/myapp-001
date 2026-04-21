@@ -72,6 +72,7 @@ class UserController extends Controller
         $organizations = $this->organizationOptions($actor);
 
         $users = $this->usersQuery($actor, $search, $organization, $role, $country)
+            ->with('organization:org_id,naam')
             ->paginate(config('app.per_page'))
             ->withQueryString();
 

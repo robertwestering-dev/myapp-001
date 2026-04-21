@@ -91,9 +91,6 @@ class QuestionnaireController extends Controller
     public function update(UpdateQuestionnaireRequest $request, Questionnaire $questionnaire): RedirectResponse
     {
         $questionnaire->update($request->validated());
-        $questionnaire->questions()->update([
-            'locale' => $questionnaire->locale,
-        ]);
 
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)

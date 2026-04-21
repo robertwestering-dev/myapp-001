@@ -83,6 +83,15 @@
             </label>
 
             <label>
+                <span>Taal</span>
+                <select name="locale" required>
+                    @foreach (config('locales.supported', []) as $localeCode => $localeLabel)
+                        <option value="{{ $localeCode }}" @selected(old('locale', $question->locale) === $localeCode)>{{ strtoupper($localeCode) }} · {{ $localeLabel }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
                 <span>Vraag</span>
                 <textarea name="prompt" required>{{ old('prompt', $question->prompt) }}</textarea>
             </label>

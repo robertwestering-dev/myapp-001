@@ -260,7 +260,7 @@
                     <thead>
                         <tr>
                             <th>Naam</th>
-                            <th>Emailadres</th>
+                            <th>Organisatie</th>
                             <th>Rol</th>
                             <th>Email verified</th>
                             <th>Acties</th>
@@ -270,7 +270,7 @@
                         @foreach ($users as $user)
                             <tr>
                                 <td>{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
+                                <td>{{ $user->organization?->naam ?? 'Geen organisatie' }}</td>
                                 <td><x-admin-status-badge :label="$user->role" /></td>
                                 <td class="muted">{{ $user->email_verified_at?->format('d-m-Y H:i') ?? 'Niet geverifieerd' }}</td>
                                 <td>

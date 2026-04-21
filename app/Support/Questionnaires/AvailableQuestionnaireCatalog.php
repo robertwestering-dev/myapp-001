@@ -9,6 +9,8 @@ use Illuminate\Support\Collection;
 
 class AvailableQuestionnaireCatalog
 {
+    public function __construct(private readonly LocalizedQuestionnaireContent $localizedContent) {}
+
     /**
      * @return Collection<int, OrganizationQuestionnaire>
      */
@@ -35,8 +37,11 @@ class AvailableQuestionnaireCatalog
             ->where('is_active', true)
             ->get()
             ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->isAvailable())
-            ->filter(fn (OrganizationQuestionnaire $organizationQuestionnaire): bool => $organizationQuestionnaire->questionnaire?->locale === $preferredLocale)
-            ->map(function (OrganizationQuestionnaire $organizationQuestionnaire): OrganizationQuestionnaire {
+            ->map(function (OrganizationQuestionnaire $organizationQuestionnaire) use ($preferredLocale): OrganizationQuestionnaire {
+                if ($organizationQuestionnaire->questionnaire !== null) {
+                    $this->localizedContent->apply($organizationQuestionnaire->questionnaire, $preferredLocale);
+                }
+
                 $completedResponses = $organizationQuestionnaire->responses
                     ->whereNotNull('submitted_at')
                     ->sortByDesc('submitted_at')

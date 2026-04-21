@@ -50,31 +50,19 @@ test('users can view available questionnaires on the questionnaire library page'
         ->assertSee('user-surface-card', false);
 });
 
-test('users only see questionnaires in the same profile language', function () {
+test('users see one available questionnaire in their profile language without separate questionnaire records', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->create([
         'org_id' => $organization->org_id,
         'locale' => 'en',
     ]);
-    $englishQuestionnaire = Questionnaire::factory()->create([
-        'title' => 'Work rhythm',
-        'locale' => 'en',
-    ]);
-    $dutchQuestionnaire = Questionnaire::factory()->create([
+    $questionnaire = Questionnaire::factory()->create([
         'title' => 'Werkritme',
         'locale' => 'nl',
     ]);
 
     OrganizationQuestionnaire::factory()->create([
-        'questionnaire_id' => $englishQuestionnaire->id,
-        'org_id' => $organization->org_id,
-        'available_from' => Carbon::today()->subDay()->toDateString(),
-        'available_until' => Carbon::today()->addDay()->toDateString(),
-        'is_active' => true,
-    ]);
-
-    OrganizationQuestionnaire::factory()->create([
-        'questionnaire_id' => $dutchQuestionnaire->id,
+        'questionnaire_id' => $questionnaire->id,
         'org_id' => $organization->org_id,
         'available_from' => Carbon::today()->subDay()->toDateString(),
         'available_until' => Carbon::today()->addDay()->toDateString(),
@@ -84,36 +72,25 @@ test('users only see questionnaires in the same profile language', function () {
     $this->actingAs($user)
         ->get(route('questionnaires.index'))
         ->assertOk()
-        ->assertSee('Work rhythm')
-        ->assertDontSee('Werkritme');
+        ->assertSee('Werkritme');
+
+    expect(Questionnaire::query()->where('title', 'Werkritme')->count())->toBe(1);
 });
 
-test('session locale is used for questionnaires when the user profile has no locale', function () {
+test('session locale keeps the same questionnaire availability visible when the user profile has no locale', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->create([
         'org_id' => $organization->org_id,
     ]);
     $user->forceFill(['locale' => null])->save();
 
-    $englishQuestionnaire = Questionnaire::factory()->create([
-        'title' => 'Work rhythm',
-        'locale' => 'en',
-    ]);
-    $dutchQuestionnaire = Questionnaire::factory()->create([
+    $questionnaire = Questionnaire::factory()->create([
         'title' => 'Werkritme',
         'locale' => 'nl',
     ]);
 
     OrganizationQuestionnaire::factory()->create([
-        'questionnaire_id' => $englishQuestionnaire->id,
-        'org_id' => $organization->org_id,
-        'available_from' => Carbon::today()->subDay()->toDateString(),
-        'available_until' => Carbon::today()->addDay()->toDateString(),
-        'is_active' => true,
-    ]);
-
-    OrganizationQuestionnaire::factory()->create([
-        'questionnaire_id' => $dutchQuestionnaire->id,
+        'questionnaire_id' => $questionnaire->id,
         'org_id' => $organization->org_id,
         'available_from' => Carbon::today()->subDay()->toDateString(),
         'available_until' => Carbon::today()->addDay()->toDateString(),
@@ -124,8 +101,7 @@ test('session locale is used for questionnaires when the user profile has no loc
         ->actingAs($user)
         ->get(route('questionnaires.index'))
         ->assertOk()
-        ->assertSee('Work rhythm')
-        ->assertDontSee('Werkritme');
+        ->assertSee('Werkritme');
 });
 
 test('questionnaire library shows a clear empty state with a dashboard action when nothing is available', function () {

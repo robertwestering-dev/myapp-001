@@ -129,12 +129,12 @@
                 @php($currentResponse = $availableQuestionnaire->currentResponse)
                 <x-user-surface-card variant="soft" class="questionnaire-card">
                     <div class="questionnaire-card__header">
-                        <strong>{{ $availableQuestionnaire->questionnaire->title }}</strong>
+                        <strong>{{ $availableQuestionnaire->questionnaire->localized_title ?? $availableQuestionnaire->questionnaire->title }}</strong>
                         @if ($currentResponse?->isDraft())
                             <x-admin-status-badge :label="__('hermes.dashboard.draft_badge')" tone="warning" uppercase />
                         @endif
                     </div>
-                    <div class="questionnaire-card__description">{{ $availableQuestionnaire->questionnaire->description ?: __('hermes.dashboard.description_fallback') }}</div>
+                    <div class="questionnaire-card__description">{{ ($availableQuestionnaire->questionnaire->localized_description ?? $availableQuestionnaire->questionnaire->description) ?: __('hermes.dashboard.description_fallback') }}</div>
                     <x-user-action-row class="questionnaire-card__actions">
                         <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">
                             {{ $currentResponse?->isDraft() ? __('hermes.dashboard.resume_draft') : __('hermes.questionnaires.start_questionnaire') }}

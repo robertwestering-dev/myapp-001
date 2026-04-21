@@ -1,4 +1,4 @@
-<x-layouts.hermes-dashboard :title="$organizationQuestionnaire->questionnaire->title">
+<x-layouts.hermes-dashboard :title="$organizationQuestionnaire->questionnaire->localized_title ?? $organizationQuestionnaire->questionnaire->title">
     <x-slot:head>
         <style>
         :root {
@@ -788,8 +788,8 @@
             <section class="panel panel--intro">
                 <x-user-page-heading
                     :eyebrow="__('hermes.questionnaire.eyebrow')"
-                    :title="$organizationQuestionnaire->questionnaire->title"
-                    :text="$organizationQuestionnaire->questionnaire->description"
+                    :title="$organizationQuestionnaire->questionnaire->localized_title ?? $organizationQuestionnaire->questionnaire->title"
+                    :text="$organizationQuestionnaire->questionnaire->localized_description ?? $organizationQuestionnaire->questionnaire->description"
                 />
 
                 <div class="meta-list">
@@ -837,7 +837,7 @@
                             <div class="progress-label" data-questionnaire-progress-label>
                                 {{ __('hermes.questionnaire.step_of', ['current' => $initialStepIndex + 1, 'total' => max($categories->count(), 1)]) }}
                             </div>
-                            <div class="progress-title" data-questionnaire-progress-title>{{ $initialCategory?->title }}</div>
+                            <div class="progress-title" data-questionnaire-progress-title>{{ $initialCategory?->localized_title ?? $initialCategory?->title }}</div>
                             <div class="progress-meta" data-questionnaire-progress-meta>
                                 {{ __('hermes.questionnaire.section_progress', ['answered' => $initialAnsweredQuestionCount, 'total' => max($initialVisibleQuestionCount, 1)]) }}
                             </div>
@@ -878,14 +878,14 @@
                             data-questionnaire-step
                             data-step-index="{{ $categoryIndex }}"
                             data-step-category-id="{{ $category->id }}"
-                            data-step-title="{{ $category->title }}"
+                            data-step-title="{{ $category->localized_title ?? $category->title }}"
                             @if ($categoryIndex !== $initialStepIndex) hidden @endif
                         >
                             <div class="step__header">
                                 <span class="step__counter">{{ __('hermes.questionnaire.step_of', ['current' => $categoryIndex + 1, 'total' => $categories->count()]) }}</span>
                                 <x-user-section-heading
-                                    :title="$category->title"
-                                    :text="$category->description"
+                                    :title="$category->localized_title ?? $category->title"
+                                    :text="$category->localized_description ?? $category->description"
                                 />
                             </div>
 

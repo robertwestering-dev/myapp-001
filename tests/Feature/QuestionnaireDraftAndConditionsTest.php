@@ -252,6 +252,9 @@ test('pro users can submit the same questionnaire multiple times and view every 
         'prompt' => 'Wat is uw focus?',
         'is_required' => true,
     ]);
+
+    Carbon::setTestNow(Carbon::parse('2026-04-18 09:00:00'));
+
     $availability = OrganizationQuestionnaire::factory()->create([
         'questionnaire_id' => $questionnaire->id,
         'org_id' => $organization->org_id,
@@ -259,8 +262,6 @@ test('pro users can submit the same questionnaire multiple times and view every 
         'available_until' => Carbon::today()->addDay()->toDateString(),
         'is_active' => true,
     ]);
-
-    Carbon::setTestNow(Carbon::parse('2026-04-18 09:00:00'));
 
     $this->actingAs($user)
         ->post(route('questionnaire-responses.store', $availability), [
@@ -286,8 +287,6 @@ test('pro users can submit the same questionnaire multiple times and view every 
             ],
         ])
         ->assertRedirect();
-
-    Carbon::setTestNow();
 
     $responses = QuestionnaireResponse::query()
         ->where('organization_questionnaire_id', $availability->id)
@@ -317,6 +316,8 @@ test('pro users can submit the same questionnaire multiple times and view every 
         ->assertOk()
         ->assertSee('Herhaalbare scan')
         ->assertSee(__('hermes.questionnaire.results.generic_title'));
+
+    Carbon::setTestNow();
 });
 
 test('regular users need pro to repeat a completed questionnaire', function () {

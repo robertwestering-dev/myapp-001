@@ -28,6 +28,7 @@ class UpdateQuestionnaireQuestionRequest extends FormRequest
                 'required',
                 Rule::exists(QuestionnaireCategory::class, 'id')->where('questionnaire_id', $questionnaire->id),
             ],
+            'locale' => ['required', 'string', Rule::in(Questionnaire::localeOptions())],
             'prompt' => ['required', 'string'],
             'help_text' => ['nullable', 'string'],
             'type' => ['required', 'string', Rule::in(QuestionnaireQuestion::types())],

@@ -168,7 +168,7 @@ test('dashboard shows questionnaire summary counts instead of the questionnaire 
         ->assertDontSee('Werkritme Scan');
 });
 
-test('dashboard questionnaire counts only include questionnaires in the active user language', function () {
+test('dashboard questionnaire counts include all available questionnaires regardless of active user language', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->create([
         'org_id' => $organization->org_id,
@@ -204,8 +204,8 @@ test('dashboard questionnaire counts only include questionnaires in the active u
     $response
         ->assertOk()
         ->assertSee(__('hermes.dashboard.questionnaires_available_count'))
-        ->assertSee('1')
-        ->assertViewHas('availableQuestionnaireCount', 1);
+        ->assertSee('2')
+        ->assertViewHas('availableQuestionnaireCount', 2);
 });
 
 test('dashboard uses the session locale for questionnaire context when the profile locale is empty', function () {

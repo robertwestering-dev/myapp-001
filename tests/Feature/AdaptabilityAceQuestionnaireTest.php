@@ -18,8 +18,9 @@ test('the adaptability ace questionnaire is available in the questionnaire libra
         'Character',
         'Environment',
     ]);
-    expect($questionnaire?->categories->sum(fn ($category) => $category->questions->count()))->toBe(15);
-    expect($questionnaire?->categories->every(fn ($category) => $category->questions->count() === 5))->toBeTrue();
+    expect($questionnaire?->categories->sum(fn ($category) => $category->questions->count()))->toBe(30);
+    expect($questionnaire?->categories->every(fn ($category) => $category->questions->where('locale', 'nl')->count() === 5))->toBeTrue();
+    expect($questionnaire?->categories->every(fn ($category) => $category->questions->where('locale', 'en')->count() === 5))->toBeTrue();
 });
 
 test('seeding the adaptability ace questionnaire twice does not create duplicates', function () {
@@ -33,5 +34,5 @@ test('seeding the adaptability ace questionnaire twice does not create duplicate
 
     expect(Questionnaire::query()->where('title', SyncAdaptabilityAceQuestionnaire::TITLE)->count())->toBe(1);
     expect($questionnaire->categories_count)->toBe(3);
-    expect($questionnaire->questions_count)->toBe(15);
+    expect($questionnaire->questions_count)->toBe(30);
 });

@@ -92,13 +92,15 @@ class QuestionnaireLibraryImporter
             $questionIdsToKeep = [];
 
             foreach (($categoryDefinition['questions'] ?? []) as $questionDefinition) {
+                $questionLocale = (string) ($questionDefinition['locale'] ?? $questionnaire->locale);
+
                 $question = QuestionnaireQuestion::query()->updateOrCreate(
                     [
                         'questionnaire_category_id' => $category->id,
                         'sort_order' => (int) ($questionDefinition['sort_order'] ?? 0),
+                        'locale' => $questionLocale,
                     ],
                     [
-                        'locale' => $questionnaire->locale,
                         'prompt' => (string) ($questionDefinition['prompt'] ?? ''),
                         'help_text' => $questionDefinition['help_text'] ?: null,
                         'type' => (string) ($questionDefinition['type'] ?? QuestionnaireQuestion::TYPE_SHORT_TEXT),
@@ -114,6 +116,7 @@ class QuestionnaireLibraryImporter
                 $questionsByReference[$this->questionReference(
                     (int) $category->sort_order,
                     (int) $question->sort_order,
+                    $questionLocale,
                 )] = $question;
 
                 if (is_array($questionDefinition['display_condition'] ?? null)) {
@@ -134,6 +137,7 @@ class QuestionnaireLibraryImporter
             $targetReference = $this->questionReference(
                 (int) ($displayCondition['category_sort_order'] ?? 0),
                 (int) ($displayCondition['question_sort_order'] ?? 0),
+                (string) ($displayCondition['locale'] ?? QuestionnaireQuestion::query()->whereKey($questionId)->value('locale') ?? $questionnaire->locale),
             );
 
             $targetQuestion = $questionsByReference[$targetReference] ?? null;
@@ -167,8 +171,8 @@ class QuestionnaireLibraryImporter
         ));
     }
 
-    protected function questionReference(int $categorySortOrder, int $questionSortOrder): string
+    protected function questionReference(int $categorySortOrder, int $questionSortOrder, string $locale): string
     {
-        return $categorySortOrder.':'.$questionSortOrder;
+        return $categorySortOrder.':'.$questionSortOrder.':'.$locale;
     }
 }

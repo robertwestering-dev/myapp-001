@@ -14,7 +14,8 @@ test('admins can view the users list', function () {
 
     $response->assertOk()
         ->assertDontSee('Gebruikersoverzicht')
-        ->assertSee($users[0]->email)
+        ->assertSee($users[0]->organization->naam)
+        ->assertDontSee($users[0]->email)
         ->assertSee('Export CSV')
         ->assertSee('Organisatie')
         ->assertSee('Rol')
@@ -300,7 +301,8 @@ test('admins can filter users by organization role and country', function () {
         ->assertSee('Organisatie: Atlas BV')
         ->assertSee('Rol: Beheerder')
         ->assertSee('Land: Nederland')
-        ->assertSee('match@example.com')
+        ->assertSee('Atlas BV')
+        ->assertDontSee('match@example.com')
         ->assertDontSee('other-role@example.com')
         ->assertDontSee('other-country@example.com')
         ->assertDontSee('other-org@example.com');
@@ -445,7 +447,10 @@ test('managers only see users from their own organization', function () {
     $response = $this->actingAs($manager)->get(route('admin.users.index'));
 
     $response->assertOk()
-        ->assertSee($ownUser->email)
+        ->assertSee($ownUser->name)
+        ->assertSee('Eigen Org')
+        ->assertDontSee($ownUser->email)
+        ->assertDontSee($otherUser->name)
         ->assertDontSee($otherUser->email);
 });
 

@@ -24,7 +24,7 @@ class UpdateQuestionnaireRequest extends FormRequest
         $questionnaire = $this->route('questionnaire');
 
         return [
-            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')->where('locale', $this->input('locale'))->ignore($questionnaire)],
+            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')->ignore($questionnaire)],
             'description' => ['nullable', 'string'],
             'locale' => ['required', 'string', Rule::in(Questionnaire::localeOptions())],
             'is_active' => ['required', 'boolean'],

@@ -5,6 +5,9 @@ namespace App\Http\Requests;
 use App\Concerns\NormalizesAnswers;
 use App\Models\OrganizationQuestionnaire;
 use App\Models\QuestionnaireQuestion;
+use App\Models\User;
+use App\Support\Questionnaires\AvailableQuestionnaireCatalog;
+use App\Support\Questionnaires\LocalizedQuestionnaireContent;
 use App\Support\Questionnaires\QuestionnaireConditionEvaluator;
 use Closure;
 use Illuminate\Contracts\Validation\Validator;
@@ -56,9 +59,14 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
     {
         /** @var OrganizationQuestionnaire $organizationQuestionnaire */
         $organizationQuestionnaire = $this->route('organizationQuestionnaire');
-        $questions = $organizationQuestionnaire->questionnaire
-            ->loadMissing('categories.questions')
-            ->questions;
+        /** @var User $user */
+        $user = $this->user();
+        $localeContext = app(AvailableQuestionnaireCatalog::class)->localeContext($this, $user);
+        $questionnaire = app(LocalizedQuestionnaireContent::class)->apply(
+            $organizationQuestionnaire->questionnaire,
+            $localeContext['locale'],
+        );
+        $questions = $questionnaire->categories->flatMap->questions;
         $answers = $this->input('answers', []);
         $conditionEvaluator = app(QuestionnaireConditionEvaluator::class);
         $visibleQuestions = collect($conditionEvaluator->visibleQuestions($questions, $answers))

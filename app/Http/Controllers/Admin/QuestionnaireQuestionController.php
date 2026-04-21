@@ -24,6 +24,7 @@ class QuestionnaireQuestionController extends Controller
             'submitLabel' => 'Vraag opslaan',
             'question' => new QuestionnaireQuestion([
                 'questionnaire_category_id' => $request->integer('category'),
+                'locale' => $questionnaire->locale ?? config('locales.primary'),
                 'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
                 'sort_order' => 0,
             ]),
@@ -45,7 +46,6 @@ class QuestionnaireQuestionController extends Controller
             $attributes['display_condition_answer'] ?? null,
         );
         $attributes['is_required'] = $request->boolean('is_required');
-        $attributes['locale'] = $questionnaire->locale;
 
         QuestionnaireQuestion::create($attributes);
 
@@ -87,7 +87,6 @@ class QuestionnaireQuestionController extends Controller
             $attributes['display_condition_answer'] ?? null,
         );
         $attributes['is_required'] = $request->boolean('is_required');
-        $attributes['locale'] = $questionnaire->locale;
 
         $question->update($attributes);
 

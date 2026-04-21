@@ -41,46 +41,58 @@ class SyncAdaptabilityAceQuestionnaire
         return DB::transaction(function (): Questionnaire {
             $questionnaireTableHasLocale = Schema::hasColumn('questionnaires', 'locale');
             $questionTableHasLocale = Schema::hasColumn('questionnaire_questions', 'locale');
-            $lastSyncedQuestionnaire = null;
+            $definitions = $this->definitions();
+            $primaryDefinition = $definitions[0];
 
-            foreach ($this->definitions() as $definition) {
-                $questionnaire = Questionnaire::query()->updateOrCreate(
-                    ['title' => $definition['title']],
-                    array_filter([
-                        'description' => $definition['description'],
-                        'locale' => $questionnaireTableHasLocale ? $definition['locale'] : null,
-                        'is_active' => true,
-                    ], fn (mixed $value): bool => $value !== null),
+            $questionnaire = Questionnaire::query()->updateOrCreate(
+                ['title' => self::TITLE],
+                array_filter([
+                    'description' => $primaryDefinition['description'],
+                    'locale' => $questionnaireTableHasLocale ? config('locales.primary') : null,
+                    'is_active' => true,
+                ], fn (mixed $value): bool => $value !== null),
+            );
+
+            Questionnaire::query()
+                ->where('title', self::ENGLISH_TITLE)
+                ->whereKeyNot($questionnaire->id)
+                ->update(['is_active' => false]);
+
+            $categorySortOrders = [];
+            $questionReferencesToKeep = [];
+
+            foreach ($primaryDefinition['categories'] as $categoryDefinition) {
+                $categorySortOrders[] = $categoryDefinition['sort_order'];
+
+                $category = QuestionnaireCategory::query()->updateOrCreate(
+                    [
+                        'questionnaire_id' => $questionnaire->id,
+                        'sort_order' => $categoryDefinition['sort_order'],
+                    ],
+                    [
+                        'title' => $categoryDefinition['title'],
+                        'description' => $categoryDefinition['description'],
+                    ],
                 );
 
-                $categorySortOrders = [];
+                foreach ($definitions as $definition) {
+                    $localizedCategory = collect($definition['categories'])
+                        ->firstWhere('sort_order', $categoryDefinition['sort_order']);
 
-                foreach ($definition['categories'] as $categoryDefinition) {
-                    $categorySortOrders[] = $categoryDefinition['sort_order'];
-
-                    $category = QuestionnaireCategory::query()->updateOrCreate(
-                        [
-                            'questionnaire_id' => $questionnaire->id,
-                            'sort_order' => $categoryDefinition['sort_order'],
-                        ],
-                        [
-                            'title' => $categoryDefinition['title'],
-                            'description' => $categoryDefinition['description'],
-                        ],
-                    );
-
-                    $questionSortOrders = [];
-
-                    foreach ($categoryDefinition['questions'] as $questionDefinition) {
-                        $questionSortOrders[] = $questionDefinition['sort_order'];
+                    foreach (($localizedCategory['questions'] ?? []) as $questionDefinition) {
+                        $questionReferencesToKeep[] = [
+                            'category_id' => $category->id,
+                            'sort_order' => $questionDefinition['sort_order'],
+                            'locale' => $definition['locale'],
+                        ];
 
                         QuestionnaireQuestion::query()->updateOrCreate(
-                            [
+                            array_filter([
                                 'questionnaire_category_id' => $category->id,
                                 'sort_order' => $questionDefinition['sort_order'],
-                            ],
+                                'locale' => $questionTableHasLocale ? $definition['locale'] : null,
+                            ], fn (mixed $value): bool => $value !== null),
                             array_filter([
-                                'locale' => $questionTableHasLocale ? ($questionnaire->locale ?? $definition['locale']) : null,
                                 'prompt' => $questionDefinition['prompt'],
                                 'help_text' => $questionDefinition['help_text'],
                                 'type' => QuestionnaireQuestion::TYPE_SINGLE_CHOICE,
@@ -89,21 +101,38 @@ class SyncAdaptabilityAceQuestionnaire
                             ], fn (mixed $value): bool => $value !== null),
                         );
                     }
-
-                    $category->questions()
-                        ->whereNotIn('sort_order', $questionSortOrders)
-                        ->delete();
                 }
-
-                $questionnaire->categories()
-                    ->whereNotIn('sort_order', $categorySortOrders)
-                    ->delete();
-
-                $lastSyncedQuestionnaire = $questionnaire;
             }
 
-            return $lastSyncedQuestionnaire?->fresh(['categories.questions']) ?? new Questionnaire;
+            $questionnaire->categories()
+                ->whereNotIn('sort_order', $categorySortOrders)
+                ->delete();
+
+            $this->deleteStaleQuestions($questionnaire, $questionReferencesToKeep);
+
+            return $questionnaire->fresh(['categories.questions']);
         });
+    }
+
+    /**
+     * @param  array<int, array{category_id: int, sort_order: int, locale: string}>  $questionReferencesToKeep
+     */
+    protected function deleteStaleQuestions(Questionnaire $questionnaire, array $questionReferencesToKeep): void
+    {
+        $questionnaire->load('categories.questions');
+
+        $references = collect($questionReferencesToKeep)
+            ->map(fn (array $reference): string => $reference['category_id'].':'.$reference['sort_order'].':'.$reference['locale'])
+            ->all();
+
+        $questionnaire->categories
+            ->flatMap->questions
+            ->reject(fn (QuestionnaireQuestion $question): bool => in_array(
+                $question->questionnaire_category_id.':'.$question->sort_order.':'.$question->locale,
+                $references,
+                true,
+            ))
+            ->each->delete();
     }
 
     /**

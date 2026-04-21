@@ -9,6 +9,7 @@ use App\Models\QuestionnaireCategory;
 use App\Models\QuestionnaireResponse;
 use App\Models\User;
 use App\Support\Questionnaires\AvailableQuestionnaireCatalog;
+use App\Support\Questionnaires\LocalizedQuestionnaireContent;
 use App\Support\Questionnaires\QuestionnaireConditionEvaluator;
 use App\Support\Questionnaires\Results\QuestionnaireResultsEngine;
 use Illuminate\Contracts\View\View;
@@ -26,6 +27,7 @@ class QuestionnaireResponseController extends Controller
     public function __construct(
         protected QuestionnaireConditionEvaluator $conditionEvaluator,
         protected AvailableQuestionnaireCatalog $catalog,
+        protected LocalizedQuestionnaireContent $localizedContent,
         protected QuestionnaireResultsEngine $resultsEngine,
     ) {}
 
@@ -37,10 +39,8 @@ class QuestionnaireResponseController extends Controller
 
         $this->ensureAccessible($request, $organizationQuestionnaire, $user);
 
-        $organizationQuestionnaire->load([
-            'questionnaire.categories' => fn ($query) => $query->orderBy('sort_order'),
-            'questionnaire.categories.questions' => fn ($query) => $query->orderBy('sort_order'),
-        ]);
+        $organizationQuestionnaire->load('questionnaire');
+        $this->localizedContent->apply($organizationQuestionnaire->questionnaire, $localeContext['locale']);
 
         $response = QuestionnaireResponse::query()
             ->with('answers')
@@ -128,8 +128,14 @@ class QuestionnaireResponseController extends Controller
 
         $this->ensureAccessible($request, $organizationQuestionnaire, $user);
 
-        $questionnaire = $organizationQuestionnaire->questionnaire->loadMissing('categories.questions');
-        $questions = $questionnaire->questions->keyBy('id');
+        $localeContext = $this->catalog->localeContext($request, $user);
+        $questionnaire = $this->localizedContent->apply(
+            $organizationQuestionnaire->questionnaire,
+            $localeContext['locale'],
+        );
+        $questions = $questionnaire->categories
+            ->flatMap->questions
+            ->keyBy('id');
         $categories = $questionnaire->categories->keyBy('id');
         $validatedAnswers = $request->validated('answers', []);
         $isDraft = $request->saveAsDraft();
@@ -224,10 +230,6 @@ class QuestionnaireResponseController extends Controller
 
         abort_unless($organizationQuestionnaire->org_id === $user->org_id, 403);
         abort_unless($organizationQuestionnaire->isAvailable(), 403);
-        abort_unless(
-            $organizationQuestionnaire->questionnaire?->locale === $this->catalog->localeContext($request, $user)['locale'],
-            403
-        );
     }
 
     protected function hasCompletedResponse(OrganizationQuestionnaire $organizationQuestionnaire, User $user): bool

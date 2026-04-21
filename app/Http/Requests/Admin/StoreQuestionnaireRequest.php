@@ -21,7 +21,7 @@ class StoreQuestionnaireRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')->where('locale', $this->input('locale'))],
+            'title' => ['required', 'string', 'max:255', Rule::unique(Questionnaire::class, 'title')],
             'description' => ['nullable', 'string'],
             'locale' => ['required', 'string', Rule::in(Questionnaire::localeOptions())],
             'is_active' => ['required', 'boolean'],

@@ -20,9 +20,7 @@ test('admins can view the questionnaire list and create page', function () {
         ->assertSee('admin-status-badge', false)
         ->assertSee('Werkdrukmeting')
         ->assertSee(SyncAdaptabilityAceQuestionnaire::TITLE)
-        ->assertSee(SyncAdaptabilityAceQuestionnaire::ENGLISH_TITLE)
         ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::TITLE)
-        ->assertSee(SyncDigitalResilienceQuickScanQuestionnaire::ENGLISH_TITLE)
         ->assertSee('Nieuwe questionnaire');
 
     $this->actingAs($admin)
@@ -31,7 +29,7 @@ test('admins can view the questionnaire list and create page', function () {
         ->assertSee('Nieuwe questionnaire');
 });
 
-test('default questionnaires are synchronized in dutch and english', function () {
+test('default questionnaires are synchronized once with dutch and english questions', function () {
     (new SyncAdaptabilityAceQuestionnaire)->handle();
     (new SyncDigitalResilienceQuickScanQuestionnaire)->handle();
 
@@ -41,19 +39,12 @@ test('default questionnaires are synchronized in dutch and english', function ()
     ]);
 
     $this->assertDatabaseHas('questionnaires', [
-        'title' => SyncAdaptabilityAceQuestionnaire::ENGLISH_TITLE,
-        'locale' => 'en',
-    ]);
-
-    $this->assertDatabaseHas('questionnaires', [
         'title' => SyncDigitalResilienceQuickScanQuestionnaire::TITLE,
         'locale' => 'nl',
     ]);
 
-    $this->assertDatabaseHas('questionnaires', [
-        'title' => SyncDigitalResilienceQuickScanQuestionnaire::ENGLISH_TITLE,
-        'locale' => 'en',
-    ]);
+    expect(Questionnaire::query()->where('title', SyncAdaptabilityAceQuestionnaire::TITLE)->count())->toBe(1);
+    expect(Questionnaire::query()->where('title', SyncDigitalResilienceQuickScanQuestionnaire::TITLE)->count())->toBe(1);
 
     $this->assertDatabaseHas('questionnaire_questions', [
         'prompt' => 'I generally stay calm and constructive when outcomes are uncertain.',
@@ -93,6 +84,7 @@ test('admins can compose a questionnaire with categories and questions', functio
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.questions.store', $questionnaire), [
             'questionnaire_category_id' => $category->id,
+            'locale' => 'nl',
             'prompt' => 'Hoeveel energie ervaart u gemiddeld tijdens uw werkdag?',
             'help_text' => 'Kies het antwoord dat het beste past.',
             'type' => 'single_choice',
@@ -141,6 +133,7 @@ test('admins can configure conditional questionnaire questions', function () {
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.questions.store', $questionnaire), [
             'questionnaire_category_id' => $category->id,
+            'locale' => 'nl',
             'prompt' => 'Welke verdieping wilt u ontvangen?',
             'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
             'display_condition_question_id' => $triggerQuestion->id,
@@ -167,6 +160,7 @@ test('admins can add likert scale questions with multiple scale options', functi
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.questions.store', $questionnaire), [
             'questionnaire_category_id' => $category->id,
+            'locale' => 'nl',
             'prompt' => 'Ik voel me gesteund door mijn team.',
             'type' => QuestionnaireQuestion::TYPE_LIKERT_SCALE,
             'options' => "Helemaal oneens\nOneens\nNeutraal\nEens\nHelemaal eens",
@@ -248,6 +242,7 @@ test('admins can update and delete questionnaire questions', function () {
     $this->actingAs($admin)
         ->put(route('admin.questionnaires.questions.update', [$questionnaire, $question]), [
             'questionnaire_category_id' => $category->id,
+            'locale' => 'nl',
             'prompt' => 'Nieuwe vraag?',
             'help_text' => 'Werk de antwoordkeuze bij.',
             'type' => QuestionnaireQuestion::TYPE_MULTIPLE_CHOICE,
@@ -285,6 +280,7 @@ test('admins cannot attach a question to a category from another questionnaire',
     $this->actingAs($admin)
         ->post(route('admin.questionnaires.questions.store', $questionnaire), [
             'questionnaire_category_id' => $otherCategory->id,
+            'locale' => 'nl',
             'prompt' => 'Onjuiste koppeling?',
             'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
             'sort_order' => 1,

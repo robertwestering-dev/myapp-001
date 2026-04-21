@@ -145,7 +145,7 @@
             </label>
 
             <label>
-                <span>Taal</span>
+                <span>Basistaal</span>
                 <select name="locale" required>
                     @foreach (config('locales.supported', []) as $localeCode => $localeLabel)
                         <option value="{{ $localeCode }}" @selected(old('locale', $questionnaire->locale) === $localeCode)>{{ strtoupper($localeCode) }} · {{ $localeLabel }}</option>
