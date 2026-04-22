@@ -1004,8 +1004,9 @@ return [
         ],
         'personal_pro' => [
             'name' => 'Pro',
-            'price' => '49,50 EUR pro Jahr (zzgl. MwSt.)',
-            'tagline' => 'Weniger als 1 EUR pro Woche, für alle, die wirklich wachsen möchten',
+            'price' => '98 EUR pro Jahr (zzgl. MwSt.)',
+            'temporary_free_label' => 'Vorübergehend KOSTENLOS',
+            'tagline' => 'Für alle, die wirklich wachsen möchten',
             'features' => [
                 'Alle Selbsttests inklusive vertiefender Analysen',
                 'Vollständiger Zugang zur Hermes Academy',
@@ -1064,7 +1065,7 @@ return [
         'meta_description' => 'Führen Sie vorübergehend kostenlos ein Upgrade auf Hermes Results Pro durch und erhalten Sie Zugang zu allen Assessments, E-Learnings und Arbeitsbüchern.',
         'eyebrow' => 'Pro-Upgrade',
         'hero_title' => 'Upgrade dich auf PRO',
-        'hero_intro' => 'Bald können Sie Ihren Pro-Zugang aktivieren und alles erhalten, was Sie brauchen, um gezielt an Ihrer digitalen Widerstandsfähigkeit zu arbeiten.',
+        'hero_intro' => 'Aktivieren Sie Ihren Pro-Zugang und erhalten Sie alles, was Sie brauchen, um gezielt an Ihrer digitalen Widerstandsfähigkeit zu arbeiten.',
         'temporary_tagline' => 'Für alle, die wirklich wachsen möchten, jetzt vorübergehend KOSTENLOS',
         'free_label' => 'KOSTENLOS',
         'upgraded_status' => 'Ihr Konto wurde auf Pro aktualisiert.',

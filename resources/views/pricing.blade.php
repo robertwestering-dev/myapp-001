@@ -240,7 +240,7 @@
                     <h3>{{ __('hermes.pricing_page.personal_pro.name') }}</h3>
                     <div class="pricing-card__price">
                         <span class="pricing-card__label">{{ __('hermes.pricing_page.price_label') }}</span>
-                        <span class="pricing-card__amount">{{ __('hermes.pricing_page.personal_pro.price') }}</span>
+                        <span class="pricing-card__amount"><s>{{ __('hermes.pricing_page.personal_pro.price') }}</s> {{ __('hermes.pricing_page.personal_pro.temporary_free_label') }}</span>
                     </div>
                     <p>{{ __('hermes.pricing_page.personal_pro.tagline') }}</p>
                     <p>{{ __('hermes.pricing_page.everything_from_free') }}</p>

@@ -29,6 +29,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
     public string $current_password = '';
     public string $password = '';
     public string $password_confirmation = '';
+    public bool $showProfilePrompt = false;
 
     public function mount(): void
     {
@@ -42,6 +43,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
         $this->country = $user->country;
         $this->locale = $user->locale;
         $this->email = $user->email;
+        $this->showProfilePrompt = session()->has('profile_incomplete_prompt');
     }
 
     public function updateProfileInformation(): void
@@ -375,6 +377,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
                         ? __('hermes.settings.profile.verification.help_unverified')
                         : __('hermes.settings.profile.verification.help_verified')"
                     :tone="$this->hasUnverifiedEmail ? 'warning' : 'default'"
+                    :prompt="$this->showProfilePrompt ? 'Wil je even je profiel volledig invullen? Alvast dank!' : null"
                 />
 
                 <article class="user-info-card profile-upgrade-card">

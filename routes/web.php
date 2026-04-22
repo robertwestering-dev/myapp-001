@@ -50,8 +50,10 @@ Route::get('/sitemap.xml', BlogSitemapController::class)->name('sitemap');
 Route::view('/inspiratiebronnen', 'inspiration-sources')->name('inspiration-sources.show');
 Route::view('/over-ons', 'about')->name('about.show');
 Route::view('/prijzen', 'pricing')->name('pricing.show');
-Route::view('/pro-upgrade', 'pro-upgrade')->name('pro-upgrade.show');
-Route::post('/pro-upgrade', ProUpgradeController::class)->middleware('auth')->name('pro-upgrade.store');
+Route::middleware('auth')->group(function (): void {
+    Route::view('/pro-upgrade', 'pro-upgrade')->name('pro-upgrade.show');
+    Route::post('/pro-upgrade', ProUpgradeController::class)->name('pro-upgrade.store');
+});
 Route::view('/privacy', 'privacy')->name('privacy.show');
 Route::view('/voor-organisaties', 'organizations')->name('organizations.landing');
 Route::view('/contact', 'contact')->name('contact.show');

@@ -462,6 +462,15 @@
             line-height: 1.6;
         }
 
+        .user-info-card__prompt {
+            margin-top: 8px;
+            color: #d96a2b;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
         .user-info-card__badge {
             display: inline-flex;
             align-items: center;

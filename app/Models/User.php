@@ -169,6 +169,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ForumReply::class);
     }
 
+    public function isProfileComplete(): bool
+    {
+        return ! empty($this->first_name)
+            && ! empty($this->gender)
+            && ! empty($this->birth_date)
+            && ! empty($this->city)
+            && ! empty($this->country);
+    }
+
     /**
      * Get the user's initials
      */

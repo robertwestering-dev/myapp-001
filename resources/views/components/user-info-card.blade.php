@@ -3,6 +3,7 @@
     'text',
     'badge' => null,
     'tone' => 'default',
+    'prompt' => null,
 ])
 
 <article {{ $attributes->class(['user-info-card', "user-info-card--{$tone}"]) }}>
@@ -12,4 +13,8 @@
 
     <strong>{{ $title }}</strong>
     <p>{{ $text }}</p>
+
+    @if ($prompt)
+        <p class="user-info-card__prompt">{{ $prompt }}</p>
+    @endif
 </article>

@@ -1043,8 +1043,9 @@ return [
         ],
         'personal_pro' => [
             'name' => 'Pro',
-            'price' => 'EUR 49.50 per year (excl. VAT)',
-            'tagline' => 'Less than EUR 1 per week, for people who really want to grow',
+            'price' => 'EUR 98 per year (excl. VAT)',
+            'temporary_free_label' => 'Temporarily FREE',
+            'tagline' => 'For people who really want to grow',
             'features' => [
                 'All self-assessments, including deeper analysis',
                 'Full access to the Hermes Academy',
@@ -1103,7 +1104,7 @@ return [
         'meta_description' => 'Temporarily upgrade to Hermes Results Pro for free and get access to all assessments, e-learning, and workbooks.',
         'eyebrow' => 'Pro upgrade',
         'hero_title' => 'Upgrade yourself to PRO',
-        'hero_intro' => 'Soon you can activate your Pro access and get everything you need to work on your digital resilience with focus.',
+        'hero_intro' => 'Activate your Pro access and get everything you need to work on your digital resilience with focus.',
         'temporary_tagline' => 'For people who really want to grow, now temporarily FREE',
         'free_label' => 'FREE',
         'upgraded_status' => 'Your account has been upgraded to Pro.',

@@ -7,8 +7,11 @@ test('pricing page can be rendered with individual and organization packages', f
 
     $response->assertOk()
         ->assertSee(__('hermes.pricing_page.hero_title'))
+        ->assertSee('helpen je op jouw persoonlijke weg')
+        ->assertDontSee('jeop')
         ->assertSee(__('hermes.pricing_page.personal_free.name'))
         ->assertSee(__('hermes.pricing_page.personal_pro.name'))
+        ->assertSee('<s>'.__('hermes.pricing_page.personal_pro.price').'</s> '.__('hermes.pricing_page.personal_pro.temporary_free_label'), false)
         ->assertDontSee(__('hermes.pricing_page.organizations_eyebrow'))
         ->assertDontSee(__('hermes.pricing_page.organization_tiers.starter.name'))
         ->assertDontSee(__('hermes.pricing_page.organization_tiers.business.name'))
@@ -17,17 +20,28 @@ test('pricing page can be rendered with individual and organization packages', f
         ->assertSee('"@type": "WebPage"', false);
 });
 
-test('pro upgrade page renders the temporary pro offer', function () {
-    $response = $this->get(route('pro-upgrade.show'));
+test('guest cannot view the pro upgrade page', function () {
+    $this->get(route('pro-upgrade.show'))
+        ->assertRedirectToRoute('login');
+});
+
+test('logged in user can view the pro upgrade page with the temporary pro offer', function () {
+    $user = User::factory()->create([
+        'role' => User::ROLE_USER,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('pro-upgrade.show'));
 
     $response->assertOk()
         ->assertSee(__('hermes.pro_upgrade_page.hero_title'))
+        ->assertSee(__('hermes.pro_upgrade_page.hero_intro'))
         ->assertSee(__('hermes.pricing_page.personal_pro.name'))
         ->assertSee('<s>'.__('hermes.pricing_page.personal_pro.price').'</s> <b>'.__('hermes.pro_upgrade_page.free_label').'</b>', false)
         ->assertSee(__('hermes.pro_upgrade_page.temporary_tagline'))
-        ->assertDontSee(__('hermes.pricing_page.personal_pro.tagline'))
+        ->assertDontSee('Minder dan €1 per week, voor wie echt wil groeien')
         ->assertSee(__('hermes.pricing_page.personal_pro.features')[0])
-        ->assertSee(route('register', absolute: false), false);
+        ->assertSee(route('pro-upgrade.store', absolute: false), false)
+        ->assertDontSee(route('register', absolute: false), false);
 });
 
 test('logged in user can upgrade their account to pro from the pro upgrade page', function () {

@@ -87,4 +87,15 @@ class UserFactory extends Factory
             'role' => User::ROLE_USER_PRO,
         ]);
     }
+
+    public function incompleteProfile(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'first_name' => null,
+            'gender' => null,
+            'birth_date' => null,
+            'city' => null,
+            'country' => null,
+        ]);
+    }
 }

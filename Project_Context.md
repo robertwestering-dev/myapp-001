@@ -934,6 +934,93 @@ Bevestigd werkend op live:
 - wachtwoord reset
 - e-mailverificatie
 
+## Sessie-update 2026-04-21
+
+Deze update vult de baseline van `2026-04-19` aan met de belangrijkste wijzigingen uit de huidige sessie.
+
+Questionnaire-lokalisatie:
+
+- questionnaires moeten conceptueel één canoniek record blijven, ook als ze in meerdere talen ingevuld kunnen worden
+- taalvarianten worden niet meer opgelost door aparte questionnaire-records per taal aan te maken
+- `app/Support/Questionnaires/LocalizedQuestionnaireContent.php` past titel, beschrijving, categorienamen en zichtbare vragen toe op basis van de actieve locale
+- `AvailableQuestionnaireCatalog`, `QuestionnaireResponseController` en `SubmitQuestionnaireResponseRequest` gebruiken de locale-context zodat overzicht, invulpagina, validatie en opslag dezelfde taalset gebruiken
+- vragen kunnen een eigen `locale` hebben; per categorie en `sort_order` wordt de vraag voor de actieve locale gekozen
+- import/export neemt vraag-locale en locale-aware display conditions mee
+
+Canonieke meertalige questionnaires:
+
+- `Digitale spiegel` bestaat als één canonieke questionnaire met Nederlandse, Engelse en Duitse vragen en antwoordopties
+- `Positief fundament` bestaat als één canonieke questionnaire met Nederlandse, Engelse en Duitse titel, beschrijving, vragen en antwoordopties
+- `Positief fundament` gebruikt in de questionnaire-beschrijving niet langer de prefix `PERMA-`; alleen de beschrijving is aangepast, resultaat- en moduleteksten met `PERMA` zijn ongemoeid gelaten
+- `Adaptability Scan` en `Quick Scan digitale weerbaarheid` zijn ook naar het canonieke meertalige patroon gebracht met locale-specifieke vragen
+- `database/migrations/2026_04_21_060214_resync_canonical_multilingual_questionnaires.php` is een forward-only data repair migration die de canonieke meertalige questionnaires opnieuw synchroniseert
+- bij deploy moet `php artisan migrate --force` deze datasynchronisatie uitvoeren; lokaal kunnen de specifieke seeders worden gedraaid om dezelfde data te herstellen
+
+PRO-flow en profielpagina:
+
+- nieuwe publieke pagina `/pro-upgrade` met named route `pro-upgrade.show`
+- `POST /pro-upgrade` gebruikt `App\Http\Controllers\ProUpgradeController` en is beschermd met `auth`
+- als een ingelogde gebruiker met rol `User` op `Start met Pro` klikt, wordt de rol gewijzigd naar `user_pro`
+- rollen `user_pro`, `Beheerder` en `Admin` worden door de upgrade-actie niet gewijzigd
+- op `/settings/profile` is het taalvoorkeur-infoblok vervangen door een PRO-blok
+- op `/settings/profile` ziet rol `User` de titel `Upgrade jezelf naar PRO` met CTA `Ik wil Pro worden`
+- op `/settings/profile` zien andere rollen de titel `Je bent een Pro` zonder CTA
+- de profielpagina toont niet langer de hoofdtitel `Persoonlijke gegevens`, de bijbehorende intro, de badge `Wordt een pro` of de verificatiebadge `E-mail geverifieerd`
+- het taalkeuzeveld in het profielformulier is blijven bestaan
+
+Admin en gebruikersoverzicht:
+
+- op `/admin-portal/users` is de kolom met e-mailadres vervangen door de naam van de organisatie
+- de users-query eager-loadt de organisatie zodat de lijst geen extra queries per rij nodig heeft
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Support/Questionnaires/LocalizedQuestionnaireContent.php`
+- `app/Actions/Questionnaires/SyncDigitalMirrorQuestionnaire.php`
+- `app/Actions/Questionnaires/SyncPositiveFoundationQuestionnaire.php`
+- `app/Actions/Questionnaires/SyncAdaptabilityAceQuestionnaire.php`
+- `app/Actions/Questionnaires/SyncDigitalResilienceQuickScanQuestionnaire.php`
+- `database/migrations/2026_04_21_060214_resync_canonical_multilingual_questionnaires.php`
+- `app/Http/Controllers/ProUpgradeController.php`
+- `resources/views/pro-upgrade.blade.php`
+- `resources/views/pages/settings/⚡profile.blade.php`
+- `resources/views/admin/users/index.blade.php`
+- `tests/Feature/DigitalMirrorQuestionnaireTest.php`
+- `tests/Feature/PositiveFoundationQuestionnaireTest.php`
+- `tests/Feature/PricingPageTest.php`
+- `tests/Feature/Settings/ProfileUpdateTest.php`
+
+Teststatus uit deze sessie:
+
+- gerichte questionnaire-tests voor `Digitale spiegel`, `Positief fundament`, questionnaire library en response flow zijn groen
+- profiel- en PRO-upgrade tests zijn groen
+- volledige testsuite is niet opnieuw volledig groen bevestigd in deze sessie; eerder waren er twee unrelated full-suite failures rond contactlinkverwachtingen in publieke pagina-tests
+
+## Sessie-update 2026-04-22
+
+Profiel-volledigheidscheck bij inloggen:
+
+- na een succesvolle login controleert `LoginResponse` (en `TwoFactorLoginResponse`) of het profiel volledig is ingevuld
+- als dat niet het geval is én de gebruiker geen admin/beheerder is, wordt de gebruiker direct doorgestuurd naar `/settings/profile` (in plaats van het dashboard)
+- er wordt een session flash `profile_incomplete_prompt` gezet zodat de profielpagina de melding kan tonen
+- `User::isProfileComplete()` controleert of `first_name`, `gender`, `birth_date`, `city` en `country` allemaal niet leeg zijn — gebruikt `empty()` zodat ook lege strings (`""`) als onvolledig worden beschouwd
+- de `x-user-info-card` component heeft een optionele `:prompt` prop gekregen die onderaan de kaart een oranje tekst toont (`color: #d96a2b`, de `--accent` kleur van de CTAs)
+- op de profielpagina: `showProfilePrompt` public property, gezet in `mount()` via `session()->has('profile_incomplete_prompt')`
+- het bericht "Wil je even je profiel volledig invullen? Alvast dank!" verschijnt onderaan het Verificatiestatus-blok
+- `UserFactory::incompleteProfile()` state toegevoegd voor gebruik in tests
+- 9 nieuwe tests in `tests/Feature/Auth/LoginRedirectTest.php`
+
+Gewijzigde bestanden:
+
+- `app/Models/User.php` — `isProfileComplete()` methode toegevoegd
+- `app/Actions/Fortify/LoginResponse.php` — redirect naar profiel als onvolledig
+- `app/Actions/Fortify/TwoFactorLoginResponse.php` — idem
+- `resources/views/components/user-info-card.blade.php` — optionele `$prompt` prop
+- `resources/views/components/layouts/hermes-dashboard.blade.php` — CSS klasse `.user-info-card__prompt`
+- `resources/views/pages/settings/⚡profile.blade.php` — `showProfilePrompt` property + prompt doorgeven
+- `database/factories/UserFactory.php` — `incompleteProfile()` state
+- `tests/Feature/Auth/LoginRedirectTest.php` — nieuw testbestand
+
 ## Gebruik Van Dit Bestand
 
 Gebruik dit document als startpunt voor vervolgopdrachten, tenzij nieuwe code of nieuwe deploys aantoonbaar actuelere informatie geven.
