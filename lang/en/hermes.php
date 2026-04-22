@@ -120,6 +120,7 @@ return [
                 'badge_unverified' => 'Email not verified yet',
                 'help_verified' => 'Your current email address has been confirmed. If you change it, we will automatically send a new verification email.',
                 'help_unverified' => 'Your account is already using this email address, but you still need to confirm the verification link to restore your verified status.',
+                'profile_incomplete_prompt' => 'Complete your profile below. Thanks in advance!',
                 'notice' => 'Your email address has not been verified yet.',
                 'resend' => 'Click here to resend the verification email.',
                 'sent' => 'A new verification link has been sent to your email address.',

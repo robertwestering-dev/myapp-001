@@ -272,6 +272,53 @@
                     grid-auto-flow: row;
                 }
             }
+
+            .about-story,
+            .about-story__card {
+                display: grid;
+                gap: 24px;
+            }
+
+            .about-story {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .about-story__card {
+                padding: 28px;
+                border-radius: 26px;
+                background: rgba(255, 255, 255, 0.74);
+                border: 1px solid rgba(23, 35, 33, 0.1);
+                box-shadow: var(--shadow);
+            }
+
+            .about-story__card p {
+                margin: 0;
+                color: var(--muted);
+                line-height: 1.8;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .about-story__card--accent {
+                background:
+                    linear-gradient(180deg, rgba(30, 71, 61, 0.98), rgba(16, 42, 35, 0.98)),
+                    var(--forest);
+                color: #f8f1e7;
+            }
+
+            .about-story__card--accent p {
+                color: rgba(248, 241, 231, 0.9);
+            }
+
+            .about-story__card h2 {
+                margin: 0;
+                font-size: clamp(1.35rem, 2vw, 1.75rem);
+            }
+
+            @media (max-width: 920px) {
+                .about-story {
+                    grid-template-columns: 1fr;
+                }
+            }
         </style>
     </x-slot:head>
 
@@ -421,6 +468,24 @@
             <div class="home-actions">
                 <a href="{{ route('inspiration-sources.show') }}" class="pill">{{ __('hermes.home_people.inspiration_action') }}</a>
             </div>
+        </section>
+
+        <section class="about-story">
+            <article class="about-story__card">
+                <h2>{{ __('hermes.about_page.story_title') }}</h2>
+
+                @foreach (__('hermes.about_page.story_paragraphs') as $paragraph)
+                    <p>{{ $paragraph }}</p>
+                @endforeach
+            </article>
+
+            <article class="about-story__card about-story__card--accent">
+                <h2>{{ __('hermes.about_page.mission_title') }}</h2>
+
+                @foreach (__('hermes.about_page.mission_paragraphs') as $paragraph)
+                    <p>{{ $paragraph }}</p>
+                @endforeach
+            </article>
         </section>
 
         <section class="home-section home-organization-card">

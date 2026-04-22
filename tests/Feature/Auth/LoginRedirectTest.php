@@ -39,7 +39,11 @@ test('profile incomplete prompt is shown when session flag is set', function () 
         ->withSession(['profile_incomplete_prompt' => true])
         ->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee('Wil je even je profiel volledig invullen? Alvast dank!');
+        ->assertSee(__('hermes.settings.profile.verification.profile_incomplete_prompt'))
+        ->assertSee('.user-info-card .user-info-card__prompt', false)
+        ->assertSee('color: var(--accent);', false)
+        ->assertSee('font-weight: 700;', false)
+        ->assertDontSee('Wil je even je profiel volledig invullen? Alvast dank!');
 });
 
 test('profile incomplete prompt is not shown without session flag', function () {
@@ -48,7 +52,7 @@ test('profile incomplete prompt is not shown without session flag', function () 
     $this->actingAs($user)
         ->get(route('profile.edit'))
         ->assertOk()
-        ->assertDontSee('Wil je even je profiel volledig invullen? Alvast dank!');
+        ->assertDontSee(__('hermes.settings.profile.verification.profile_incomplete_prompt'));
 });
 
 test('profile incomplete prompt is shown on profile page after redirect from login', function () {
@@ -62,7 +66,7 @@ test('profile incomplete prompt is shown on profile page after redirect from log
     $this->actingAs($user)
         ->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee('Wil je even je profiel volledig invullen? Alvast dank!');
+        ->assertSee(__('hermes.settings.profile.verification.profile_incomplete_prompt'));
 });
 
 test('isProfileComplete returns false when required fields are missing', function () {
@@ -84,5 +88,5 @@ test('profile page showProfilePrompt is true when session flag is set', function
 
     Livewire::test('pages::settings.profile')
         ->assertSet('showProfilePrompt', true)
-        ->assertSee('Wil je even je profiel volledig invullen? Alvast dank!');
+        ->assertSee(__('hermes.settings.profile.verification.profile_incomplete_prompt'));
 });

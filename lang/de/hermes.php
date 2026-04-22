@@ -120,6 +120,7 @@ return [
                 'badge_unverified' => 'E-Mail noch nicht verifiziert',
                 'help_verified' => 'Ihre aktuelle E-Mail-Adresse wurde bestätigt. Wenn Sie diese ändern, senden wir automatisch eine neue Verifizierungs-E-Mail.',
                 'help_unverified' => 'Ihr Konto verwendet diese E-Mail-Adresse bereits, aber Sie müssen den Verifizierungslink noch bestätigen, um den verifizierten Status wiederherzustellen.',
+                'profile_incomplete_prompt' => 'Füllen Sie unten Ihr Profil vollständig aus. Vielen Dank im Voraus!',
                 'notice' => 'Ihre E-Mail-Adresse wurde noch nicht verifiziert.',
                 'resend' => 'Klicken Sie hier, um die Verifizierungs-E-Mail erneut zu senden.',
                 'sent' => 'Ein neuer Verifizierungslink wurde an Ihre E-Mail-Adresse gesendet.',

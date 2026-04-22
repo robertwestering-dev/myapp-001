@@ -377,7 +377,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
                         ? __('hermes.settings.profile.verification.help_unverified')
                         : __('hermes.settings.profile.verification.help_verified')"
                     :tone="$this->hasUnverifiedEmail ? 'warning' : 'default'"
-                    :prompt="$this->showProfilePrompt ? 'Wil je even je profiel volledig invullen? Alvast dank!' : null"
+                    :prompt="$this->showProfilePrompt ? __('hermes.settings.profile.verification.profile_incomplete_prompt') : null"
                 />
 
                 <article class="user-info-card profile-upgrade-card">

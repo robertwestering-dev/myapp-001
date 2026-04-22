@@ -462,12 +462,12 @@
             line-height: 1.6;
         }
 
-        .user-info-card__prompt {
+        .user-info-card .user-info-card__prompt {
             margin-top: 8px;
-            color: #d96a2b;
+            color: var(--accent);
             font-family: Arial, Helvetica, sans-serif;
             font-size: 0.95rem;
-            font-weight: 600;
+            font-weight: 700;
             line-height: 1.5;
         }
 

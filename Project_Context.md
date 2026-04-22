@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3).
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-22`.
 
 ## Product In Het Kort
 
@@ -78,6 +78,7 @@ Beveiliging:
 - `Vite::useCspNonce($nonce)` wordt vóór `$next($request)` aangeroepen — Livewire v4 leest de nonce automatisch via `Vite::cspNonce()`
 - `config/livewire.php` heeft `csp_safe => true` — Livewire gebruikt de CSP-veilige Alpine-bundle zonder inline scripts
 - routes `/forum`, `/vragenlijsten`, `/academy` en alle questionnaire-routes vereisen `verified` middleware naast `auth` — onverifieerde gebruikers kunnen deze flows niet bereiken
+- route `/pro-upgrade` vereist `auth`; bezoekers worden naar login gestuurd en kunnen de tijdelijke Pro-upgradepagina niet publiek bekijken
 - `/contact` is gelimiteerd op `throttle:5,1`, `/locale` op `throttle:30,1`
 - SVG-uploads zijn geblokkeerd in `StoreMediaAssetRequest` — toegestane types: jpg, jpeg, png, webp, gif, mp4, mov, webm, ogg, pdf
 - `User::anonymizeForStatistics()` verwijdert actieve database-sessies van de gebruiker direct na anonimisering
@@ -958,8 +959,9 @@ Canonieke meertalige questionnaires:
 
 PRO-flow en profielpagina:
 
-- nieuwe publieke pagina `/pro-upgrade` met named route `pro-upgrade.show`
-- `POST /pro-upgrade` gebruikt `App\Http\Controllers\ProUpgradeController` en is beschermd met `auth`
+- nieuwe afgeschermde pagina `/pro-upgrade` met named route `pro-upgrade.show`
+- `GET /pro-upgrade` en `POST /pro-upgrade` zijn beschermd met `auth`
+- `POST /pro-upgrade` gebruikt `App\Http\Controllers\ProUpgradeController`
 - als een ingelogde gebruiker met rol `User` op `Start met Pro` klikt, wordt de rol gewijzigd naar `user_pro`
 - rollen `user_pro`, `Beheerder` en `Admin` worden door de upgrade-actie niet gewijzigd
 - op `/settings/profile` is het taalvoorkeur-infoblok vervangen door een PRO-blok
@@ -1006,7 +1008,7 @@ Profiel-volledigheidscheck bij inloggen:
 - `User::isProfileComplete()` controleert of `first_name`, `gender`, `birth_date`, `city` en `country` allemaal niet leeg zijn — gebruikt `empty()` zodat ook lege strings (`""`) als onvolledig worden beschouwd
 - de `x-user-info-card` component heeft een optionele `:prompt` prop gekregen die onderaan de kaart een oranje tekst toont (`color: #d96a2b`, de `--accent` kleur van de CTAs)
 - op de profielpagina: `showProfilePrompt` public property, gezet in `mount()` via `session()->has('profile_incomplete_prompt')`
-- het bericht "Wil je even je profiel volledig invullen? Alvast dank!" verschijnt onderaan het Verificatiestatus-blok
+- het bericht "Vul hieronder je profiel volledig in. Alvast dank!" verschijnt onderaan het Verificatiestatus-blok, vetgedrukt in de CTA-accentkleur
 - `UserFactory::incompleteProfile()` state toegevoegd voor gebruik in tests
 - 9 nieuwe tests in `tests/Feature/Auth/LoginRedirectTest.php`
 
@@ -1020,6 +1022,21 @@ Gewijzigde bestanden:
 - `resources/views/pages/settings/⚡profile.blade.php` — `showProfilePrompt` property + prompt doorgeven
 - `database/factories/UserFactory.php` — `incompleteProfile()` state
 - `tests/Feature/Auth/LoginRedirectTest.php` — nieuw testbestand
+
+Publieke pagina-copy en tijdelijke Pro-aanbieding:
+
+- `/prijzen` toont bij het Pro-pakket de doorgestreepte prijs `€98 per jaar` met label `Tijdelijk GRATIS`
+- de Pro-tagline op `/prijzen` is `Voor wie echt wil groeien`
+- de hero-intro op `/prijzen` bevat de gecorrigeerde tekst `helpen je op jouw persoonlijke weg`
+- `/pro-upgrade` gebruikt de tekst `Activeer je Pro-toegang...` zonder `straks`
+- `/over-ons` gebruikt `ruim 35 jaar` in plaats van `bijna 40 jaar`
+- relevante vertalingen in `lang/nl/hermes.php`, `lang/en/hermes.php` en `lang/de/hermes.php` zijn waar van toepassing bijgewerkt
+- `tests/Feature/PricingPageTest.php`, `tests/Feature/AboutPageTest.php` en `tests/Feature/ExampleTest.php` zijn bijgewerkt voor de nieuwe toegankelijkheid en copy
+
+Gerichte teststatus:
+
+- `php artisan test --compact tests/Feature/PricingPageTest.php tests/Feature/ExampleTest.php` groen: 33 tests, 148 assertions
+- `php artisan test --compact tests/Feature/AboutPageTest.php` groen: 2 tests, 13 assertions
 
 ## Gebruik Van Dit Bestand
 
