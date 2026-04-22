@@ -125,6 +125,58 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
 
+            .home-resilience-model {
+                display: grid;
+                gap: 20px;
+            }
+
+            .home-resilience-model__grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 20px;
+            }
+
+            .home-resilience-model__media,
+            .home-resilience-model__content {
+                min-height: 430px;
+                border-radius: 18px;
+                overflow: hidden;
+            }
+
+            .home-resilience-model__media {
+                background: #f8f2e9;
+            }
+
+            .home-resilience-model__media img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+            }
+
+            .home-resilience-model__content {
+                display: grid;
+                align-content: center;
+                gap: 18px;
+                padding: 32px;
+                background:
+                    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 243, 234, 0.78)),
+                    #fffaf1;
+            }
+
+            .home-resilience-model__content h2 {
+                margin: 0;
+                font-size: clamp(1.45rem, 2.2vw, 2rem);
+            }
+
+            .home-resilience-model__content p {
+                margin: 0;
+                color: var(--muted);
+                font-family: Arial, Helvetica, sans-serif;
+                line-height: 1.8;
+            }
+
             .home-section {
                 background: rgba(255, 255, 255, 0.72);
             }
@@ -262,6 +314,7 @@
             @media (max-width: 980px) {
                 .home-hero,
                 .home-tool-grid,
+                .home-resilience-model__grid,
                 .home-card-grid,
                 .home-confidence-grid,
                 .home-hero__stats {
@@ -270,6 +323,15 @@
 
                 .home-actions {
                     grid-auto-flow: row;
+                }
+
+                .home-resilience-model__media,
+                .home-resilience-model__content {
+                    min-height: 0;
+                }
+
+                .home-resilience-model__media {
+                    aspect-ratio: 16 / 11;
                 }
             }
 
@@ -402,6 +464,53 @@
             </div>
         </section>
 
+        <section class="home-section about-story-section">
+            <div class="user-section-heading">
+                <span class="user-section-heading__eyebrow">{{ __('hermes.about_page.story_section_eyebrow') }}</span>
+            </div>
+
+            <div class="about-story">
+                <article class="about-story__card">
+                    <h2>{{ __('hermes.about_page.story_title') }}</h2>
+
+                    @foreach (__('hermes.about_page.story_paragraphs') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
+                </article>
+
+                <article class="about-story__card about-story__card--accent">
+                    <h2>{{ __('hermes.about_page.mission_title') }}</h2>
+
+                    @foreach (__('hermes.about_page.mission_paragraphs') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
+                </article>
+            </div>
+        </section>
+
+        <section class="home-section home-resilience-model" aria-labelledby="home-resilience-model-eyebrow">
+            <div class="user-section-heading">
+                <span id="home-resilience-model-eyebrow" class="user-section-heading__eyebrow">{{ __('hermes.home_people.resilience_model_eyebrow') }}</span>
+            </div>
+
+            <div class="home-resilience-model__grid">
+                <div class="home-resilience-model__media">
+                    <img
+                        src="{{ asset('images/6lagen-model.png') }}"
+                        alt="{{ __('hermes.home_people.resilience_model_alt') }}"
+                    >
+                </div>
+
+                <article class="home-resilience-model__content">
+                    <h2>{{ __('hermes.home_people.resilience_model_title') }}</h2>
+
+                    @foreach (__('hermes.home_people.resilience_model_paragraphs') as $paragraph)
+                        <p>{{ $paragraph }}</p>
+                    @endforeach
+                </article>
+            </div>
+        </section>
+
         <section id="diensten" class="home-section">
             <div class="user-section-heading">
                 <span class="user-section-heading__eyebrow">{{ __('hermes.home_people.tools_eyebrow') }}</span>
@@ -470,46 +579,17 @@
             </div>
         </section>
 
-        <section class="about-story">
-            <article class="about-story__card">
-                <h2>{{ __('hermes.about_page.story_title') }}</h2>
-
-                @foreach (__('hermes.about_page.story_paragraphs') as $paragraph)
-                    <p>{{ $paragraph }}</p>
-                @endforeach
-            </article>
-
-            <article class="about-story__card about-story__card--accent">
-                <h2>{{ __('hermes.about_page.mission_title') }}</h2>
-
-                @foreach (__('hermes.about_page.mission_paragraphs') as $paragraph)
-                    <p>{{ $paragraph }}</p>
-                @endforeach
-            </article>
-        </section>
-
         <section class="home-section home-organization-card">
-            <x-user-section-heading
-                :eyebrow="__('hermes.home_people.cta_eyebrow')"
-                :title="__('hermes.home_people.cta_title')"
-                :text="__('hermes.home_people.cta_text')"
-            />
+            <div class="user-section-heading">
+                <span class="user-section-heading__eyebrow">{{ __('hermes.home_people.cta_eyebrow') }}</span>
+                <p>{{ __('hermes.home_people.cta_text') }}</p>
+            </div>
 
             <div class="home-actions">
                 <a href="{{ route('register') }}" class="pill pill--strong">{{ __('hermes.home_people.cta_action') }}</a>
             </div>
         </section>
 
-        <section class="home-section home-organization-card home-organization-card--accent">
-            <x-user-section-heading
-                :eyebrow="__('hermes.home_people.organization_eyebrow')"
-                :text="__('hermes.home_people.organization_text')"
-            />
-
-            <div class="home-actions">
-                <a href="{{ route('organizations.landing') }}" class="pill">{{ __('hermes.home_people.organization_action') }}</a>
-            </div>
-        </section>
 
     </div>
 </x-layouts.hermes-public>

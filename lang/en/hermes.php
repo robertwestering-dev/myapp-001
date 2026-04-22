@@ -390,6 +390,14 @@ return [
         'challenge_3_text' => 'Becoming stronger in the digital age is not only about systems or AI, but also about your energy, confidence, and resilience.',
         'challenge_4_title' => 'You are always switched on',
         'challenge_4_text' => 'Notifications, expectations, and the feeling that you must always be available cost energy — even when you do not always notice it yourself. The boundary between work and private life blurs, and that quietly asks more of you than you think.',
+        'resilience_model_eyebrow' => 'Approach',
+        'resilience_model_alt' => 'The six-layer model for digital resilience',
+        'resilience_model_title' => 'How it works',
+        'resilience_model_paragraphs' => [
+            'Not as a vague promise, but as a concrete structure — layer by layer, from foundation to practice.',
+            'You start with who you are and what gives you energy. From there, you learn to understand what happens in your brain under digital pressure. You create room for change, build resilience, take back control — until you stand with confidence in a world that keeps changing.',
+            'Each layer has its own self-assessment and e-learning. You decide where to begin and what pace fits you.',
+        ],
         'diensten_bridge_text' => 'We are here to help you understand where you stand, what you need, and what next step fits you.',
         'path_eyebrow' => 'A calmer path',
         'path_title' => 'Less pressure, more overview and guidance',
@@ -1002,6 +1010,7 @@ return [
         'hero_follow_up' => 'I know that feeling. And I also know it is not your fault.',
         'summary_label' => 'People-first guidance',
         'summary_value' => 'Almost 40 years of experience with digital change',
+        'story_section_eyebrow' => 'I help you get started',
         'story_title' => 'I am Robert van Westering.',
         'story_paragraphs' => [
             'For almost 40 years, I have helped people and organizations gain control over digital change, not by pushing technology, but by starting with what people need.',

@@ -390,6 +390,14 @@ return [
         'challenge_3_text' => 'Stärker im digitalen Zeitalter zu werden, hat nicht nur mit Systemen oder KI zu tun, sondern auch mit deiner Energie, deinem Vertrauen und deiner Resilienz.',
         'challenge_4_title' => 'Du bist immer eingeschaltet',
         'challenge_4_text' => 'Benachrichtigungen, Erwartungen und das Gefühl, immer erreichbar sein zu müssen, kosten Energie — auch wenn du das selbst nicht immer bemerkst. Die Grenze zwischen Arbeit und Privatleben verschwimmt, und das verlangt leise mehr von dir, als du denkst.',
+        'resilience_model_eyebrow' => 'Ansatz',
+        'resilience_model_alt' => 'Das Sechs-Schichten-Modell für digitale Widerstandskraft',
+        'resilience_model_title' => 'So funktioniert es',
+        'resilience_model_paragraphs' => [
+            'Nicht als vages Versprechen, sondern als konkreter Aufbau — Schicht für Schicht, vom Fundament bis zur Praxis.',
+            'Du beginnst bei dem, wer du bist und was dir Energie gibt. Von dort aus lernst du zu verstehen, was in deinem Gehirn unter digitalem Druck geschieht. Du schaffst Raum für Veränderung, baust Resilienz auf, übernimmst wieder die Regie — bis du mit Vertrauen in einer Welt stehst, die sich weiter verändert.',
+            'Jede Schicht hat ihren eigenen Selbsttest und ein eigenes E-Learning. Du bestimmst, wo du beginnst und welches Tempo zu dir passt.',
+        ],
         'diensten_bridge_text' => 'Wir sind da, um dir zu helfen zu verstehen, wo du stehst, was du brauchst und welcher nächste Schritt zu dir passt.',
         'path_eyebrow' => 'Ein ruhigerer Weg',
         'path_title' => 'Weniger Druck, mehr Überblick und Halt',
@@ -963,6 +971,7 @@ return [
         'hero_follow_up' => 'Dieses Gefühl kenne ich. Und ich weiß auch, dass es nicht an Ihnen liegt.',
         'summary_label' => 'Menschenorientierte Begleitung',
         'summary_value' => 'Fast 40 Jahre Erfahrung mit digitalem Wandel',
+        'story_section_eyebrow' => 'Ich helfe Ihnen auf den Weg',
         'story_title' => 'Ich bin Robert van Westering.',
         'story_paragraphs' => [
             'Seit fast 40 Jahren helfe ich Menschen und Organisationen, digitale Veränderungen besser zu bewältigen, nicht indem ich Technik pushe, sondern indem ich bei dem ansetze, was Menschen brauchen.',

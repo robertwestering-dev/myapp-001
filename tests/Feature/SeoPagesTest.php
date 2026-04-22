@@ -12,6 +12,17 @@ test('home page exposes seo metadata and structured data', function () {
         ->assertSee('<meta property="og:title" content="'.__('hermes.home_people.title').'">', false)
         ->assertSee('<meta name="twitter:description" content="'.__('hermes.home_people.meta_description').'">', false)
         ->assertSee(__('hermes.home_people.hero_title'))
+        ->assertSeeInOrder([
+            __('hermes.home_people.challenges_eyebrow'),
+            __('hermes.about_page.story_section_eyebrow'),
+            __('hermes.about_page.story_title'),
+            __('hermes.about_page.mission_title'),
+            __('hermes.home_people.resilience_model_eyebrow'),
+            __('hermes.home_people.resilience_model_title'),
+            __('hermes.home_people.tools_title'),
+        ])
+        ->assertSee('images/6lagen-model.png', false)
+        ->assertSee('<section class="home-section about-story-section">', false)
         ->assertSee(route('organizations.landing', absolute: false), false)
         ->assertSee('Organisaties')
         ->assertSee('"@type": "WebSite"', false)
