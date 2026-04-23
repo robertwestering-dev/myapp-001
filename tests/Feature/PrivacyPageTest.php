@@ -6,7 +6,7 @@ test('privacy page can be rendered with footer link', function () {
     $response->assertSuccessful()
         ->assertSee(__('hermes.privacy.hero_title'))
         ->assertSee(__('hermes.privacy.sections.8.title'))
-        ->assertSee(route('organizations.landing', absolute: false).'#contact', false);
+        ->assertSee(route('contact.show', absolute: false), false);
 });
 
 test('organization contact form links to the privacy page', function () {

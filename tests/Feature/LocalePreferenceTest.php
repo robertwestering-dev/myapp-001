@@ -41,35 +41,41 @@ test('guest visitors on the .eu domain receive the german default locale', funct
         ->assertSee(trans('hermes.home_people.hero_title', locale: 'de'));
 });
 
-test('english and german homepages use the updated localized homepage copy', function () {
-    $this->withSession(['locale' => 'en'])
+test('english and german homepages use the updated localized homepage copy', function (string $locale) {
+    $this->withSession(['locale' => $locale])
         ->get(route('home'))
         ->assertOk()
-        ->assertSee(trans('hermes.home_people.hero_intro', locale: 'en'))
-        ->assertSee(trans('hermes.home_people.hero_intro_extra', locale: 'en'))
-        ->assertSee(trans('hermes.home_people.challenges_eyebrow', locale: 'en'))
-        ->assertSee(trans('hermes.home_people.tools_text', locale: 'en'))
-        ->assertSee(trans('hermes.home_people.inspiration_title', locale: 'en'))
-        ->assertSee(trans('hermes.home_people.inspiration_action', locale: 'en'))
-        ->assertSee(trans('hermes.nav.about', locale: 'en'))
-        ->assertSee(trans('hermes.nav.organizations', locale: 'en'))
+        ->assertSee(trans('hermes.home_people.hero_intro', locale: $locale))
+        ->assertSee(trans('hermes.home_people.hero_intro_extra', locale: $locale))
+        ->assertSee(trans('hermes.home_people.challenges_eyebrow', locale: $locale))
+        ->assertSee(trans('hermes.about_page.story_section_eyebrow', locale: $locale))
+        ->assertSee(trans('hermes.about_page.story_title', locale: $locale))
+        ->assertSee(trans('hermes.about_page.mission_title', locale: $locale))
+        ->assertSee(trans('hermes.home_people.resilience_model_eyebrow', locale: $locale))
+        ->assertSee(trans('hermes.home_people.resilience_model_title', locale: $locale))
+        ->assertSee(trans('hermes.home_people.tools_text', locale: $locale))
+        ->assertSee(trans('hermes.home_people.inspiration_title', locale: $locale))
+        ->assertSee(trans('hermes.home_people.inspiration_action', locale: $locale))
+        ->assertSee(trans('hermes.nav.about', locale: $locale))
+        ->assertSee(trans('hermes.nav.organizations', locale: $locale))
         ->assertDontSee('Nieuwsgierig naar de denkers?')
         ->assertDontSee('Bekijk de inspiratiebronnen');
+})->with([
+    'english' => 'en',
+    'german' => 'de',
+]);
 
-    $this->withSession(['locale' => 'de'])
-        ->get(route('home'))
-        ->assertOk()
-        ->assertSee(trans('hermes.home_people.hero_intro', locale: 'de'))
-        ->assertSee(trans('hermes.home_people.hero_intro_extra', locale: 'de'))
-        ->assertSee(trans('hermes.home_people.challenges_eyebrow', locale: 'de'))
-        ->assertSee(trans('hermes.home_people.tools_text', locale: 'de'))
-        ->assertSee(trans('hermes.home_people.inspiration_title', locale: 'de'))
-        ->assertSee(trans('hermes.home_people.inspiration_action', locale: 'de'))
-        ->assertSee(trans('hermes.nav.about', locale: 'de'))
-        ->assertSee(trans('hermes.nav.organizations', locale: 'de'))
-        ->assertDontSee('Nieuwsgierig naar de denkers?')
-        ->assertDontSee('Bekijk de inspiratiebronnen');
-});
+test('homepage translation sections stay aligned across localized files', function (string $locale) {
+    $dutchTranslations = require lang_path('nl/hermes.php');
+    $localizedTranslations = require lang_path("{$locale}/hermes.php");
+
+    expect(array_keys($localizedTranslations['home_people']))->toBe(array_keys($dutchTranslations['home_people']));
+    expect(array_keys($localizedTranslations['about_page']))->toBe(array_keys($dutchTranslations['about_page']));
+})->with([
+    'english' => 'en',
+    'german' => 'de',
+    'french' => 'fr',
+]);
 
 test('session locale overrides the host default locale', function () {
     $this->withSession([

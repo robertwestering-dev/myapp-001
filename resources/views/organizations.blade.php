@@ -275,7 +275,7 @@
             }
 
             .organization-legacy-page .offer-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .organization-legacy-page .offer-card {
@@ -348,6 +348,27 @@
             .organization-legacy-page .bridge__list {
                 display: grid;
                 gap: 12px;
+            }
+
+            .organization-legacy-page .failure__panel {
+                padding: 30px;
+                border-radius: var(--radius-xl);
+                border: 1px solid rgba(255, 255, 255, 0.58);
+                background:
+                    radial-gradient(circle at top right, rgba(188, 91, 44, 0.16), transparent 26%),
+                    rgba(255, 255, 255, 0.72);
+                box-shadow: var(--shadow);
+            }
+
+            .organization-legacy-page .failure__panel h2 {
+                margin-bottom: 12px;
+                font-size: clamp(1.5rem, 2.4vw, var(--block-heading-max));
+            }
+
+            .organization-legacy-page .failure__panel p {
+                max-width: 78ch;
+                color: var(--muted);
+                line-height: 1.75;
             }
 
             .organization-legacy-page .bridge__list article {
@@ -466,7 +487,8 @@
                 .organization-legacy-page .offer-grid,
                 .organization-legacy-page .problem__grid,
                 .organization-legacy-page .plan__grid,
-                .organization-legacy-page .closing__panel {
+                .organization-legacy-page .closing__panel,
+                .organization-legacy-page .failure__panel {
                     grid-template-columns: 1fr;
                 }
             }
@@ -486,6 +508,7 @@
                 .organization-legacy-page .plan__step,
                 .organization-legacy-page .bridge__panel,
                 .organization-legacy-page .closing__panel,
+                .organization-legacy-page .failure__panel,
                 .organization-legacy-page .contact-form,
                 .organization-legacy-page .problem__grid article {
                     padding: 20px;
@@ -507,6 +530,7 @@
                 .organization-legacy-page .offer-card li,
                 .organization-legacy-page .plan__step p,
                 .organization-legacy-page .closing__panel p,
+                .organization-legacy-page .failure__panel p,
                 .organization-legacy-page .checkbox-field__note {
                     font-size: 0.98rem;
                     line-height: 1.7;
@@ -568,7 +592,7 @@
     <div class="organization-legacy-page">
         <section class="hero">
             <div class="hero__panel">
-                <span class="eyebrow">{{ __('hermes.home.eyebrow') }}</span>
+                <span class="eyebrow">{{ __('hermes.organizations_page.eyebrow') }}</span>
                 <h1>{{ __('hermes.home.hero_title') }}</h1>
                 <p class="hero__intro">{{ __('hermes.home.hero_intro') }}</p>
 
@@ -606,6 +630,7 @@
                     <li>{{ __('hermes.home.sidebar_point_3') }}</li>
                 </ul>
 
+                <div class="sidebar-box">{!! __('hermes.home.sidebar_box') !!}</div>
             </aside>
         </section>
 
@@ -630,6 +655,15 @@
                     <h3>{{ __('hermes.home.why_philosophical_title') }}</h3>
                     <p>{{ __('hermes.home.why_philosophical_text') }}</p>
                 </article>
+            </div>
+        </section>
+
+        <section class="failure">
+            <div class="failure__panel">
+                <div class="tagline">{{ __('hermes.home.failure_tagline') }}</div>
+                <h2>{{ __('hermes.home.failure_title') }}</h2>
+                <p>{{ __('hermes.home.failure_text') }}</p>
+                <p>{{ __('hermes.home.failure_note') }}</p>
             </div>
         </section>
 
@@ -659,28 +693,6 @@
 
                     <div class="offer-card__footer">
                         <span class="offer-note">{{ __('hermes.home.offer_1_note') }}</span>
-                    </div>
-                </article>
-
-                <article class="offer-card">
-                    <div class="offer-card__meta">
-                        <span class="offer-badge">{{ __('hermes.home.available_now') }}</span>
-                        <span>{{ __('hermes.home.login_required') }}</span>
-                    </div>
-
-                    <div>
-                        <h3>{{ __('hermes.home.offer_2_title') }}</h3>
-                        <p>{{ __('hermes.home.offer_2_text') }}</p>
-                    </div>
-
-                    <ul>
-                        <li>{{ __('hermes.home.offer_2_point_1') }}</li>
-                        <li>{{ __('hermes.home.offer_2_point_2') }}</li>
-                        <li>{{ __('hermes.home.offer_2_point_3') }}</li>
-                    </ul>
-
-                    <div class="offer-card__footer">
-                        <span class="offer-note">{{ __('hermes.home.offer_2_note') }}</span>
                     </div>
                 </article>
 
