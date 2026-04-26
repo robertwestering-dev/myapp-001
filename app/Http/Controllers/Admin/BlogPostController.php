@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\StoreBlogPostRequest;
 use App\Http\Requests\Admin\UpdateBlogPostRequest;
 use App\Models\BlogPost;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,12 @@ class BlogPostController extends Controller
 {
     use HandlesLocalizedPayload;
 
+    public function __construct(private readonly AuditLogger $audit) {}
+
     public function index(): View
     {
+        $this->authorize('manage', BlogPost::class);
+
         $blogPosts = BlogPost::query()
             ->with('author')
             ->orderByDesc('is_featured')
@@ -33,6 +38,8 @@ class BlogPostController extends Controller
 
     public function create(): View
     {
+        $this->authorize('manage', BlogPost::class);
+
         return view('admin.blog-posts.form', [
             'title' => __('hermes.admin.form_titles.new_blog_post'),
             'intro' => 'Publiceer een nieuw artikel voor de publieke Hermes Results blog.',
@@ -54,6 +61,8 @@ class BlogPostController extends Controller
 
         $blogPost = BlogPost::query()->create($this->blogPostPayload($request, $actor));
 
+        $this->audit->log('blog_post.created', "Blogpost aangemaakt: {$blogPost->slug}", $blogPost);
+
         return redirect()
             ->route('admin.blog-posts.edit', $blogPost)
             ->with('status', __('hermes.admin.blog_posts.created'));
@@ -61,6 +70,8 @@ class BlogPostController extends Controller
 
     public function edit(BlogPost $blogPost): View
     {
+        $this->authorize('manage', BlogPost::class);
+
         return view('admin.blog-posts.form', [
             'title' => __('hermes.admin.form_titles.edit_blog_post'),
             'intro' => 'Werk inhoud, metadata en publicatie-instellingen van deze blogpost bij.',
@@ -73,6 +84,8 @@ class BlogPostController extends Controller
 
     public function preview(BlogPost $blogPost): View
     {
+        $this->authorize('manage', BlogPost::class);
+
         return view('blog.show', [
             'blogPost' => $blogPost->load('author'),
             'blogIndexUrl' => route('admin.blog-posts.edit', $blogPost),
@@ -83,7 +96,14 @@ class BlogPostController extends Controller
 
     public function update(UpdateBlogPostRequest $request, BlogPost $blogPost): RedirectResponse
     {
+        $wasPublished = $blogPost->is_published;
         $blogPost->update($this->blogPostPayload($request, $blogPost->author));
+
+        $this->audit->log('blog_post.updated', "Blogpost bijgewerkt: {$blogPost->slug}", $blogPost);
+
+        if (! $wasPublished && $blogPost->is_published) {
+            $this->audit->log('blog_post.published', "Blogpost gepubliceerd: {$blogPost->slug}", $blogPost);
+        }
 
         return redirect()
             ->route('admin.blog-posts.edit', $blogPost)
@@ -92,6 +112,8 @@ class BlogPostController extends Controller
 
     public function confirmDestroy(BlogPost $blogPost): View
     {
+        $this->authorize('manage', BlogPost::class);
+
         return view('admin.blog-posts.confirm-delete', [
             'blogPost' => $blogPost,
         ]);
@@ -99,6 +121,10 @@ class BlogPostController extends Controller
 
     public function destroy(BlogPost $blogPost): RedirectResponse
     {
+        $this->authorize('manage', BlogPost::class);
+
+        $this->audit->log('blog_post.deleted', "Blogpost verwijderd: {$blogPost->slug}", $blogPost);
+
         $blogPost->delete();
 
         return redirect()
@@ -117,7 +143,7 @@ class BlogPostController extends Controller
         return [
             'author_id' => $author?->id,
             'slug' => $attributes['slug'],
-            'cover_image_url' => $attributes['cover_image_url'] ?: null,
+            'cover_image_url' => ($attributes['cover_image_url'] ?? '') ?: null,
             'tags' => $this->tagPayload($attributes['tags'] ?? ''),
             'title' => $this->localizedFieldPayload($attributes['title']),
             'excerpt' => $this->localizedFieldPayload($attributes['excerpt']),

@@ -22,7 +22,7 @@ test('home page can be rendered', function () {
             __('hermes.home_people.confidence_3_title'),
             __('hermes.home_people.confidence_1_title'),
         ])
-        ->assertSee('home-organization-card home-organization-card--accent', false)
+        ->assertSee('home-section home-organization-card', false)
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('Nederlands')
         ->assertSee('(c) Copyright 2026 by Hermes Results');

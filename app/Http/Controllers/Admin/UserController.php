@@ -14,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
@@ -44,12 +45,11 @@ class UserController extends Controller
         $actor = $request->user();
 
         $attributes = $request->validated();
+        $role = $attributes['role'];
+        $orgId = $actor->isAdmin() ? ($attributes['org_id'] ?? null) : $actor->org_id;
 
-        if (! $actor->isAdmin()) {
-            $attributes['org_id'] = $actor->org_id;
-        }
-
-        $user = User::create($attributes);
+        $user = User::create(Arr::except($attributes, ['role', 'org_id']));
+        $user->forceFill(['role' => $role, 'org_id' => $orgId])->save();
 
         $user->sendEmailVerificationNotification();
 
@@ -115,14 +115,18 @@ class UserController extends Controller
         abort_unless($actor->canManageOrganization($user->org_id), 403);
 
         $attributes = $request->validated();
+        $role = $attributes['role'];
+        $oldRole = $user->role;
+        $orgId = $actor->isAdmin() ? ($attributes['org_id'] ?? null) : $actor->org_id;
 
-        if (! $actor->isAdmin()) {
-            $attributes['org_id'] = $actor->org_id;
-        }
-
-        $user->update($attributes);
+        $user->update(Arr::except($attributes, ['role', 'org_id']));
+        $user->forceFill(['role' => $role, 'org_id' => $orgId])->save();
 
         $this->audit->log('user.updated', "Gebruiker bijgewerkt: {$user->name} ({$user->email})", $user);
+
+        if ($oldRole !== $role) {
+            $this->audit->log('user.role_changed', "Rol gewijzigd van '{$oldRole}' naar '{$role}': {$user->name} ({$user->email})", $user);
+        }
 
         return redirect()
             ->route('admin.users.index')

@@ -28,8 +28,8 @@ test('homepage and submenu link to the inspiration sources page', function () {
 
     $response->assertOk()
         ->assertSee(route('inspiration-sources.show', absolute: false), false)
-        ->assertSee('Nieuwsgierig naar de denkers?')
-        ->assertSee('Bekijk de inspiratiebronnen')
+        ->assertSee(__('hermes.home_people.inspiration_title'))
+        ->assertSee(__('hermes.home_people.inspiration_action'))
         ->assertSeeInOrder([
             'Inspiratiebronnen',
             'Over ons',

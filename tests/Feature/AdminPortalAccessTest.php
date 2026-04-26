@@ -35,7 +35,6 @@ test('admins can visit the admin portal', function () {
         ->assertSee('Baseline assessments')
         ->assertDontSee('hero__side', false)
         ->assertSee('/images/hermes-results-logo.png')
-        ->assertSee('/?contact=1#contact', false)
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 

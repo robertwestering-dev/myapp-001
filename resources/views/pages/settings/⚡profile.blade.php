@@ -3,6 +3,7 @@
 use App\Concerns\ProfileValidationRules;
 use App\Concerns\PasswordValidationRules;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -98,33 +99,36 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
 
     public string $twoFactorCode = '';
 
-    public function enableTwoFactor(EnableTwoFactorAuthentication $enable): void
+    public function enableTwoFactor(EnableTwoFactorAuthentication $enable, AuditLogger $audit): void
     {
         $user = $this->currentUser();
 
         $enable($user);
         Auth::setUser($user->fresh());
+        $audit->log('user.2fa_enabled', "2FA ingeschakeld: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-enabled');
         $this->dispatch('two-factor-updated');
     }
 
-    public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirm): void
+    public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirm, AuditLogger $audit): void
     {
         $user = $this->currentUser();
 
         $confirm($user, $this->twoFactorCode);
         Auth::setUser($user->fresh());
         $this->twoFactorCode = '';
+        $audit->log('user.2fa_confirmed', "2FA bevestigd: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-confirmed');
         $this->dispatch('two-factor-updated');
     }
 
-    public function disableTwoFactor(DisableTwoFactorAuthentication $disable): void
+    public function disableTwoFactor(DisableTwoFactorAuthentication $disable, AuditLogger $audit): void
     {
         $user = $this->currentUser();
 
         $disable($user);
         Auth::setUser($user->fresh());
+        $audit->log('user.2fa_disabled', "2FA uitgeschakeld: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-disabled');
         $this->dispatch('two-factor-updated');
     }

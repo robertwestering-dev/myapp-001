@@ -29,6 +29,8 @@ class QuestionnaireCategoryController extends Controller
 
     public function store(StoreQuestionnaireCategoryRequest $request, Questionnaire $questionnaire): RedirectResponse
     {
+        $this->authorize('manage', Questionnaire::class);
+
         $questionnaire->categories()->create($request->validated());
 
         return redirect()
@@ -56,6 +58,7 @@ class QuestionnaireCategoryController extends Controller
         Questionnaire $questionnaire,
         QuestionnaireCategory $category
     ): RedirectResponse {
+        $this->authorize('manage', Questionnaire::class);
         abort_unless($category->questionnaire_id === $questionnaire->id, 404);
 
         $category->update($request->validated());

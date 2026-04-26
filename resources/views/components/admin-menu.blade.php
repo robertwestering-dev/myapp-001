@@ -53,6 +53,10 @@
         <a href="{{ route('admin.translations.index') }}" @class([$itemClass, $activeClass => $active === 'translations'])>
             {{ __('hermes.admin_menu.translations') }}
         </a>
+
+        <a href="{{ route('admin.audit-logs.index') }}" @class([$itemClass, $activeClass => $active === 'audit-logs'])>
+            {{ __('hermes.admin_menu.audit_logs') }}
+        </a>
     @endif
 
     @if ($showSecondaryItems && $active !== 'portal')

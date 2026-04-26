@@ -50,7 +50,7 @@ Route::get('/sitemap.xml', BlogSitemapController::class)->name('sitemap');
 Route::view('/inspiratiebronnen', 'inspiration-sources')->name('inspiration-sources.show');
 Route::view('/over-ons', 'about')->name('about.show');
 Route::view('/prijzen', 'pricing')->name('pricing.show');
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::view('/pro-upgrade', 'pro-upgrade')->name('pro-upgrade.show');
     Route::post('/pro-upgrade', ProUpgradeController::class)->name('pro-upgrade.store');
 });
@@ -61,7 +61,7 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/dashboard', DashboardController::class)
-    ->middleware(['auth'])
+    ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {

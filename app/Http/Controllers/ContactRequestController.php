@@ -6,7 +6,6 @@ use App\Http\Requests\StoreContactRequest;
 use App\Mail\ContactFormSubmitted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class ContactRequestController extends Controller
 {
@@ -27,7 +26,9 @@ class ContactRequestController extends Controller
             ->queue($mailable);
 
         $previous = url()->previous();
-        $previousUrl = Str::startsWith($previous, config('app.url'))
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?? '';
+        $previousHost = parse_url($previous, PHP_URL_HOST) ?? '';
+        $previousUrl = ($previousHost !== '' && $previousHost === $appHost)
             ? strtok($previous, '#')
             : route('contact.show');
 

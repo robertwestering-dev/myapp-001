@@ -1,17 +1,26 @@
 <?php
 
 use App\Livewire\Actions\Logout;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 new class extends Component {
-    public function anonymizeUser(Logout $logout): void
+    public string $password = '';
+
+    public function anonymizeUser(Logout $logout, AuditLogger $audit): void
     {
+        $this->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
         $user = Auth::user();
 
         if (! $user) {
             return;
         }
+
+        $audit->log('user.anonymized', "Account geanonimiseerd: {$user->name} ({$user->email})", $user);
 
         $user->anonymizeForStatistics();
 
@@ -34,6 +43,12 @@ new class extends Component {
                 {!! nl2br(e(__('hermes.settings.delete_account.confirmation'))) !!}
             </flux:text>
         </div>
+
+        <flux:field>
+            <flux:label>{{ __('hermes.settings.delete_account.password_label') }}</flux:label>
+            <flux:input wire:model="password" type="password" autocomplete="current-password" />
+            <flux:error name="password" />
+        </flux:field>
 
         <x-user-action-row align="end" class="delete-user-modal-actions">
             <flux:modal.close>

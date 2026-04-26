@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\Translations\ManageHermesTranslations;
 use App\Http\Controllers\Controller;
 use App\Models\AcademyCourse;
+use App\Models\AdminActivityLog;
 use App\Models\BlogPost;
 use App\Models\MediaAsset;
 use App\Models\OrganizationQuestionnaire;
@@ -46,6 +47,7 @@ class AdminPortalController extends Controller
             'blogPostCount' => BlogPost::query()->count(),
             'mediaAssetCount' => MediaAsset::query()->count(),
             'translationCount' => $translations->all()->count(),
+            'auditLogCount' => AdminActivityLog::query()->count(),
             'scopedAvailabilityCount' => OrganizationQuestionnaire::query()
                 ->when(! $actor->isAdmin(), fn (Builder $query) => $query->where('org_id', $actor->org_id))
                 ->count(),

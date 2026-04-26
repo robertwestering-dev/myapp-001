@@ -40,7 +40,7 @@ test('admin can filter translation management overview', function () {
         ->assertSee('hero_title')
         ->assertViewHas('translations', function ($translations): bool {
             return $translations->total() === 1
-                && $translations->items()[0]['content'] === 'Digitale transformatie; meetbaar en menselijk';
+                && $translations->items()[0]['content'] === 'Het succes van digitale oplossingen staat of valt met je mensen';
         });
 });
 
@@ -48,7 +48,7 @@ test('admin can search within translation content', function () {
     $admin = User::factory()->admin()->create();
 
     $response = $this->actingAs($admin)->get(route('admin.translations.index', [
-        'search' => 'Digitale transformatie; meetbaar en menselijk',
+        'search' => 'Het succes van digitale oplossingen staat of valt met je mensen',
     ]));
 
     $response->assertOk()

@@ -219,6 +219,7 @@ test('user can anonymize their account and is logged out afterwards', function (
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.delete-user-modal')
+        ->set('password', 'password')
         ->call('anonymizeUser');
 
     $response

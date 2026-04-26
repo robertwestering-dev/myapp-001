@@ -30,10 +30,10 @@ class CreateNewUser implements CreatesNewUsers
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'role' => User::ROLE_USER,
             'locale' => app()->getLocale(),
             'password' => $input['password'],
         ]);
+        $user->forceFill(['role' => User::ROLE_USER])->save();
 
         Mail::to(
             config('contact.new_account_recipient_address'),
