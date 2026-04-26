@@ -26,7 +26,7 @@ class AddSecurityHeaders
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('Content-Security-Policy', implode('; ', [
             "default-src 'self'",
-            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-eval'",
+            "script-src 'nonce-{$nonce}' 'strict-dynamic'",
             "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
             "font-src 'self' https://fonts.bunny.net",
             "img-src 'self' data: https:",

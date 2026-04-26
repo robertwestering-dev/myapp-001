@@ -68,8 +68,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
     Route::get('/forum', [ForumThreadController::class, 'index'])->name('forum.index');
     Route::get('/forum/{forumThread}', [ForumThreadController::class, 'show'])->name('forum.show');
-    Route::post('/forum', [ForumThreadController::class, 'store'])->name('forum.store');
-    Route::post('/forum/{forumThread}/replies', [ForumReplyController::class, 'store'])->name('forum-replies.store');
+    Route::post('/forum', [ForumThreadController::class, 'store'])->middleware('throttle:10,1')->name('forum.store');
+    Route::post('/forum/{forumThread}/replies', [ForumReplyController::class, 'store'])->middleware('throttle:20,1')->name('forum-replies.store');
     Route::put('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'update'])->name('forum-replies.update');
     Route::delete('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'destroy'])->name('forum-replies.destroy');
     Route::get('/vragenlijsten', QuestionnaireLibraryController::class)->name('questionnaires.index');
@@ -162,7 +162,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                         Route::get('/', [UserController::class, 'index'])->name('index');
                         Route::get('/create', [UserController::class, 'create'])->name('create');
                         Route::post('/', [UserController::class, 'store'])->name('store');
-                        Route::get('/export', [UserController::class, 'export'])->name('export');
+                        Route::get('/export', [UserController::class, 'export'])->middleware('throttle:10,1')->name('export');
                         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
                         Route::get('/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])->name('confirm-delete');
                         Route::put('/{user}', [UserController::class, 'update'])->name('update');
@@ -218,9 +218,9 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                     ->group(function (): void {
                         Route::get('/', [QuestionnaireResponseReportController::class, 'index'])->name('index');
                         Route::get('/stats', [QuestionnaireResponseReportController::class, 'stats'])->name('stats');
-                        Route::get('/export', [QuestionnaireResponseReportController::class, 'export'])->name('export');
-                        Route::get('/export-summary', [QuestionnaireResponseReportController::class, 'exportSummary'])->name('export-summary');
-                        Route::get('/export-stats', [QuestionnaireResponseReportController::class, 'exportStats'])->name('export-stats');
+                        Route::get('/export', [QuestionnaireResponseReportController::class, 'export'])->middleware('throttle:10,1')->name('export');
+                        Route::get('/export-summary', [QuestionnaireResponseReportController::class, 'exportSummary'])->middleware('throttle:10,1')->name('export-summary');
+                        Route::get('/export-stats', [QuestionnaireResponseReportController::class, 'exportStats'])->middleware('throttle:10,1')->name('export-stats');
                         Route::get('/{response}', [QuestionnaireResponseReportController::class, 'show'])->name('show');
                     });
 

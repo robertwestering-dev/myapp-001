@@ -73,11 +73,10 @@ class ForumThreadController extends Controller
     {
         Gate::authorize('create', ForumThread::class);
 
-        $forumThread = ForumThread::createWithUniqueSlug([
-            ...$request->validated(),
-            'user_id' => $request->user()->getKey(),
-            'last_activity_at' => now(),
-        ]);
+        $forumThread = ForumThread::createWithUniqueSlug(
+            $request->validated(),
+            ['user_id' => $request->user()->getKey(), 'last_activity_at' => now()],
+        );
 
         return redirect()
             ->route('forum.show', $forumThread)

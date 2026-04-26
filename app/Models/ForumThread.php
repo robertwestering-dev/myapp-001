@@ -14,14 +14,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 #[Fillable([
-    'user_id',
     'slug',
     'discussion_type',
     'title',
     'body',
     'tags',
-    'is_locked',
-    'last_activity_at',
 ])]
 class ForumThread extends Model
 {
@@ -50,14 +47,22 @@ class ForumThread extends Model
     /**
      * Retry slug generation on unique constraint violation to handle race conditions
      * where two concurrent requests pass the existence check before either inserts.
+     *
+     * @param  array<string, mixed>  $guardedAttributes  Security-sensitive fields (user_id, timestamps) set via forceFill before insert
      */
-    public static function createWithUniqueSlug(array $attributes): static
+    public static function createWithUniqueSlug(array $attributes, array $guardedAttributes = []): static
     {
         $attempts = 0;
 
         while (true) {
             try {
-                return static::query()->create($attributes);
+                $instance = static::newModelInstance($attributes);
+                if ($guardedAttributes !== []) {
+                    $instance->forceFill($guardedAttributes);
+                }
+                $instance->save();
+
+                return $instance;
             } catch (UniqueConstraintViolationException $e) {
                 if ($attempts++ >= 5) {
                     throw $e;

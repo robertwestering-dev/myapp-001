@@ -18,10 +18,8 @@ class ForumReplyController extends Controller
 
         abort_if($forumThread->is_locked, 403);
 
-        $forumReply = $forumThread->replies()->create([
-            'user_id' => $request->user()->getKey(),
-            'body' => $request->validated('body'),
-        ]);
+        $forumReply = $forumThread->replies()->make(['body' => $request->validated('body')]);
+        $forumReply->forceFill(['user_id' => $request->user()->getKey()])->save();
 
         $forumThread->forceFill([
             'last_activity_at' => now(),

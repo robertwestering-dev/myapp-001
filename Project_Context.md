@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-22`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-23`.
 
 ## Product In Het Kort
 
@@ -175,6 +175,7 @@ Actieve live paden:
 Belangrijke noot:
 
 - `/home/cl1myceal_u/hermesresults-app` is een oude kopie en niet de actieve live-map
+- productie-assets die via `/images/...` worden geladen, staan bij Hostnet in de map `images` naast `hermesresults-app`, niet in `hermesresults-app/public/images`; de homepage gebruikt bijvoorbeeld `/images/6lagen-model.png`
 
 ## Deploy Baseline
 
@@ -240,8 +241,8 @@ Vertaalbestanden:
 
 Belangrijke vertaalafspraak:
 
-- bij elke tekstwijziging in een van de vertaalbestanden moeten de corresponderende keys in **alle drie de actieve taalbestanden** (nl, en, de) direct worden bijgewerkt
-- de Nederlandse tekst is altijd leidend; Engels en Duits worden daarop afgestemd
+- bij elke tekstwijziging in een van de vertaalbestanden moeten de corresponderende keys in **alle drie de actieve taalbestanden** (nl, en, de) direct worden bijgewerkt; werk ook `fr` bij als de key daar aanwezig is of als de hele sectie daar voorbereid wordt
+- de Nederlandse tekst is altijd leidend; Engels, Duits en waar aanwezig het voorbereidende Frans worden daarop afgestemd
 - dit geldt ook voor volgorde-wijzigingen in lijsten (bijv. `features`-arrays) en het toevoegen of verwijderen van keys
 
 ## Rollen
@@ -596,6 +597,11 @@ Actuele status:
 
 - mensgerichte positionering voor individuen met focus op weerbaarheid, digitale weerbaarheid, houvast en zelfvertrouwen
 - informele Nederlandse toon met consequent `je` in plaats van `u`
+- de Nederlandse homepagecopy is de bron voor vertalingen in `lang/en/hermes.php`, `lang/de/hermes.php` en het voorbereidende `lang/fr/hermes.php`
+- de homepage gebruikt de `home_people`-vertalingen voor de hoofdpagina en toont het Robert-verhaal via `about_page.story_*` en `about_page.mission_*`
+- blokvolgorde homepage: hero, `Herkenbaar`, `Ik help je op weg`, `Aanpak`, diensten/stappenplan, resultaat/vertrouwen, inspiratie en CTA
+- het blok `Ik help je op weg` bevat de kaarten `Ik ben Robert van Westering` en `Dit wil ik bijdragen`
+- het blok `Aanpak` toont links `/images/6lagen-model.png` en rechts de tekst `Zo werkt het` met de uitleg van het zeslagenmodel
 - duidelijke CTA naar een aparte publieke organisatiepagina
 - locale-afhankelijke `<title>` en meta description
 - canonical URL
@@ -603,6 +609,34 @@ Actuele status:
 - structured data voor `WebSite` en `Organization`
 
 Zie ook `BLOG_MARKDOWN_HANDLEIDING.md`.
+
+## Voor Organisaties
+
+De publieke organisatiepagina is bereikbaar via `/voor-organisaties`.
+
+Actuele positionering:
+
+- kernboodschap: het succes van digitale oplossingen staat of valt met je mensen
+- de pagina richt zich op organisaties die willen begrijpen waar medewerkers afhaken bij digitale tools, werkwijzen en transformaties
+- de Nederlandse copy is leidend; Engels, Duits en Frans zijn afgestemd op deze Nederlandse versie
+- de view gebruikt vooral keys uit `hermes.home.*` voor de zichtbare organisatiepagina-opbouw en `hermes.organizations_page.*` voor SEO, structured data en legacy/ondersteunende paginadata
+
+Actuele pagina-opbouw:
+
+- hero met drie proof-blokjes: `Quick scans`, `Stappenplan`, `Inzicht & overzicht`
+- zijblok `Over mij` met Robert-positionering, drie bullets en een korte technologie/mens-boodschap
+- probleemblok met externe, interne en filosofische context
+- waarschuwingsblok `Als je niets doet`
+- aanbodblok met twee stappen: eerst meten, dan begeleiden
+- stappenplan van scan naar resultaat
+- resultaatblok met concrete opbrengsten
+- CTA/contactblok met hetzelfde contactformulier als `/contact`
+
+Belangrijke copy-afspraken:
+
+- gebruik niet meer de oude insteek `Digital transformation; measurable and human` / `Digitale Transformation; messbar und menschlich`
+- vermijd leeftijdslabeling zoals `vijftigers` in nieuwe organisatiecopy; gebruik neutraler `medewerkers` of `ervaren medewerkers`
+- Robert wordt op deze pagina gepositioneerd rond 35 jaar ervaring, Benefits Realization en mensgerichte digitale verandering
 
 ## Contact
 

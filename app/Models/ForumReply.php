@@ -11,7 +11,6 @@ use Illuminate\Support\Str;
 
 #[Fillable([
     'forum_thread_id',
-    'user_id',
     'body',
 ])]
 class ForumReply extends Model

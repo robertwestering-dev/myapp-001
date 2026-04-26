@@ -15,7 +15,7 @@ class BlogPostRenderer
         $content = $this->replaceMediaShortcodes($content, $placeholders);
         $content = $this->normalizeMarkdownHeadings($content);
 
-        $rendered = Str::markdown($content);
+        $rendered = Str::markdown($content, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
 
         foreach ($placeholders as $placeholder => $html) {
             $rendered = str_replace("<p>{$placeholder}</p>", $html, $rendered);
@@ -94,6 +94,10 @@ class BlogPostRenderer
         $url = trim((string) ($attributes['url'] ?? ''));
         $alt = trim((string) ($attributes['alt'] ?? ''));
 
+        if (preg_match('/^\s*javascript:/i', $url)) {
+            return '';
+        }
+
         return sprintf(
             '<figure class="%s"%s><img src="%s" alt="%s"%s></figure>',
             e($this->mediaAlignmentClass($attributes['align'] ?? null)),
@@ -110,6 +114,10 @@ class BlogPostRenderer
     protected function buildVideoHtml(array $attributes): string
     {
         $url = trim((string) ($attributes['url'] ?? ''));
+
+        if (preg_match('/^\s*javascript:/i', $url)) {
+            return '';
+        }
 
         return sprintf(
             '<figure class="%s"%s><video controls src="%s"%s></video></figure>',

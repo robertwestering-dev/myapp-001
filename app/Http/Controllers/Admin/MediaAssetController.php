@@ -36,7 +36,7 @@ class MediaAssetController extends Controller
             'disk' => 'public',
             'path' => $file->store('media-assets/'.now()->format('Y/m'), 'public'),
             'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream',
+            'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
             'extension' => $file->getClientOriginalExtension() ?: null,
             'asset_type' => $this->detectAssetType($file),
             'size_bytes' => $file->getSize() ?: 0,
@@ -50,7 +50,7 @@ class MediaAssetController extends Controller
 
     protected function detectAssetType(UploadedFile $file): string
     {
-        $mimeType = $file->getClientMimeType() ?: $file->getMimeType() ?: '';
+        $mimeType = $file->getMimeType() ?: $file->getClientMimeType() ?: '';
         $extension = strtolower($file->getClientOriginalExtension());
 
         if (str_starts_with($mimeType, 'image/')) {

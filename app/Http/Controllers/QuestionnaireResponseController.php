@@ -171,7 +171,7 @@ class QuestionnaireResponseController extends Controller
             $validatedAnswers,
             $visibleQuestions,
         ): QuestionnaireResponse {
-            $response = $existingResponse ?? new QuestionnaireResponse([
+            $response = $existingResponse ?? (new QuestionnaireResponse)->forceFill([
                 'organization_questionnaire_id' => $organizationQuestionnaire->id,
                 'user_id' => $user->id,
             ]);
