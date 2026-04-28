@@ -77,12 +77,15 @@ Beveiliging:
 - `'unsafe-eval'` is vereist omdat Livewire v4 intern `new Function()` gebruikt voor `wire:click`/`wire:model` expressie-evaluatie — dit is een bekende beperking; de nonce-bescherming (tegen externe scriptinjectie en inline scripts) blijft volledig intact
 - `Vite::useCspNonce($nonce)` wordt vóór `$next($request)` aangeroepen — Livewire v4 leest de nonce automatisch via `Vite::cspNonce()`
 - `config/livewire.php` heeft `csp_safe => true` — Livewire gebruikt de CSP-veilige Alpine-bundle zonder inline scripts
-- routes `/forum`, `/vragenlijsten`, `/academy` en alle questionnaire-routes vereisen `verified` middleware naast `auth` — onverifieerde gebruikers kunnen deze flows niet bereiken
-- route `/pro-upgrade` vereist `auth`; bezoekers worden naar login gestuurd en kunnen de tijdelijke Pro-upgradepagina niet publiek bekijken
+- routes `/forum`, `/vragenlijsten`, `/academy`, `/dashboard` en alle questionnaire-routes vereisen `verified` middleware naast `auth` — onverifieerde gebruikers kunnen deze flows niet bereiken
+- route `/pro-upgrade` vereist `['auth', 'verified']`; onverifieerde en niet-ingelogde gebruikers worden geblokkeerd
 - `/contact` is gelimiteerd op `throttle:5,1`, `/locale` op `throttle:30,1`
 - SVG-uploads zijn geblokkeerd in `StoreMediaAssetRequest` — toegestane types: jpg, jpeg, png, webp, gif, mp4, mov, webm, ogg, pdf
 - `User::anonymizeForStatistics()` verwijdert actieve database-sessies van de gebruiker direct na anonimisering
 - sessieversleuteling staat aan (`SESSION_ENCRYPT=true`) en cookies worden alleen via HTTPS verstuurd (`SESSION_SECURE_COOKIE=true` op productie)
+- `AddSecurityHeaders.php` stuurt `Strict-Transport-Security: max-age=63072000; includeSubDomains` — HSTS actief voor twee jaar inclusief subdomeinen
+- `User` model heeft `role`, `org_id` en `last_login_at` niet in `#[Fillable]` — mass-assignment van deze velden is onmogelijk; gebruik `forceFill()` in controllers en actions
+- contactformulier redirect gebruikt `parse_url()` om het app-domein te valideren — open redirect naar externe URLs is niet mogelijk
 - `BlogPostRenderer::normalizeCssDimension()` accepteert alleen veilige CSS-eenheden (px, em, rem, %, vw, vh, e.d.) — onbekende waarden vallen terug op `100%`
 
 2FA-handhaving:
@@ -99,9 +102,14 @@ Auditlog:
 
 - `app/Models/AdminActivityLog.php` + tabel `admin_activity_logs` — slaat op: `user_id`, `action`, `subject_type`, `subject_id`, `description`, `ip_address`, `timestamps`
 - `app/Services/AuditLogger.php` — injecteerbare service die automatisch de ingelogde gebruiker en het IP-adres registreert
-- `UserController` logt `user.created`, `user.updated`, `user.deleted`
+- `UserController` logt `user.created`, `user.updated`, `user.deleted`, `user.role_changed`
 - `OrganizationController` logt `organization.created`, `organization.updated`, `organization.deleted`
+- `ProUpgradeController` logt `user.pro_upgrade`
+- `BlogPostController` logt `blog_post.created`, `blog_post.updated`, `blog_post.published`, `blog_post.deleted`
+- `⚡delete-user-modal` (Livewire) logt `user.anonymized` vóór anonimisering
+- `⚡profile` (Livewire) logt `user.2fa_enabled`, `user.2fa_confirmed`, `user.2fa_disabled`
 - auditlogoverzicht beschikbaar op `/admin-portal/audit-logs` — alleen voor globale `Admin`, ondersteunt filteren op actie en omschrijving
+- auditlog-kaart met teller zichtbaar op het admin-portaal; menu-link in de admin-navigatie
 
 Forummeldingen:
 
@@ -1071,6 +1079,49 @@ Gerichte teststatus:
 
 - `php artisan test --compact tests/Feature/PricingPageTest.php tests/Feature/ExampleTest.php` groen: 33 tests, 148 assertions
 - `php artisan test --compact tests/Feature/AboutPageTest.php` groen: 2 tests, 13 assertions
+
+## Sessie-update 2026-04-26
+
+Beveiligingsaudit en hardening, uitgebreide auditlogging, en auditlog-portaalintegratie.
+
+Beveiliging — wijzigingen doorgevoerd:
+
+- `AddSecurityHeaders.php` stuurt nu ook `Strict-Transport-Security: max-age=63072000; includeSubDomains` (HSTS) — dwingt HTTPS af voor twee jaar inclusief subdomeinen
+- dashboard-route en `/pro-upgrade`-routes gebruiken nu `['auth', 'verified']` in plaats van alleen `auth` — onverifieerde gebruikers kunnen deze flows niet bereiken
+- `User::$fillable` (via `#[Fillable]`) bevat niet langer `role`, `org_id` of `last_login_at` — voorkomt mass-assignment van gevoelige velden; controllers die deze velden moeten zetten, gebruiken `forceFill()`
+- `UserController::store()` en `update()` extraheren `role` en `org_id` vóór `User::create()` en zetten ze daarna via `->forceFill()->save()`
+- `CreateNewUser` Fortify-action gebruikt ook `forceFill(['role' => User::ROLE_USER])` na `User::create()`
+- `QuestionnaireCategoryController::store()` en `update()` hadden geen `$this->authorize()` — dit is hersteld
+- `ContactRequestController` used open redirect via `url()->previous()`; nu gevalideerd met `parse_url()` — alleen redirects naar hetzelfde app-domein zijn toegestaan, anders valt de flow terug op `route('contact.show')`
+- `⚡delete-user-modal.blade.php`: verwijdering van het account vereist nu wachtwoordbevestiging (`current_password` validatieregel) voor het aanroepen van `anonymizeUser()` — wachtwoordveld met foutmelding is toegevoegd aan het modale formulier; vertalingssleutel `settings.delete_account.password_label` toegevoegd in nl/en/de
+
+Auditlogging — uitgebreid:
+
+- `user.role_changed` wordt gelogd door `UserController::update()` als de rol daadwerkelijk wijzigt (met vermelding van oude en nieuwe rol)
+- `user.pro_upgrade` wordt gelogd door `ProUpgradeController::store()` bij een geslaagde rol-upgrade
+- `user.anonymized` wordt gelogd door `⚡delete-user-modal` (Livewire) vóór het anonimiseren, zodat naam en e-mail nog leesbaar zijn in het logitem
+- `user.2fa_enabled`, `user.2fa_confirmed` en `user.2fa_disabled` worden gelogd door `⚡profile.blade.php` (Livewire) bij 2FA-wijzigingen
+- `blog_post.created`, `blog_post.updated`, `blog_post.deleted` worden gelogd door `BlogPostController`
+- `blog_post.published` wordt aanvullend gelogd door `BlogPostController::update()` als een draft voor het eerst gepubliceerd wordt
+- auditlogging in Livewire SFC-components werkt via method-parameter injection van `AuditLogger` (geen constructor injection mogelijk in Livewire SFCs)
+
+Auditlog-portaalintegratie:
+
+- `AdminPortalController::dashboardCounts()` geeft nu `auditLogCount` mee aan de portalview
+- het admin-menu (`admin-menu.blade.php`) bevat nu een link naar `admin.audit-logs.index`, alleen zichtbaar voor globale admins
+- het admin-portaal (`admin-portal.blade.php`) bevat nu een auditlog-kaart met teller en link, alleen zichtbaar voor globale admins
+- vertalingssleutels `admin_menu.audit_logs` en `admin_portal.audit_title/text/action/count` zijn toegevoegd in nl/en/de
+
+Bugfix:
+
+- `BlogPostController::blogPostPayload()` raadpleegde `$attributes['cover_image_url']` zonder null-check; PHP 8.5 converteert dit naar een `ErrorException` als het veld ontbreekt in het validatie-resultaat — opgelost met `($attributes['cover_image_url'] ?? '') ?: null`
+
+Teststatus:
+
+- 334 tests groen (was 321 vóór deze sessie)
+- 13 nieuwe tests in `tests/Feature/AuditLogTest.php` voor alle nieuwe auditlog-acties en portaalintegratie
+- `tests/Feature/Settings/ProfileUpdateTest.php` bijgewerkt voor verplicht wachtwoordveld bij anonimisering
+- diverse stale assertions in `AdminPortalAccessTest`, `AdminTranslationManagementTest`, `ExampleTest` en `InspirationSourcesPageTest` zijn gecorrigeerd
 
 ## Gebruik Van Dit Bestand
 

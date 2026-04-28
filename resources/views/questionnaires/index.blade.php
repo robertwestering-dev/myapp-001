@@ -86,13 +86,28 @@
             }
 
             .questionnaire-card--pro-only {
-                opacity: 0.5;
                 pointer-events: none;
+            }
+
+            .questionnaire-card--pro-only .questionnaire-card__header,
+            .questionnaire-card--pro-only .questionnaire-card__description,
+            .questionnaire-card--pro-only .questionnaire-card__meta,
+            .questionnaire-card--pro-only .questionnaire-card__history {
+                opacity: 0.5;
                 filter: grayscale(0.4);
             }
 
             .questionnaire-card--pro-only .questionnaire-card__pro-badge {
                 pointer-events: auto;
+            }
+
+            .questionnaire-card--pro-only .questionnaire-card__upgrade-action {
+                pointer-events: auto;
+            }
+
+            .questionnaire-card__upgrade-button {
+                background: linear-gradient(135deg, #2f7d4a 0%, #1f5c35 100%);
+                color: #ffffff;
             }
 
             .questionnaire-modal__body {
@@ -152,6 +167,13 @@
                         @endif
                     </div>
                     <div class="questionnaire-card__description">{{ ($availableQuestionnaire->questionnaire->localized_description ?? $availableQuestionnaire->questionnaire->description) ?: __('hermes.dashboard.description_fallback') }}</div>
+                    @if ($isLockedForUser)
+                        <x-user-action-row class="questionnaire-card__actions questionnaire-card__upgrade-action">
+                            <a href="{{ route('pro-upgrade.show') }}" class="pill questionnaire-card__upgrade-button">
+                                {{ __('hermes.settings.profile.pro_upgrade.action') }}
+                            </a>
+                        </x-user-action-row>
+                    @endif
                     @unless ($isLockedForUser)
                         <x-user-action-row class="questionnaire-card__actions">
                             <a href="{{ route('questionnaire-responses.show', $availableQuestionnaire) }}" class="pill">

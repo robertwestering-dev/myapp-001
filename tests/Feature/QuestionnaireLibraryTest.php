@@ -155,3 +155,31 @@ test('users only see questionnaires for their own organization', function () {
         ->assertSee('Eigen scan')
         ->assertDontSee('Andere scan');
 });
+
+test('regular users see a pro upgrade button for locked pro questionnaires', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+        'role' => User::ROLE_USER,
+    ]);
+    $questionnaire = Questionnaire::factory()->create([
+        'title' => 'Digitale weerbaarheid Pro',
+        'pro_only' => true,
+    ]);
+
+    OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('questionnaires.index'))
+        ->assertOk()
+        ->assertSee('Digitale weerbaarheid Pro')
+        ->assertSee(__('hermes.settings.profile.pro_upgrade.action'))
+        ->assertSee(route('pro-upgrade.show', absolute: false), false)
+        ->assertDontSee(__('hermes.questionnaires.start_questionnaire'));
+});
