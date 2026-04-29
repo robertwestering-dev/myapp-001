@@ -53,7 +53,10 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertDontSee('Robert')
         ->assertDontSee($user->email)
         ->assertSee('#academy-course-'.$course->slug, false)
-        ->assertSee(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()], absolute: false), false);
+        ->assertSee(route('academy-courses.show', [
+            'academyCoursePath' => $course->contentRouteSegment(),
+            'asset' => 'index.html',
+        ], absolute: false), false);
 });
 
 test('dashboard links authenticated users to the academy catalog', function () {

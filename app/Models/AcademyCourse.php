@@ -110,7 +110,10 @@ class AcademyCourse extends Model
         }
 
         return Route::has('academy-courses.show')
-            ? route('academy-courses.show', ['academyCoursePath' => $this->contentRouteSegment()])
+            ? route('academy-courses.show', [
+                'academyCoursePath' => $this->contentRouteSegment(),
+                'asset' => 'index.html',
+            ])
             : null;
     }
 
