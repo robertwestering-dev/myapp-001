@@ -651,6 +651,16 @@ return [
         'empty_title' => 'There are no e-learnings in the Academy yet.',
         'empty_text' => 'Add a training to the Academy configuration to show the first tile here.',
         'empty_action' => 'Back to dashboard',
+        'perma_widget' => [
+            'eyebrow' => 'PERMA overview',
+            'title' => 'Your latest PERMA scores',
+            'latest_result' => 'Based on your most recent Positive Foundation submission from :datetime.',
+            'not_available' => 'Not available',
+            'empty_title' => 'No PERMA scores available yet',
+            'empty_text' => 'Complete the Positive Foundation questionnaire first to show your compact PERMA overview here.',
+            'dimensions_unavailable_title' => 'Limited detail.',
+            'dimensions_unavailable_text' => 'This result currently shows only your total score and profile.',
+        ],
         'catalog' => [
             'adaptability-foundations' => [
                 'title' => 'Adaptability Fundamentals',

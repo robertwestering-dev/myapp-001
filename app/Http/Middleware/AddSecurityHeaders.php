@@ -50,7 +50,7 @@ class AddSecurityHeaders
 
         return implode('; ', [
             "default-src 'self'",
-            "script-src 'nonce-{$nonce}' 'strict-dynamic'",
+            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-eval'",
             "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
             "font-src 'self' https://fonts.bunny.net",
             "img-src 'self' data: https:",

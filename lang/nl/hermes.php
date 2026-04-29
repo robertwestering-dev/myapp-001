@@ -675,6 +675,16 @@ return [
         'empty_title' => 'Er staan nog geen e-learnings in de Academy.',
         'empty_text' => 'Voeg een training toe aan de Academy-configuratie om hier de eerste tegel te tonen.',
         'empty_action' => 'Terug naar dashboard',
+        'perma_widget' => [
+            'eyebrow' => 'PERMA-overzicht',
+            'title' => 'Jouw laatste PERMA-scores',
+            'latest_result' => 'Gebaseerd op je meest recente Positief-fundament inzending van :datetime.',
+            'not_available' => 'Niet beschikbaar',
+            'empty_title' => 'Nog geen PERMA-scores beschikbaar',
+            'empty_text' => 'Vul eerst de vragenlijst Positief fundament in om hier jouw compacte PERMA-overzicht te tonen.',
+            'dimensions_unavailable_title' => 'Detailniveau beperkt.',
+            'dimensions_unavailable_text' => 'In deze uitslag zijn alleen je totaalscore en profiel beschikbaar.',
+        ],
         'catalog' => [
             'adaptability-foundations' => [
                 'title' => 'Adaptability Fundamentals',

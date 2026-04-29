@@ -1029,7 +1029,7 @@
             </section>
         </div>
 
-    <script>
+    <script nonce="{{ Vite::cspNonce() }}">
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('[data-questionnaire-form]');
             const progressPanel = form?.closest('.panel');

@@ -182,7 +182,8 @@ test('questionnaire categories are shown as paginated steps', function () {
         ->assertSee('Indienen')
         ->assertSee('user-action-row', false)
         ->assertSee('data-questionnaire-step')
-        ->assertSee('data-step-total="3"', false);
+        ->assertSee('data-step-total="3"', false)
+        ->assertSee('<script nonce="', false);
 });
 
 test('likert scale questions are rendered as a full-width horizontal scale', function () {

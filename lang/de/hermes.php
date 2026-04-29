@@ -612,6 +612,16 @@ return [
         'empty_title' => 'Es sind noch keine E-Learnings in der Academy vorhanden.',
         'empty_text' => 'Fugen Sie der Academy-Konfiguration ein Training hinzu, um hier die erste Kachel anzuzeigen.',
         'empty_action' => 'Zurück zum Dashboard',
+        'perma_widget' => [
+            'eyebrow' => 'PERMA-Uberblick',
+            'title' => 'Ihre neuesten PERMA-Werte',
+            'latest_result' => 'Basierend auf Ihrer neuesten Positives-Fundament-Einsendung vom :datetime.',
+            'not_available' => 'Nicht verfugbar',
+            'empty_title' => 'Noch keine PERMA-Werte verfugbar',
+            'empty_text' => 'Fullen Sie zuerst den Fragebogen Positives Fundament aus, um hier Ihre kompakte PERMA-Ubersicht zu sehen.',
+            'dimensions_unavailable_title' => 'Begrenzte Detailtiefe.',
+            'dimensions_unavailable_text' => 'In diesem Ergebnis sind derzeit nur Gesamtscore und Profil verfugbar.',
+        ],
         'catalog' => [
             'adaptability-foundations' => [
                 'title' => 'Adaptability Fundamentals',

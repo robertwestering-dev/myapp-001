@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-23`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-29`.
 
 ## Product In Het Kort
 
@@ -352,6 +352,9 @@ Actuele status van deze pagina:
 - dashboard en library gebruiken dezelfde cataloguslogica
 - de oude regel onder `Bibliotheek` met de actieve taal is verwijderd
 - statusmeldingen op deze pagina worden ook gebruikt als veilige fallback na een taalwissel vanaf een questionnaire-detailpagina
+- PRO-questionnaires blijven voor gewone `User` zichtbaar als vergrijsde, niet-startbare kaarten
+- in zo'n vergrijsde PRO-kaart staat onder de beschrijving een groene CTA `Ik wil Pro worden`
+- de PRO-upgradeknop blijft expliciet buiten de grijs/transparant-lockstijl van de kaart zodat hij niet als disabled oogt
 
 Belangrijke functionele afspraken:
 
@@ -540,6 +543,18 @@ Actuele status:
 - header en opbouw sluiten aan op de dashboardstijl
 - contentblokken gebruiken dezelfde kaart- en metadata-componenten als de rest van de gebruikersomgeving
 - donkere highlightblokken volgen dezelfde witte-tekstafspraak als dashboard en blog
+- Academy-cursussen worden niet meer als directe publieke bestanden uitgeserveerd maar via een beveiligde Laravel-route
+- alleen ingelogde gebruikers met rol `User` of `user_pro` mogen Academy-content openen
+- als een cursus `pro_only` is, wordt toegang extra beperkt tot `user_pro`
+- complete e-learning exports horen in `storage/app/private/academy-courses/...` te staan, niet in de publieke webroot
+- een Academy-export moet volledig worden geüpload inclusief `index.html` en alle submappen/assets
+- de beschermde route serveert ook geneste assets zoals `story_content/...`, scripts en databestanden vanuit dezelfde private exportmap
+- Academy-content heeft in `AddSecurityHeaders.php` een eigen, bewust soepelere CSP dan de rest van de app, zodat statische e-learning exports met eigen JS/CSS correct kunnen draaien
+- `AcademyCourseContentController` zet expliciet het juiste `Content-Type` op uitgeserveerde exportbestanden; dit is nodig in combinatie met `X-Content-Type-Options: nosniff`
+- adminveld `Pad naar web-export` blijft functioneel leidend voor de mapstructuur; gebruik stabiele lowercase paden zonder spaties of wisselend hoofdlettergebruik
+- er is een aparte ingelogde widgetpagina voor e-learnings op `/academy/widgets/perma-scores.html` die compact de meest recente `Positief fundament`-PERMA-uitslag van de huidige gebruiker toont zonder header, footer of menu
+- deze widget is bedoeld voor embed-gebruik in iSpring/web objects en gebruikt dezelfde resultaatslogica als de gewone questionnaire-resultaatanalyse
+- in de PERMA-widget geldt de visuele statusafspraak: `Sterk fundament` = groen, `Gedeeltelijk fundament` = grijs, `Fragiel fundament` = oranje; de aanbevolen startlaag krijgt een aparte `Start here`-markering met icoon en niet langer een “goed”-kleur
 
 ## Forum
 
@@ -1122,6 +1137,67 @@ Teststatus:
 - 13 nieuwe tests in `tests/Feature/AuditLogTest.php` voor alle nieuwe auditlog-acties en portaalintegratie
 - `tests/Feature/Settings/ProfileUpdateTest.php` bijgewerkt voor verplicht wachtwoordveld bij anonimisering
 - diverse stale assertions in `AdminPortalAccessTest`, `AdminTranslationManagementTest`, `ExampleTest` en `InspirationSourcesPageTest` zijn gecorrigeerd
+
+## Sessie-update 2026-04-29
+
+Questionnairebibliotheek en PRO-CTA:
+
+- op `/vragenlijsten` tonen niet-beschikbare PRO-questionnaires voor gewone `User`-accounts een expliciete groene knop `Ik wil Pro worden`
+- deze knop linkt naar `route('pro-upgrade.show')`
+- de CTA gebruikt bewust niet dezelfde oranje stijl als `Vragenlijst invullen`
+- de CTA blijft visueel volledig actief en valt niet onder de blur/transparantie van de vergrijsde lock-kaart
+
+Academy-afscherming en e-learning hosting:
+
+- Academy-content wordt beschermd via `app/Http/Controllers/AcademyCourseContentController.php`
+- de launch-URL van een cursus gebruikt het cursuspad plus expliciet `index.html`; alleen de map-URL zonder bestand is niet betrouwbaar genoeg voor exports die relatieve assets laden
+- productie-exports mogen niet publiek in `/academy-courses/...` blijven staan als de cursus echt afgeschermd moet zijn; publiek geplaatste exports blijven buiten Laravel om direct bereikbaar
+- de juiste private opslaglocatie is `storage/app/private/academy-courses/<mapnaam>/...`
+- de beveiligde Academy-route serveert ook geneste assets vanuit dezelfde exportmap zodat loops of ontbrekende data-bestanden worden voorkomen
+- voor de route `academy-courses.show` geldt een aparte Academy-CSP in `AddSecurityHeaders.php`; de normale app-CSP blijft gescheiden
+
+PERMA-widget voor Academy/iSpring:
+
+- nieuwe controller: `app/Http/Controllers/AcademyPermaWidgetController.php`
+- nieuwe widgetview: `resources/views/academy/perma-widget.blade.php`
+- nieuwe embed-URL: `/academy/widgets/perma-scores.html`
+- de widget toont de meest recente definitieve `Positief fundament`-inzending van de ingelogde gebruiker
+- de widget gebruikt geen standaard app-layout en bevat dus geen header, footer of menu
+- de visuele betekenis is aangepast zodat groen alleen nog “sterk” betekent; de aanbevolen startlaag wordt gemarkeerd met een aparte `Start here`-badge met icoon
+
+Questionnaire-CSP en stapnavigatie:
+
+- de meerstaps questionnaireflow op `resources/views/questionnaires/show.blade.php` gebruikt een eigen inline script voor `Vorige`/`Volgende` en stapvalidatie
+- onder de strikte app-CSP moet dat inline script expliciet dezelfde nonce meekrijgen als de Vite/Livewire-scripts
+- het vragenlijstscript heeft daarom nu `nonce=\"{{ Vite::cspNonce() }}\"`; zonder deze nonce kan de gebruiker op pagina 1 blijven hangen omdat de stapnavigatie niet wordt uitgevoerd
+- de algemene app-CSP blijft `script-src 'nonce-{nonce}' 'strict-dynamic' 'unsafe-eval'`; `unsafe-eval` blijft nodig voor Livewire v4
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Http/Controllers/AcademyCourseContentController.php`
+- `app/Http/Controllers/AcademyPermaWidgetController.php`
+- `app/Models/AcademyCourse.php`
+- `app/Http/Middleware/AddSecurityHeaders.php`
+- `resources/views/academy/index.blade.php`
+- `resources/views/academy/perma-widget.blade.php`
+- `resources/views/questionnaires/index.blade.php`
+- `resources/views/questionnaires/show.blade.php`
+- `routes/web.php`
+- `tests/Feature/AcademyPermaWidgetTest.php`
+- `tests/Feature/AcademyTest.php`
+- `tests/Feature/ProOnlyAccessTest.php`
+- `tests/Feature/QuestionnaireLibraryTest.php`
+- `tests/Feature/QuestionnaireResponseFlowTest.php`
+- `tests/Feature/SecurityHeadersTest.php`
+
+Gerichte teststatus uit deze sessielijn:
+
+- `tests/Feature/AcademyPermaWidgetTest.php` groen
+- `tests/Feature/AcademyTest.php` groen
+- `tests/Feature/ProOnlyAccessTest.php` groen
+- `tests/Feature/QuestionnaireLibraryTest.php` groen
+- de nonce-regressiecheck voor de questionnaire-stappenpagina is groen via de gerichte test `questionnaire categories are shown as paginated steps`
+- `tests/Feature/QuestionnaireResponseFlowTest.php` als geheel bevat nog een bestaande, losstaande failure op een resultaten-tekstassert (`Analyse van uw resultaten`); die stond los van de nonce-fix
 
 ## Gebruik Van Dit Bestand
 

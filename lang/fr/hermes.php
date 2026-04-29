@@ -381,6 +381,16 @@ return [
         'pending_copy' => 'Placez l export web dans le dossier associe pour rendre cette formation accessible.',
         'empty_title' => 'Aucun e-learning n est encore present dans l Academy.',
         'empty_text' => 'Ajoutez une formation a la configuration de l Academy pour afficher ici la premiere tuile.',
+        'perma_widget' => [
+            'eyebrow' => 'Vue PERMA',
+            'title' => 'Vos derniers scores PERMA',
+            'latest_result' => 'Base sur votre envoi le plus recent de Fondement positif du :datetime.',
+            'not_available' => 'Non disponible',
+            'empty_title' => 'Aucun score PERMA disponible pour le moment',
+            'empty_text' => 'Remplissez d abord le questionnaire Fondement positif pour afficher ici votre apercu PERMA compact.',
+            'dimensions_unavailable_title' => 'Niveau de detail limite.',
+            'dimensions_unavailable_text' => 'Ce resultat affiche actuellement uniquement votre score total et votre profil.',
+        ],
         'catalog' => [
             'adaptability-foundations' => [
                 'title' => 'Adaptability Fundamentals',
