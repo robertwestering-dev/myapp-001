@@ -187,6 +187,8 @@ test('academy course content route serves nested asset files from the course exp
         ->assertOk();
 
     expect($response->baseResponse->getFile()->getPathname())->toBe($assetPath);
+    $response->assertHeader('content-type', 'application/javascript; charset=UTF-8');
+    expect($response->headers->get('content-security-policy'))->toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
 });
 
 // --- Admin forms ---
