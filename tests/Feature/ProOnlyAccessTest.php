@@ -119,7 +119,7 @@ test('admin cannot open academy course content', function () {
     File::put($course->contentPath(), '<html><body>Blocked</body></html>');
 
     $this->actingAs($admin)
-        ->get(route('academy-courses.show', $course))
+        ->get(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()]))
         ->assertForbidden();
 });
 
@@ -133,7 +133,7 @@ test('user role cannot open pro-only academy course content', function () {
     File::put($course->contentPath(), '<html><body>Blocked pro</body></html>');
 
     $this->actingAs($user)
-        ->get(route('academy-courses.show', $course))
+        ->get(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()]))
         ->assertForbidden();
 });
 
@@ -147,7 +147,7 @@ test('user role can open non-pro academy course content', function () {
     File::put($course->contentPath(), '<html><body>Open course</body></html>');
 
     $response = $this->actingAs($user)
-        ->get(route('academy-courses.show', $course))
+        ->get(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()]))
         ->assertOk();
 
     expect($response->baseResponse->getFile()->getPathname())->toBe($course->contentPath());
@@ -163,10 +163,30 @@ test('user_pro role can open pro-only academy course content', function () {
     File::put($course->contentPath(), '<html><body>Allowed pro</body></html>');
 
     $response = $this->actingAs($user)
-        ->get(route('academy-courses.show', $course))
+        ->get(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()]))
         ->assertOk();
 
     expect($response->baseResponse->getFile()->getPathname())->toBe($course->contentPath());
+});
+
+test('academy course content route serves nested asset files from the course export', function () {
+    $user = User::factory()->create(['role' => User::ROLE_USER]);
+    $course = AcademyCourse::factory()->create([
+        'path' => 'academy-courses/positief-fundament',
+    ]);
+    $assetPath = $course->contentPath('story_content/data.js');
+
+    File::ensureDirectoryExists(dirname($assetPath));
+    File::put($assetPath, 'window.storyData = true;');
+
+    $response = $this->actingAs($user)
+        ->get(route('academy-courses.show', [
+            'academyCoursePath' => $course->contentRouteSegment(),
+            'asset' => 'story_content/data.js',
+        ]))
+        ->assertOk();
+
+    expect($response->baseResponse->getFile()->getPathname())->toBe($assetPath);
 });
 
 // --- Admin forms ---

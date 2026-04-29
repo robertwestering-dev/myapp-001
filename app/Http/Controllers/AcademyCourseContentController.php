@@ -8,12 +8,15 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AcademyCourseContentController extends Controller
 {
-    public function __invoke(Request $request, AcademyCourse $academyCourse, ?string $asset = null): BinaryFileResponse
+    public function __invoke(Request $request, string $academyCoursePath, ?string $asset = null): BinaryFileResponse
     {
         $user = $request->user();
+        $academyCourse = AcademyCourse::query()
+            ->where('path', 'academy-courses/'.trim($academyCoursePath, '/'))
+            ->where('is_active', true)
+            ->firstOrFail();
 
         abort_unless($user !== null, 403);
-        abort_unless($academyCourse->is_active, 404);
         abort_unless($academyCourse->canBeLaunchedBy($user), 403);
 
         $relativeAssetPath = $this->normalizedAssetPath($asset);

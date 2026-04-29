@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'slug',
@@ -109,7 +110,7 @@ class AcademyCourse extends Model
         }
 
         return Route::has('academy-courses.show')
-            ? route('academy-courses.show', $this)
+            ? route('academy-courses.show', ['academyCoursePath' => $this->contentRouteSegment()])
             : null;
     }
 
@@ -140,6 +141,11 @@ class AcademyCourse extends Model
         }
 
         return $coursePath.'/'.ltrim($relativePath, '/');
+    }
+
+    public function contentRouteSegment(): string
+    {
+        return Str::after($this->normalizedPath(), 'academy-courses/');
     }
 
     /**

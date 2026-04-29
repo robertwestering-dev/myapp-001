@@ -67,7 +67,7 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
-    Route::get('/academy-courses/{academyCourse}/{asset?}', AcademyCourseContentController::class)
+    Route::get('/academy-courses/{academyCoursePath}/{asset?}', AcademyCourseContentController::class)
         ->where('asset', '.*')
         ->name('academy-courses.show');
     Route::get('/forum', [ForumThreadController::class, 'index'])->name('forum.index');

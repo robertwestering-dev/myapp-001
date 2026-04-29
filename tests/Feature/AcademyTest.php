@@ -53,7 +53,7 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertDontSee('Robert')
         ->assertDontSee($user->email)
         ->assertSee('#academy-course-'.$course->slug, false)
-        ->assertSee(route('academy-courses.show', $course, absolute: false), false);
+        ->assertSee(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()], absolute: false), false);
 });
 
 test('dashboard links authenticated users to the academy catalog', function () {
@@ -85,6 +85,6 @@ test('guests are redirected to the login page when opening academy course conten
     File::ensureDirectoryExists(dirname($course->contentPath()));
     File::put($course->contentPath(), '<html><body>Course</body></html>');
 
-    $this->get(route('academy-courses.show', $course))
+    $this->get(route('academy-courses.show', ['academyCoursePath' => $course->contentRouteSegment()]))
         ->assertRedirect(route('login'));
 });
