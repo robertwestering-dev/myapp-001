@@ -6,6 +6,7 @@ use App\Models\OrganizationQuestionnaire;
 use App\Models\Questionnaire;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 
 // --- Questionnaire library ---
 
@@ -80,6 +81,8 @@ test('user role sees pro-only academy course but card is locked (greyed out, no 
         'path' => 'academy-courses/adaptability-foundations',
         'title' => ['nl' => 'PRO Cursus', 'en' => 'PRO Course', 'de' => 'PRO Kurs', 'fr' => 'PRO Cours'],
     ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Pro course</body></html>');
 
     $this->actingAs($user)
         ->get(route('academy.index'))
@@ -97,12 +100,73 @@ test('user_pro role sees pro-only academy course without lock', function () {
         'path' => 'academy-courses/adaptability-foundations',
         'title' => ['nl' => 'PRO Cursus', 'en' => 'PRO Course', 'de' => 'PRO Kurs', 'fr' => 'PRO Cours'],
     ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Pro course</body></html>');
 
     $this->actingAs($user)
         ->get(route('academy.index'))
         ->assertOk()
         ->assertSee('PRO Cursus')
         ->assertSee($course->launchUrl(), false);
+});
+
+test('admin cannot open academy course content', function () {
+    $admin = User::factory()->admin()->create();
+    $course = AcademyCourse::factory()->create([
+        'path' => 'academy-courses/admin-blocked-course',
+    ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Blocked</body></html>');
+
+    $this->actingAs($admin)
+        ->get(route('academy-courses.show', $course))
+        ->assertForbidden();
+});
+
+test('user role cannot open pro-only academy course content', function () {
+    $user = User::factory()->create(['role' => User::ROLE_USER]);
+    $course = AcademyCourse::factory()->create([
+        'pro_only' => true,
+        'path' => 'academy-courses/pro-only-course',
+    ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Blocked pro</body></html>');
+
+    $this->actingAs($user)
+        ->get(route('academy-courses.show', $course))
+        ->assertForbidden();
+});
+
+test('user role can open non-pro academy course content', function () {
+    $user = User::factory()->create(['role' => User::ROLE_USER]);
+    $course = AcademyCourse::factory()->create([
+        'pro_only' => false,
+        'path' => 'academy-courses/free-course',
+    ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Open course</body></html>');
+
+    $response = $this->actingAs($user)
+        ->get(route('academy-courses.show', $course))
+        ->assertOk();
+
+    expect($response->baseResponse->getFile()->getPathname())->toBe($course->contentPath());
+});
+
+test('user_pro role can open pro-only academy course content', function () {
+    $user = User::factory()->create(['role' => User::ROLE_USER_PRO]);
+    $course = AcademyCourse::factory()->create([
+        'pro_only' => true,
+        'path' => 'academy-courses/pro-course',
+    ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Allowed pro</body></html>');
+
+    $response = $this->actingAs($user)
+        ->get(route('academy-courses.show', $course))
+        ->assertOk();
+
+    expect($response->baseResponse->getFile()->getPathname())->toBe($course->contentPath());
 });
 
 // --- Admin forms ---

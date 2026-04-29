@@ -10,13 +10,15 @@ class AcademyController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
+
         return view('academy.index', [
             'courses' => AcademyCourse::query()
                 ->active()
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get(),
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 }

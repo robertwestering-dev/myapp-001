@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademyController;
+use App\Http\Controllers\AcademyCourseContentController;
 use App\Http\Controllers\Admin\AcademyCourseController;
 use App\Http\Controllers\Admin\AdminPortalController;
 use App\Http\Controllers\Admin\AuditLogController;
@@ -66,6 +67,9 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
+    Route::get('/academy-courses/{academyCourse}/{asset?}', AcademyCourseContentController::class)
+        ->where('asset', '.*')
+        ->name('academy-courses.show');
     Route::get('/forum', [ForumThreadController::class, 'index'])->name('forum.index');
     Route::get('/forum/{forumThread}', [ForumThreadController::class, 'show'])->name('forum.show');
     Route::post('/forum', [ForumThreadController::class, 'store'])->middleware('throttle:10,1')->name('forum.store');

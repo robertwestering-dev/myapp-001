@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Route;
 
 #[Fillable([
     'slug',
@@ -107,12 +108,38 @@ class AcademyCourse extends Model
             return null;
         }
 
-        return asset($this->normalizedPath().'/index.html');
+        return Route::has('academy-courses.show')
+            ? route('academy-courses.show', $this)
+            : null;
     }
 
     public function isAvailable(): bool
     {
-        return file_exists(public_path($this->normalizedPath().'/index.html'));
+        return is_file($this->contentPath());
+    }
+
+    public function canBeLaunchedBy(User $user): bool
+    {
+        if (! in_array($user->role, [User::ROLE_USER, User::ROLE_USER_PRO], true)) {
+            return false;
+        }
+
+        if ($this->pro_only && ! $user->isProUser()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function contentPath(?string $relativePath = null): string
+    {
+        $coursePath = storage_path('app/private/'.$this->normalizedPath());
+
+        if ($relativePath === null) {
+            return $coursePath.'/index.html';
+        }
+
+        return $coursePath.'/'.ltrim($relativePath, '/');
     }
 
     /**

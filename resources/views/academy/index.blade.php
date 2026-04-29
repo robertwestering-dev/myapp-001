@@ -197,7 +197,8 @@
 
                 <div class="academy-grid__cards">
                     @forelse ($courses as $course)
-                        @php($isLockedForUser = $course->pro_only && $user->role === \App\Models\User::ROLE_USER)
+                        @php($canLaunchCourse = $course->canBeLaunchedBy($user))
+                        @php($isLockedForUser = $course->isAvailable() && ! $canLaunchCourse)
                         <x-user-surface-card
                             variant="soft"
                             class="academy-card academy-card--{{ $course->theme }} {{ $isLockedForUser ? 'academy-card--pro-only' : '' }}"
@@ -264,7 +265,7 @@
                                     </div>
                                 </details>
 
-                                @if ($course->launchUrl() && ! $isLockedForUser)
+                                @if ($course->launchUrl() && $canLaunchCourse)
                                     <a href="{{ $course->launchUrl() }}" class="pill" target="_blank" rel="noopener noreferrer">
                                         {{ __('hermes.academy.open_course') }}
                                     </a>

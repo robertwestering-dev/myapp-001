@@ -2,6 +2,7 @@
 
 use App\Models\AcademyCourse;
 use App\Models\User;
+use Illuminate\Support\Facades\File;
 
 test('guests are redirected to the login page when visiting the academy', function () {
     $response = $this->get(route('academy.index'));
@@ -23,6 +24,8 @@ test('authenticated users can visit the academy catalog', function () {
             'fr' => 'Adaptability Fundamentals',
         ],
     ]);
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Adaptability Fundamentals</body></html>');
 
     $response = $this->actingAs($user)->get(route('academy.index'));
 
@@ -50,7 +53,7 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertDontSee('Robert')
         ->assertDontSee($user->email)
         ->assertSee('#academy-course-'.$course->slug, false)
-        ->assertSee('/academy-courses/adaptability-foundations/index.html', false);
+        ->assertSee(route('academy-courses.show', $course, absolute: false), false);
 });
 
 test('dashboard links authenticated users to the academy catalog', function () {
@@ -75,4 +78,13 @@ test('academy shows a clear empty state with a dashboard action when there are n
         ->assertSee(__('hermes.academy.empty_action'))
         ->assertSee(route('dashboard', absolute: false), false)
         ->assertSee('user-guidance-card', false);
+});
+
+test('guests are redirected to the login page when opening academy course content', function () {
+    $course = AcademyCourse::factory()->create();
+    File::ensureDirectoryExists(dirname($course->contentPath()));
+    File::put($course->contentPath(), '<html><body>Course</body></html>');
+
+    $this->get(route('academy-courses.show', $course))
+        ->assertRedirect(route('login'));
 });
