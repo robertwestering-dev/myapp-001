@@ -135,15 +135,20 @@ class AcademyCourse extends Model
         return true;
     }
 
+    public function contentDirectory(): string
+    {
+        return storage_path('app/private/'.$this->normalizedPath());
+    }
+
     public function contentPath(?string $relativePath = null): string
     {
-        $coursePath = storage_path('app/private/'.$this->normalizedPath());
+        $courseDirectory = $this->contentDirectory();
 
         if ($relativePath === null) {
-            return $coursePath.'/index.html';
+            return $courseDirectory.'/index.html';
         }
 
-        return $coursePath.'/'.ltrim($relativePath, '/');
+        return $courseDirectory.'/'.ltrim($relativePath, '/');
     }
 
     public function contentRouteSegment(): string

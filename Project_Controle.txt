@@ -1,0 +1,36 @@
+Gebruik Project_Context.md als baseline.
+
+Voer een volledige beveiligings- en kwaliteitsaudit uit op de huidige codebase en fix daarna alles wat je vindt. De scope:
+
+**Beveiliging**
+- Authenticatie & autorisatie: ontbrekende middleware, ontbrekende policies, privilege escalation
+- Mass assignment, SQL injection, XSS, path traversal, open redirect
+- Rate limiting op gevoelige routes
+- CSRF-bescherming op state-wijzigende acties
+- Gevoelige data in logs, responses of error messages
+- Sessie- en cookieconfiguratie
+- HTTP security headers
+
+**Code-kwaliteit & best practices**
+- N+1 queries en ontbrekende eager loads
+- Ontbrekende DB-level constraints (unique, foreign key)
+- Race conditions in create/update flows
+- Validatieregels die te los of te streng zijn voor het gebruik
+- Ongebruikte of dode code
+
+**Architectuur**
+- Consistentie in autorisatiepatronen (policy vs. abort_unless)
+- Controllers die domeinlogica bevatten die in een service thuishoort
+- Gedeelde logica die gedupliceerd is
+
+**Werkwijze**
+1. Lees Project_Context.md en de open aanbevelingen uit de laatste sessie-update
+2. Exploreer de codebase grondig — controllers, models, policies, middleware, routes, requests, views
+3. Rapporteer bevindingen per ernst: KRITIEK / HOOG / MEDIUM / LAAG
+4. Vermeld voor elke bevinding: bestandspad, regelnummer, probleem, concrete fix
+5. Noteer ook wat je hebt bekeken en correct bevonden (zodat ik weet wat gecontroleerd is)
+6. Fix daarna alles t/m MEDIUM
+7. Vraag bevestiging vóór LAAG-fixes als de wijziging niet triviaal is
+8. Schrijf of update bestaande tests voor elke fix
+9. Draai `vendor/bin/pint --dirty` en de relevante tests na elke wijziging
+10. Update Project_Context.md met de nieuwe sessie-update

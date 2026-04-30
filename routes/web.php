@@ -27,6 +27,7 @@ use App\Http\Controllers\ContactRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ForumReplyController;
 use App\Http\Controllers\ForumThreadController;
+use App\Http\Controllers\JournalController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProUpgradeController;
 use App\Http\Controllers\QuestionnaireLibraryController;
@@ -55,7 +56,7 @@ Route::view('/over-ons', 'about')->name('about.show');
 Route::view('/prijzen', 'pricing')->name('pricing.show');
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::view('/pro-upgrade', 'pro-upgrade')->name('pro-upgrade.show');
-    Route::post('/pro-upgrade', ProUpgradeController::class)->name('pro-upgrade.store');
+    Route::post('/pro-upgrade', ProUpgradeController::class)->middleware('throttle:5,1')->name('pro-upgrade.store');
 });
 Route::view('/privacy', 'privacy')->name('privacy.show');
 Route::view('/voor-organisaties', 'organizations')->name('organizations.landing');
@@ -69,6 +70,11 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
+    Route::redirect('/three-good-things', '/journal');
+    Route::get('/journal', [JournalController::class, 'index'])->name('journal.index');
+    Route::post('/journal', [JournalController::class, 'store'])->middleware('throttle:30,1')->name('journal.store');
+    Route::put('/journal/{journalEntry}', [JournalController::class, 'update'])->middleware('throttle:30,1')->name('journal.update');
+    Route::delete('/journal/{journalEntry}', [JournalController::class, 'destroy'])->middleware('throttle:30,1')->name('journal.destroy');
     Route::get('/academy/widgets/perma-scores.html', AcademyPermaWidgetController::class)->name('academy.widgets.perma-scores');
     Route::get('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'show'])->name('academy.widgets.strengths');
     Route::post('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'store'])->name('academy.widgets.strengths.store');
@@ -162,7 +168,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                     ->name('media-assets.')
                     ->group(function (): void {
                         Route::get('/', [MediaAssetController::class, 'index'])->name('index');
-                        Route::post('/', [MediaAssetController::class, 'store'])->name('store');
+                        Route::post('/', [MediaAssetController::class, 'store'])->middleware('throttle:20,1')->name('store');
                     });
 
                 Route::prefix('users')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Concerns\ProvidesOrganizationOptions;
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -53,7 +54,7 @@ class UserController extends Controller
 
         $user->sendEmailVerificationNotification();
 
-        $this->audit->log('user.created', "Gebruiker aangemaakt: {$user->name} ({$user->email})", $user);
+        $this->audit->log(AuditAction::UserCreated, "Gebruiker aangemaakt: {$user->name} ({$user->email})", $user);
 
         return redirect()
             ->route('admin.users.index')
@@ -122,10 +123,10 @@ class UserController extends Controller
         $user->update(Arr::except($attributes, ['role', 'org_id']));
         $user->forceFill(['role' => $role, 'org_id' => $orgId])->save();
 
-        $this->audit->log('user.updated', "Gebruiker bijgewerkt: {$user->name} ({$user->email})", $user);
+        $this->audit->log(AuditAction::UserUpdated, "Gebruiker bijgewerkt: {$user->name} ({$user->email})", $user);
 
         if ($oldRole !== $role) {
-            $this->audit->log('user.role_changed', "Rol gewijzigd van '{$oldRole}' naar '{$role}': {$user->name} ({$user->email})", $user);
+            $this->audit->log(AuditAction::UserRoleChanged, "Rol gewijzigd van '{$oldRole}' naar '{$role}': {$user->name} ({$user->email})", $user);
         }
 
         return redirect()
@@ -167,7 +168,7 @@ class UserController extends Controller
                 ]);
         }
 
-        $this->audit->log('user.deleted', "Gebruiker verwijderd: {$user->name} ({$user->email})", $user);
+        $this->audit->log(AuditAction::UserDeleted, "Gebruiker verwijderd: {$user->name} ({$user->email})", $user);
 
         $user->delete();
 
@@ -185,6 +186,15 @@ class UserController extends Controller
         $fileName = 'users.csv';
         /** @var User $actor */
         $actor = $request->user();
+
+        $filterSummary = collect(array_filter([
+            $search !== '' ? "zoek:{$search}" : null,
+            $organization !== '' ? "org:{$organization}" : null,
+            $role !== '' ? "rol:{$role}" : null,
+            $country !== '' ? "land:{$country}" : null,
+        ]))->join(', ') ?: 'geen filters';
+
+        $this->audit->log(AuditAction::UserExported, "Gebruikersexport gedownload ({$filterSummary})");
 
         return response()->streamDownload(function () use ($actor, $search, $organization, $role, $country): void {
             $csv = (new CsvExporter)->open();

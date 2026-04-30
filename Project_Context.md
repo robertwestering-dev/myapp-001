@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-29`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-30`.
 
 ## Product In Het Kort
 
@@ -87,6 +87,9 @@ Beveiliging:
 - `User` model heeft `role`, `org_id` en `last_login_at` niet in `#[Fillable]` — mass-assignment van deze velden is onmogelijk; gebruik `forceFill()` in controllers en actions
 - contactformulier redirect gebruikt `parse_url()` om het app-domein te valideren — open redirect naar externe URLs is niet mogelijk
 - `BlogPostRenderer::normalizeCssDimension()` accepteert alleen veilige CSS-eenheden (px, em, rem, %, vw, vh, e.d.) — onbekende waarden vallen terug op `100%`
+- `BlogPostRenderer::isAllowedMediaUrl()` staat uitsluitend `https://`, `http://` en relatieve paden (`/...`) toe als media-URL in shortcodes — data-URI's, `javascript:`, `vbscript:` en andere schema's worden geweigerd
+- `AcademyCourseContentController` verifieert met `realpath()` dat het opgeloste bestandspad binnen de cursusmap valt (`assertWithinCourseDirectory()`) — URL-encoding bypasses zijn daarmee gesloten; de string-check op `../` is verwijderd
+- `AcademyCourse::contentDirectory()` geeft de private opslagmap van een cursus terug; gebruik deze methode voor pathverificatie in plaats van zelf `storage_path` samen te stellen
 
 2FA-handhaving:
 
@@ -101,11 +104,12 @@ Beveiliging:
 Auditlog:
 
 - `app/Models/AdminActivityLog.php` + tabel `admin_activity_logs` — slaat op: `user_id`, `action`, `subject_type`, `subject_id`, `description`, `ip_address`, `timestamps`
-- `app/Services/AuditLogger.php` — injecteerbare service die automatisch de ingelogde gebruiker en het IP-adres registreert
-- `UserController` logt `user.created`, `user.updated`, `user.deleted`, `user.role_changed`
-- `OrganizationController` logt `organization.created`, `organization.updated`, `organization.deleted`
-- `ProUpgradeController` logt `user.pro_upgrade`
-- `BlogPostController` logt `blog_post.created`, `blog_post.updated`, `blog_post.published`, `blog_post.deleted`
+- `app/Services/AuditLogger.php` — injecteerbare service die automatisch de ingelogde gebruiker en het IP-adres registreert; `log()` accepteert een `AuditAction` enum (geen vrije string)
+- `app/Enums/AuditAction.php` — enum met alle toegestane auditacties als type-veilige constanten; gebruik altijd `AuditAction::UserCreated` e.d. in plaats van hardcoded strings
+- `UserController` logt `AuditAction::UserCreated`, `UserUpdated`, `UserDeleted`, `UserRoleChanged`
+- `OrganizationController` logt `AuditAction::OrganizationCreated`, `OrganizationUpdated`, `OrganizationDeleted`
+- `ProUpgradeController` logt `AuditAction::UserProUpgrade`
+- `BlogPostController` logt `AuditAction::BlogPostCreated`, `BlogPostUpdated`, `BlogPostPublished`, `BlogPostDeleted`
 - `⚡delete-user-modal` (Livewire) logt `user.anonymized` vóór anonimisering
 - `⚡profile` (Livewire) logt `user.2fa_enabled`, `user.2fa_confirmed`, `user.2fa_disabled`
 - auditlogoverzicht beschikbaar op `/admin-portal/audit-logs` — alleen voor globale `Admin`, ondersteunt filteren op actie en omschrijving
@@ -137,6 +141,12 @@ Admin-vertalingen:
 Gedeelde traits:
 
 - `app/Concerns/NormalizesAnswers.php` — gedeeld door `QuestionnaireResponseController` en `SubmitQuestionnaireResponseRequest`; biedt `isEmptyAnswer()`, `normalizeScalarAnswer()` en `normalizeListAnswer()`
+
+Journaalafspraken:
+
+- `JournalController::store()` werkt als upsert: als er al een entry bestaat voor dezelfde `entry_date` + `entry_type`, wordt die bijgewerkt; anders aangemaakt — de DB-level unique constraint op `(user_id, entry_date, entry_type)` voorkomt echte duplicaten
+- `UpsertJournalEntryRequest` past de `Rule::unique`-validatie op `entry_date` **alleen toe bij `update`** (wanneer `journalEntry` als route-binding aanwezig is); bij `store` is de unique-check weggelaten omdat het upsert-gedrag dit vereist
+- gebruik altijd `whereDate('entry_date', ...)` voor zoekopdrachten op journaalentries — plain `where('entry_date', ...)` matcht niet betrouwbaar door de Eloquent `date`-cast
 
 Organisatie-scoping:
 
@@ -1245,6 +1255,93 @@ Gerichte teststatus uit deze sessie:
 
 - `tests/Feature/AcademyStrengthsWidgetTest.php` groen
 - `tests/Feature/SecurityHeadersTest.php` groen
+
+## Sessie-update 2026-04-30 (beveiligingshardening)
+
+Volledige beveiligingsaudit uitgevoerd. Bevindingen beoordeeld en de onderstaande fixes doorgevoerd.
+
+Doorgevoerde fixes:
+
+- **Path traversal dicht** — `AcademyCourseContentController` gebruikt nu `realpath()` om te bewijzen dat het bestandspad binnen de cursusmap valt; `AcademyCourse::contentDirectory()` methode toegevoegd
+- **AuditAction enum** — `app/Enums/AuditAction.php` gemaakt; `AuditLogger::log()` accepteert nu uitsluitend `AuditAction` (geen vrije string meer); alle vier de controllers (`UserController`, `OrganizationController`, `BlogPostController`, `ProUpgradeController`) bijgewerkt
+- **BlogPostRenderer URL-whitelist** — `isAllowedMediaUrl()` staat uitsluitend `https://`, `http://` en relatieve paden toe; alle andere schema's (inclusief `data:`, `vbscript:`) worden geweigerd
+- **Journaal upsert hersteld** — `UpsertJournalEntryRequest` past `Rule::unique` alleen toe bij `update`; `store` mag een bestaande entry overschrijven (upsert-gedrag)
+
+Bevindingen die niet zijn aangepast (bewust ontwerp of false alarm):
+
+- Wachtwoord bij anonimisering: de `hashed` cast op het `password`-veld in `User` hash automatisch — `forceFill(['password' => Str::random(40)])` slaat al een gehashed wachtwoord op; handmatige `Hash::make()` zou double-hashing veroorzaken
+- Forum LIKE-escaping: de `str_replace(['%', '_'], ...)` in `ForumThreadController` is opzettelijk — LIKE-wildcards in gebruikersinvoer moeten worden geëscaped
+- `filteredResponsesQuery()` in `QuestionnaireResponseReportController`: org-scoping is al correct geïmplementeerd via `->when(!$actor->isAdmin(), fn ($q) => $q->where('org_id', $actor->org_id))`
+- `QuestionnairePolicy::manage()` is bewust admin-only — questionnaire-sjablonen zijn globale gedeelde resources; managers beheren alleen responses, niet de sjabloonstructuur
+
+Nog open aanbevelingen:
+
+- Geen audit logging bij mislukte loginpogingen en 403-weigeringen
+- Geen wachtwoordbevestiging vereist bij rolwijzigingen en gebruikersverwijdering via admin (anonimisering heeft dit al wel)
+- `resume_token` op `questionnaire_responses` heeft geen vervaldatum (`resume_token_expires_at`)
+- Geen rate limiting op bestandsuploads in `MediaAssetController`
+- `selected_strengths` staat bewust niet in `#[Fillable]` — gebruik `forceFill()` — dit is nog niet gedocumenteerd in de code zelf
+
+Teststatus:
+
+- 66 gerichte tests groen na de fixes (`AcademyTest`, `AuditLogTest`, `ThreeGoodThingsJournalTest`, `BlogAdminManagement`, `AdminUserManagement`, `OrganizationManagement`)
+
+Gewijzigde bestanden:
+
+- `app/Enums/AuditAction.php` — nieuw
+- `app/Models/AcademyCourse.php` — `contentDirectory()` toegevoegd
+- `app/Http/Controllers/AcademyCourseContentController.php` — `realpath()`-verificatie
+- `app/Http/Controllers/JournalController.php` — toelichting upsert-gedrag
+- `app/Http/Requests/UpsertJournalEntryRequest.php` — `Rule::unique` conditioneel gemaakt
+- `app/Services/AuditLogger.php` — type-hint `AuditAction`
+- `app/Services/BlogPostRenderer.php` — `isAllowedMediaUrl()`
+- `app/Http/Controllers/Admin/UserController.php` — AuditAction enum
+- `app/Http/Controllers/Admin/OrganizationController.php` — AuditAction enum
+- `app/Http/Controllers/Admin/BlogPostController.php` — AuditAction enum
+- `app/Http/Controllers/ProUpgradeController.php` — AuditAction enum
+
+## Sessie-update 2026-04-30 (beveiligings- en kwaliteitsaudit #2)
+
+Volledige beveiligings- en kwaliteitsaudit uitgevoerd. Bevindingen beoordeeld, alle issues t/m MEDIUM gefixed.
+
+### Bevindingen — gecontroleerd en correct bevonden
+
+- Authenticatie & middleware: alle routes correct afgeschermd
+- Path traversal: `AcademyCourseContentController` gebruikt `realpath()` — correct
+- Mass assignment: `role`, `org_id`, `last_login_at`, `selected_strengths` buiten `#[Fillable]` — correct
+- Open redirect: `ContactRequestController` valideert via `parse_url()` — correct
+- XSS / media URLs: `BlogPostRenderer::isAllowedMediaUrl()` whitelists veilige schema's — correct
+- CSRF, 2FA, sessie/cookies, security headers — correct
+- N+1 queries op kritieke plekken (eager loads aanwezig) — correct
+- `UpsertJournalEntryRequest::authorize()` + `resolveOwnedEntry()` in controller — eigenaarschap correct bewaakt
+
+### Doorgevoerde fixes
+
+- **HOOG — Race condition ProUpgradeController** (`ProUpgradeController.php`): `forceFill()->save()` vervangen door atomische `DB::table()->where('role', ROLE_USER)->update()` — twee gelijktijdige requests kunnen de rol nu niet allebei wijzigen en genereren ook niet allebei een auditlog-entry
+- **MEDIUM — Rate limiting `POST /pro-upgrade`** (`routes/web.php`): `throttle:5,1` toegevoegd
+- **MEDIUM — Rate limiting journal write-routes** (`routes/web.php`): `throttle:30,1` toegevoegd op `POST /journal`, `PUT /journal/{id}` en `DELETE /journal/{id}`
+- **MEDIUM — Rate limiting media-asset upload** (`routes/web.php`): `throttle:20,1` toegevoegd op `POST /admin-portal/media-assets` (was al als open aanbeveling genoteerd)
+- **MEDIUM — Redundante index verwijderd** (`2026_04_30_173743_drop_redundant_journal_index.php`): `journal_entries_user_id_entry_date_entry_type_index` was overbodig naast de unique constraint op dezelfde kolommen; migratie verwijdert de index met try/catch (cross-database safe)
+
+### Nog open aanbevelingen (LAAG)
+
+- `AuditAction` enum is onvolledig: ontbrekende lifecycle-acties voor Academy, Questionnaire en MediaAsset
+- `JournalEntry::$table = 'three_good_things_entries'` is een legacy tabelnaam; technische schuld, geen beveiligingsrisico
+
+### Teststatus
+
+- 46 gerichte tests groen: `ProUpgradeTest`, `ThreeGoodThingsJournalTest`, `AuditLogTest`, `AdminUserManagementTest`
+- `ProUpgradeTest.php` is een nieuw testbestand met 7 tests
+
+### Gewijzigde bestanden
+
+- `app/Http/Controllers/ProUpgradeController.php` — atomische DB-update
+- `app/Http/Controllers/Admin/UserController.php` — exportactie geauditlogd met filtersamenvatting
+- `app/Enums/AuditAction.php` — `UserExported` case toegevoegd
+- `routes/web.php` — rate limiting op pro-upgrade, journal en media-assets
+- `database/migrations/2026_04_30_173743_drop_redundant_journal_index.php` — nieuw
+- `tests/Feature/ProUpgradeTest.php` — nieuw (7 tests)
+- `tests/Feature/AdminUserManagementTest.php` — auditlog-check op exporttest toegevoegd
 
 ## Gebruik Van Dit Bestand
 

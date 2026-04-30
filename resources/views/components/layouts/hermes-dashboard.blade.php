@@ -7,6 +7,7 @@
         request()->routeIs('dashboard') => 'dashboard',
         request()->routeIs('questionnaires.index'), request()->routeIs('questionnaire-responses.*') => 'questionnaires',
         request()->routeIs('academy.index') => 'academy',
+        request()->routeIs('journal.*') => 'journal',
         request()->routeIs('forum.*'), request()->routeIs('forum-replies.*') => 'forum',
         request()->routeIs('blog.*') => 'blog',
         request()->routeIs('profile.*') => 'profile',
@@ -622,6 +623,9 @@
             <a href="{{ route('dashboard') }}" @if ($activeMenu === 'dashboard') aria-current="page" @endif>{{ __('hermes.dashboard.title') }}</a>
             <a href="{{ route('questionnaires.index') }}" @if ($activeMenu === 'questionnaires') aria-current="page" @endif>{{ __('hermes.nav.questionnaires') }}</a>
             <a href="{{ route('academy.index') }}" @if ($activeMenu === 'academy') aria-current="page" @endif>{{ __('hermes.nav.academy') }}</a>
+            @if (auth()->user()?->isProUser())
+                <a href="{{ route('journal.index') }}" @if ($activeMenu === 'journal') aria-current="page" @endif>{{ __('hermes.nav.journal') }}</a>
+            @endif
             <a href="{{ route('forum.index') }}" @if ($activeMenu === 'forum') aria-current="page" @endif>{{ __('hermes.nav.forum') }}</a>
             <a href="{{ route('blog.index') }}" @if ($activeMenu === 'blog') aria-current="page" @endif>{{ __('hermes.nav.blog') }}</a>
             <a href="{{ route('profile.edit') }}" @if ($activeMenu === 'profile') aria-current="page" @endif>{{ __('hermes.nav.profile') }}</a>

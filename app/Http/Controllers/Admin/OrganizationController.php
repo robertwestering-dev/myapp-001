@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrganizationRequest;
 use App\Http\Requests\Admin\UpdateOrganizationRequest;
@@ -56,7 +57,7 @@ class OrganizationController extends Controller
     {
         $organization = Organization::create($request->validated());
 
-        $this->audit->log('organization.created', "Organisatie aangemaakt: {$organization->naam}", $organization);
+        $this->audit->log(AuditAction::OrganizationCreated, "Organisatie aangemaakt: {$organization->naam}", $organization);
 
         return redirect()
             ->route('admin.organizations.index')
@@ -84,7 +85,7 @@ class OrganizationController extends Controller
     {
         $organization->update($request->validated());
 
-        $this->audit->log('organization.updated', "Organisatie bijgewerkt: {$organization->naam}", $organization);
+        $this->audit->log(AuditAction::OrganizationUpdated, "Organisatie bijgewerkt: {$organization->naam}", $organization);
 
         return redirect()
             ->route('admin.organizations.index')
@@ -120,7 +121,7 @@ class OrganizationController extends Controller
                 ->withErrors(['organization' => __('hermes.admin.organizations.delete_has_users')]);
         }
 
-        $this->audit->log('organization.deleted', "Organisatie verwijderd: {$organization->naam}", $organization);
+        $this->audit->log(AuditAction::OrganizationDeleted, "Organisatie verwijderd: {$organization->naam}", $organization);
 
         $organization->delete();
 

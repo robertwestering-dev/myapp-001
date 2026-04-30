@@ -94,7 +94,7 @@ class BlogPostRenderer
         $url = trim((string) ($attributes['url'] ?? ''));
         $alt = trim((string) ($attributes['alt'] ?? ''));
 
-        if (preg_match('/^\s*javascript:/i', $url)) {
+        if (! $this->isAllowedMediaUrl($url)) {
             return '';
         }
 
@@ -115,7 +115,7 @@ class BlogPostRenderer
     {
         $url = trim((string) ($attributes['url'] ?? ''));
 
-        if (preg_match('/^\s*javascript:/i', $url)) {
+        if (! $this->isAllowedMediaUrl($url)) {
             return '';
         }
 
@@ -126,6 +126,17 @@ class BlogPostRenderer
             e($url),
             $this->mediaElementStyle($attributes)
         );
+    }
+
+    protected function isAllowedMediaUrl(string $url): bool
+    {
+        if ($url === '') {
+            return false;
+        }
+
+        return str_starts_with($url, 'https://')
+            || str_starts_with($url, 'http://')
+            || str_starts_with($url, '/');
     }
 
     protected function mediaAlignmentClass(?string $align): string

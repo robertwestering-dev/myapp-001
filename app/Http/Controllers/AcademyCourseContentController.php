@@ -23,6 +23,8 @@ class AcademyCourseContentController extends Controller
         $relativeAssetPath = $this->normalizedAssetPath($asset);
         $absolutePath = $academyCourse->contentPath($relativeAssetPath);
 
+        $this->assertWithinCourseDirectory($absolutePath, $academyCourse->contentDirectory());
+
         abort_unless(is_file($absolutePath), 404);
 
         return response()->file($absolutePath, [
@@ -42,14 +44,22 @@ class AcademyCourseContentController extends Controller
 
         $normalizedAssetPath = trim(str_replace('\\', '/', $asset), '/');
 
-        abort_if(
-            $normalizedAssetPath === ''
-                || str_contains($normalizedAssetPath, '../')
-                || str_starts_with($normalizedAssetPath, '..'),
-            404,
-        );
+        abort_if($normalizedAssetPath === '', 404);
 
         return $normalizedAssetPath;
+    }
+
+    private function assertWithinCourseDirectory(string $absolutePath, string $courseDirectory): void
+    {
+        $resolvedCourseDirectory = realpath($courseDirectory);
+        $resolvedPath = realpath($absolutePath);
+
+        abort_unless(
+            $resolvedCourseDirectory !== false
+                && $resolvedPath !== false
+                && str_starts_with($resolvedPath, $resolvedCourseDirectory.DIRECTORY_SEPARATOR),
+            404,
+        );
     }
 
     private function contentTypeFor(string $absolutePath): string

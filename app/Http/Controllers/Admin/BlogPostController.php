@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Concerns\HandlesLocalizedPayload;
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBlogPostRequest;
 use App\Http\Requests\Admin\UpdateBlogPostRequest;
@@ -61,7 +62,7 @@ class BlogPostController extends Controller
 
         $blogPost = BlogPost::query()->create($this->blogPostPayload($request, $actor));
 
-        $this->audit->log('blog_post.created', "Blogpost aangemaakt: {$blogPost->slug}", $blogPost);
+        $this->audit->log(AuditAction::BlogPostCreated, "Blogpost aangemaakt: {$blogPost->slug}", $blogPost);
 
         return redirect()
             ->route('admin.blog-posts.edit', $blogPost)
@@ -99,10 +100,10 @@ class BlogPostController extends Controller
         $wasPublished = $blogPost->is_published;
         $blogPost->update($this->blogPostPayload($request, $blogPost->author));
 
-        $this->audit->log('blog_post.updated', "Blogpost bijgewerkt: {$blogPost->slug}", $blogPost);
+        $this->audit->log(AuditAction::BlogPostUpdated, "Blogpost bijgewerkt: {$blogPost->slug}", $blogPost);
 
         if (! $wasPublished && $blogPost->is_published) {
-            $this->audit->log('blog_post.published', "Blogpost gepubliceerd: {$blogPost->slug}", $blogPost);
+            $this->audit->log(AuditAction::BlogPostPublished, "Blogpost gepubliceerd: {$blogPost->slug}", $blogPost);
         }
 
         return redirect()
@@ -123,7 +124,7 @@ class BlogPostController extends Controller
     {
         $this->authorize('manage', BlogPost::class);
 
-        $this->audit->log('blog_post.deleted', "Blogpost verwijderd: {$blogPost->slug}", $blogPost);
+        $this->audit->log(AuditAction::BlogPostDeleted, "Blogpost verwijderd: {$blogPost->slug}", $blogPost);
 
         $blogPost->delete();
 

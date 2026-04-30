@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AdminActivityLog;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -362,6 +363,26 @@ test('admins can export the users list to csv', function () {
         ->toContain('Naam,Emailadres,Rol,"Email verified"')
         ->toContain('"Anna Export",anna@example.com,User,"2026-03-01 10:15:00"')
         ->not->toContain('"Bram Export",bram@example.com,Admin,"2026-03-02 11:30:00"');
+});
+
+test('user export is logged in the audit log with active filters', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->get(route('admin.users.export', [
+        'search' => 'Anna',
+        'role' => User::ROLE_USER,
+    ]));
+
+    $this->assertDatabaseHas('admin_activity_logs', [
+        'user_id' => $admin->id,
+        'action' => 'user.exported',
+    ]);
+
+    $log = AdminActivityLog::where('user_id', $admin->id)
+        ->where('action', 'user.exported')
+        ->firstOrFail();
+
+    expect($log->description)->toContain('zoek:Anna')->toContain('rol:User');
 });
 
 test('non admins cannot access the users list or export', function () {

@@ -150,6 +150,12 @@
         </dialog>
     @endif
 
+    @php
+        $latestJournalEntryLabel = $latestJournalEntryDate
+            ? \Illuminate\Support\Carbon::parse($latestJournalEntryDate)->format('d-m-Y')
+            : __('hermes.journal.empty.latest_fallback');
+    @endphp
+
     <section class="dashboard-card user-panel">
         <x-user-page-heading
             :eyebrow="__('hermes.dashboard.overview_eyebrow')"
@@ -204,6 +210,30 @@
                 </div>
             </section>
 
+            @if (auth()->user()->isProUser())
+                <section class="dashboard-section" aria-labelledby="dashboard-diary-title">
+                    <x-user-surface-card class="summary-card">
+                        <div class="summary-card__header">
+                            <x-user-section-heading
+                                id="dashboard-diary-title"
+                                :eyebrow="__('hermes.dashboard.journal_eyebrow')"
+                                :title="__('hermes.dashboard.journal_title')"
+                                :text="__('hermes.dashboard.journal_text')"
+                            />
+                        </div>
+
+                        <div class="summary-card__stats">
+                            <x-user-stat-tile :label="__('hermes.dashboard.journal_entries_count')" :value="$journalEntryCount" />
+                            <x-user-stat-tile :label="__('hermes.dashboard.journal_latest_date')" :value="$latestJournalEntryLabel" />
+                            <x-user-stat-tile :label="__('hermes.dashboard.journal_access_label')" value="PRO" />
+                        </div>
+
+                        <x-user-action-row class="summary-card__actions">
+                            <a href="{{ route('journal.index') }}" class="pill">{{ __('hermes.dashboard.journal_action') }}</a>
+                        </x-user-action-row>
+                    </x-user-surface-card>
+                </section>
+            @endif
         </div>
     </section>
 </x-layouts.hermes-dashboard>

@@ -40,6 +40,8 @@ class DashboardController extends Controller
             'inProgressAcademyCourseCount' => 0,
             // TODO: Academy completion tracking is not yet implemented. Implement a completion model before showing real data here.
             'completedAcademyCourseCount' => 0,
+            'journalEntryCount' => $user->journalEntries()->count(),
+            'latestJournalEntryDate' => $user->journalEntries()->max('entry_date'),
             'availableQuestionnaireCount' => $availableQuestionnaires->count(),
             'completedQuestionnaireCount' => $completedQuestionnaireCount,
             'draftQuestionnaireCount' => $draftQuestionnaireCount,

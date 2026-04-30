@@ -170,6 +170,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ForumReply::class);
     }
 
+    public function journalEntries(): HasMany
+    {
+        return $this->hasMany(JournalEntry::class);
+    }
+
+    public function threeGoodThingsEntries(): HasMany
+    {
+        return $this->journalEntries()->where('entry_type', JournalEntry::TYPE_THREE_GOOD_THINGS);
+    }
+
     public function isProfileComplete(): bool
     {
         return ! empty($this->first_name)
