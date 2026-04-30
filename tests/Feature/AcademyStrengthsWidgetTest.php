@@ -16,12 +16,16 @@ test('academy strengths widget shows the saved strengths for the authenticated u
         ->get(route('academy.widgets.strengths'))
         ->assertOk()
         ->assertSee('academy-strengths-widget', false)
-        ->assertSee(__('hermes.academy.strengths_widget.title'))
+        ->assertSee(__('hermes.academy.strengths_widget.eyebrow'))
+        ->assertSee(__('hermes.academy.strengths_widget.intro'))
         ->assertSee(__('hermes.academy.strengths_widget.options.aanpassingsvermogen'))
         ->assertSee(__('hermes.academy.strengths_widget.options.creativiteit'))
         ->assertSee(__('hermes.academy.strengths_widget.options.teamwerk'))
         ->assertSee('value="aanpassingsvermogen"', false)
         ->assertSee('checked', false)
+        ->assertDontSee('<h1', false)
+        ->assertDontSee('Selecteer precies drie sterke kanten die jou het meest typeren.')
+        ->assertDontSee('Je kunt maximaal drie keuzes maken.')
         ->assertDontSee(__('hermes.dashboard.logout'));
 });
 

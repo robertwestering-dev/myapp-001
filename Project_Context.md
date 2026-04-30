@@ -184,6 +184,11 @@ Belangrijke noot:
 
 - `/home/cl1myceal_u/hermesresults-app` is een oude kopie en niet de actieve live-map
 - productie-assets die via `/images/...` worden geladen, staan bij Hostnet in de map `images` naast `hermesresults-app`, niet in `hermesresults-app/public/images`; de homepage gebruikt bijvoorbeeld `/images/6lagen-model.png`
+- de echte publieke webroot van Hostnet is `/webroots/sites/hermesresults.com`; requests komen daar eerst binnen via de root-`index.php` en `.htaccess`, niet rechtstreeks via `hermesresults-app/public`
+- een testbestand zoals `phpversion.php` of `phpinfo.php` moet daarom in `/webroots/sites/hermesresults.com` staan als je de web-PHP wilt controleren; een bestand alleen in `hermesresults-app` of lokaal in de repo zegt niets over de live web-PHP
+- Hostnet kan verschillende PHP-versies gebruiken voor SSH/CLI en voor webrequests; controleer productie-PHP daarom altijd via een tijdelijk bestand in de echte webroot, niet alleen via `php -v`
+- tijdens incidentanalyse op `2026-04-30` bleek: SSH/CLI draaide `PHP 8.4.20`, maar `https://hermesresults.com/phpversion.php` draaide nog `PHP 8.2.30` via `CGI/FastCGI`; hierdoor crashte de site met `Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.4.0"`
+- zolang de web-PHP lager is dan de lockfile/dependencies vereisen, helpt `composer install` of cache-clearen niet; eerst moet Hostnet de web/FastCGI-PHP van het domein zelf ophogen naar minimaal `8.4` (voorkeur `8.5`)
 
 ## Deploy Baseline
 
@@ -208,6 +213,8 @@ Praktische deployregels:
 - `php artisan storage:link` moet aanwezig zijn voor asset-URLs onder `/storage/...`
 - na elke deploy `composer install --no-dev --optimize-autoloader` draaien zodat dev-packages (zoals `laravel/boost`) uit de autoload-map worden verwijderd — anders geeft de server een `BoostServiceProvider not found` error
 - als de server een `Class "translator" does not exist` error gooit, is de oorzaak altijd een corrupte of verouderde bootstrap-cache; fix: `rm -f bootstrap/cache/*.php && php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache`
+- vóór een productie-`composer install` altijd verifiëren dat de web-PHP van `hermesresults.com` zelf voldoet aan de lockfile; Hostnet kan panel/CLI al op `8.4+` hebben terwijl de live FastCGI-handler nog op `8.2` staat
+- als productie ineens crasht met `Composer detected issues in your platform`, controleer direct `https://hermesresults.com/phpversion.php` vanuit een tijdelijk bestand in `/webroots/sites/hermesresults.com`; als die pagina nog `PHP 8.2.x` of `8.3.x` toont terwijl SSH `php -v` hoger is, ligt het probleem bij de Hostnet web-PHP-handler en niet bij Laravel-code of caches
 
 Gebruik ook `DEPLOY_HANDLEIDING.md` als checklist per wijzigingstype.
 
@@ -1198,6 +1205,46 @@ Gerichte teststatus uit deze sessielijn:
 - `tests/Feature/QuestionnaireLibraryTest.php` groen
 - de nonce-regressiecheck voor de questionnaire-stappenpagina is groen via de gerichte test `questionnaire categories are shown as paginated steps`
 - `tests/Feature/QuestionnaireResponseFlowTest.php` als geheel bevat nog een bestaande, losstaande failure op een resultaten-tekstassert (`Analyse van uw resultaten`); die stond los van de nonce-fix
+
+## Sessie-update 2026-04-30
+
+Sterke-kanten-widget voor Positief fundament:
+
+- nieuwe embed-widget toegevoegd op `/academy/widgets/strengths.html`
+- de widget laat de ingelogde gebruiker precies 3 sterke kanten kiezen uit een vaste lijst van 20
+- opslag gebeurt per gebruiker in de nieuwe `users.selected_strengths` JSON-kolom
+- de widget gebruikt dezelfde losse iSpring/web-object-opzet als de PERMA-widget: geen standaard app-layout, geen header, footer of menu
+- de uiteindelijke lijst van 20 sterke kanten is: Aanpassingsvermogen, Creativiteit, Dankbaarheid, Doorzettingsvermogen, Eerlijkheid, Empathie, Hoop, Humor, Leergierigheid, Leiderschap, Moed, Nieuwsgierigheid, Optimisme, Rechtvaardigheid, Teamwerk, Verantwoordelijkheid, Verbondenheid, Vriendelijkheid, Wijsheid, Zelfbeheersing
+- de widget is daarna compacter gemaakt voor 16:9 PowerPoint-slides: kleinere keuzevakken, compactere header en de opslaanknop rechtsboven naast het label
+
+Productie-incident Hostnet PHP-mismatch:
+
+- productie crashte met `Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.4.0"`
+- root cause: mismatch tussen server-CLI en web-PHP op Hostnet
+- bevestigd op `2026-04-30`:
+  - SSH/CLI in `/webroots/sites/hermesresults.com/hermesresults-app` gaf `PHP 8.4.20`
+  - `https://hermesresults.com/phpversion.php` in de echte webroot gaf `PHP 8.2.30`
+  - de live site draaide dus nog via een `CGI/FastCGI`-handler op `PHP 8.2`, ondanks hogere CLI/paneelinstellingen
+- hierdoor kon de bestaande dependencyset / lockfile niet meer bootstrappen onder webverkeer
+- Hostnet-ticket aangemaakt om de web/FastCGI-PHP van het domein recht te zetten
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Http/Controllers/AcademyStrengthsWidgetController.php`
+- `app/Http/Requests/StoreAcademyStrengthsRequest.php`
+- `app/Support/Academy/PositiveFoundationStrengthCatalog.php`
+- `database/migrations/2026_04_30_071036_add_selected_strengths_to_users_table.php`
+- `resources/views/academy/strengths-widget.blade.php`
+- `routes/web.php`
+- `tests/Feature/AcademyStrengthsWidgetTest.php`
+- `lang/nl/hermes.php`
+- `lang/en/hermes.php`
+- `lang/de/hermes.php`
+
+Gerichte teststatus uit deze sessie:
+
+- `tests/Feature/AcademyStrengthsWidgetTest.php` groen
+- `tests/Feature/SecurityHeadersTest.php` groen
 
 ## Gebruik Van Dit Bestand
 

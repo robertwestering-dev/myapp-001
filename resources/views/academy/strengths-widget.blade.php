@@ -74,15 +74,13 @@
             gap: 12px;
         }
 
-        .widget-heading h1,
-        .widget-heading p {
-            margin: 0;
+        .widget-heading__copy {
+            display: grid;
+            gap: 4px;
         }
 
-        .widget-heading h1 {
-            font-size: clamp(1.12rem, 1.5vw, 1.42rem);
-            line-height: 1.04;
-            color: var(--forest-deep);
+        .widget-heading p {
+            margin: 0;
         }
 
         .widget-heading p,
@@ -155,8 +153,8 @@
             display: flex;
             align-items: center;
             gap: 9px;
-            min-height: 46px;
-            padding: 10px 12px;
+            min-height: 40px;
+            padding: 8px 11px;
             border-radius: 14px;
             border: 1px solid rgba(24, 33, 29, 0.1);
             background: #fff;
@@ -188,7 +186,7 @@
 
         .widget-option__label {
             color: var(--ink);
-            font-size: 0.84rem;
+            font-size: 0.8rem;
             line-height: 1.12;
             font-weight: 700;
             font-family: Arial, Helvetica, sans-serif;
@@ -292,13 +290,12 @@
 
                 <div class="widget-heading">
                     <div class="widget-heading__top">
-                        <div>
+                        <div class="widget-heading__copy">
                             <p class="widget-eyebrow">{{ __('hermes.academy.strengths_widget.eyebrow') }}</p>
-                            <h1>{{ __('hermes.academy.strengths_widget.title') }}</h1>
+                            <p class="widget-heading__intro">{{ __('hermes.academy.strengths_widget.intro') }}</p>
                         </div>
                         <button class="widget-button" type="submit">{{ __('hermes.academy.strengths_widget.submit') }}</button>
                     </div>
-                    <p class="widget-heading__intro">{{ __('hermes.academy.strengths_widget.intro') }}</p>
                 </div>
 
                 @if (session('status'))
@@ -324,7 +321,6 @@
                             {{ __('hermes.academy.strengths_widget.counter', ['count' => $selectedCount, 'max' => 3]) }}
                         </strong>
                     </div>
-                    <div class="widget-helper">{{ __('hermes.academy.strengths_widget.helper') }}</div>
                 </div>
 
                 <div class="widget-grid">

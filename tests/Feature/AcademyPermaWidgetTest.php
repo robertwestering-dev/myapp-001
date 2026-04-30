@@ -81,8 +81,8 @@ test('academy perma widget shows the latest positive foundation result for the a
         ->assertSee('Betekenis')
         ->assertSee('widget-dimension__status--strong', false)
         ->assertSee('widget-dimension__status--partial', false)
-        ->assertSee('widget-dimension__recommended', false)
-        ->assertSee('Start here')
+        ->assertDontSee('widget-dimension__recommended', false)
+        ->assertDontSee('Start here')
         ->assertDontSee('42 / 100')
         ->assertDontSee(__('hermes.dashboard.logout'))
         ->assertDontSee(__('hermes.nav.questionnaires'));

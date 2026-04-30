@@ -143,11 +143,6 @@
             background: #fff;
         }
 
-        .widget-dimension--recommended {
-            border-color: rgba(43, 111, 138, 0.34);
-            box-shadow: inset 0 0 0 1px rgba(43, 111, 138, 0.08);
-        }
-
         .widget-dimension__top {
             display: grid;
             gap: 4px;
@@ -194,27 +189,6 @@
         .widget-dimension__status--fragile {
             color: var(--warning);
             background: var(--warning-soft);
-        }
-
-        .widget-dimension__recommended {
-            display: inline-flex;
-            width: fit-content;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            color: var(--start);
-            background: var(--start-soft);
-            font-size: 0.7rem;
-            font-weight: 700;
-            line-height: 1;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .widget-dimension__recommended svg {
-            width: 12px;
-            height: 12px;
-            flex: 0 0 12px;
         }
 
         .widget-progress {
@@ -327,7 +301,7 @@
                                 'fragile' => 'widget-progress--fragile',
                                 default => 'widget-progress--partial',
                             })
-                            <article class="widget-dimension {{ $dimension->isRecommended ? 'widget-dimension--recommended' : '' }}">
+                            <article class="widget-dimension">
                                 <div class="widget-dimension__top">
                                     <div class="widget-dimension__name">{{ $dimension->label }}</div>
                                     <div class="widget-dimension__score">{{ $dimension->score }} / {{ $dimension->maxScore }}</div>
@@ -335,15 +309,6 @@
                                 <div class="widget-progress {{ $progressClass }}" aria-hidden="true">
                                     <span style="width: {{ $progress }}%;"></span>
                                 </div>
-                                @if ($dimension->isRecommended)
-                                    <div class="widget-dimension__recommended">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 5v14"></path>
-                                            <path d="m19 12-7 7-7-7"></path>
-                                        </svg>
-                                        Start here
-                                    </div>
-                                @endif
                                 @if ($dimension->statusLabel)
                                     <div class="widget-dimension__status {{ $statusClass }}">
                                         {{ $dimension->statusLabel }}
