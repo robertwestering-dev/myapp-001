@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademyController;
 use App\Http\Controllers\AcademyCourseContentController;
 use App\Http\Controllers\AcademyPermaWidgetController;
+use App\Http\Controllers\AcademyStrengthsWidgetController;
 use App\Http\Controllers\Admin\AcademyCourseController;
 use App\Http\Controllers\Admin\AdminPortalController;
 use App\Http\Controllers\Admin\AuditLogController;
@@ -69,6 +70,8 @@ Route::get('/dashboard', DashboardController::class)
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
     Route::get('/academy/widgets/perma-scores.html', AcademyPermaWidgetController::class)->name('academy.widgets.perma-scores');
+    Route::get('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'show'])->name('academy.widgets.strengths');
+    Route::post('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'store'])->name('academy.widgets.strengths.store');
     Route::get('/academy-courses/{academyCoursePath}/{asset?}', AcademyCourseContentController::class)
         ->where('asset', '.*')
         ->name('academy-courses.show');

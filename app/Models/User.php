@@ -62,6 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'birth_date' => 'date',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'selected_strengths' => 'array',
         ];
     }
 
