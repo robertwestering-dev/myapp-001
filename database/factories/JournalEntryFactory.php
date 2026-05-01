@@ -45,4 +45,18 @@ class JournalEntryFactory extends Factory
             ],
         ]);
     }
+
+    public function weeklyIntention(): static
+    {
+        return $this->state(fn (): array => [
+            'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
+            'what_went_well' => '',
+            'my_contribution' => '',
+            'content' => [
+                'strength_key' => fake()->randomElement(array_keys(JournalEntry::strengthOptions())),
+                'planned_strength_use' => fake()->sentence(7),
+                'general_intention' => fake()->paragraph(),
+            ],
+        ]);
+    }
 }

@@ -23,6 +23,8 @@ class UpsertJournalEntryRequest extends FormRequest
             ->all();
         $isThreeGoodThings = $this->entryType() === JournalEntry::TYPE_THREE_GOOD_THINGS;
         $isStrengthsReflection = $this->entryType() === JournalEntry::TYPE_STRENGTHS_REFLECTION;
+        $isWeeklyIntention = $this->entryType() === JournalEntry::TYPE_WEEKLY_INTENTION;
+        $isWeeklyIntentionWidgetRequest = $this->routeIs('academy.widgets.weekly-intention.store');
 
         return [
             'entry_date' => array_filter([
@@ -38,20 +40,26 @@ class UpsertJournalEntryRequest extends FormRequest
                     : null,
             ]),
             'entry_type' => ['required', 'string', Rule::in(JournalEntry::entryTypeOptions())],
-            'content' => ['required', 'array:what_went_well,my_contribution,strength_key,situation,how_used,reflection'],
+            'content' => ['required', 'array:what_went_well,my_contribution,strength_key,situation,how_used,reflection,planned_strength_use,general_intention'],
             'content.what_went_well' => [Rule::requiredIf($isThreeGoodThings), 'nullable', 'string', 'max:255'],
             'content.my_contribution' => [Rule::requiredIf($isThreeGoodThings), 'nullable', 'string', 'max:255'],
-            'content.strength_key' => [Rule::requiredIf($isStrengthsReflection), 'nullable', 'string', Rule::in($strengthKeys)],
+            'content.strength_key' => [Rule::requiredIf($isStrengthsReflection || $isWeeklyIntention), 'nullable', 'string', Rule::in($strengthKeys)],
             'content.situation' => [Rule::requiredIf($isStrengthsReflection), 'nullable', 'string', 'max:255'],
             'content.how_used' => [Rule::requiredIf($isStrengthsReflection), 'nullable', 'string', 'max:255'],
             'content.reflection' => [Rule::requiredIf($isStrengthsReflection), 'nullable', 'string', 'max:1000'],
+            'content.planned_strength_use' => [Rule::requiredIf($isWeeklyIntention), 'nullable', 'string', 'max:255'],
+            'content.general_intention' => [Rule::requiredIf($isWeeklyIntention && ! $isWeeklyIntentionWidgetRequest), 'nullable', 'string', 'max:1000'],
         ];
     }
 
     public function messages(): array
     {
+        $strengthKeyMessage = $this->entryType() === JournalEntry::TYPE_WEEKLY_INTENTION
+            ? __('hermes.journal.types.weekly_intention.validation.invalid')
+            : __('hermes.journal.types.strengths_reflection.validation.invalid');
+
         return [
-            'content.strength_key.in' => __('hermes.journal.types.strengths_reflection.validation.invalid'),
+            'content.strength_key.in' => $strengthKeyMessage,
         ];
     }
 
@@ -66,6 +74,8 @@ class UpsertJournalEntryRequest extends FormRequest
             'content.situation' => __('hermes.journal.types.strengths_reflection.fields.situation'),
             'content.how_used' => __('hermes.journal.types.strengths_reflection.fields.how_used'),
             'content.reflection' => __('hermes.journal.types.strengths_reflection.fields.reflection'),
+            'content.planned_strength_use' => __('hermes.journal.types.weekly_intention.fields.planned_strength_use'),
+            'content.general_intention' => __('hermes.journal.types.weekly_intention.fields.general_intention'),
         ];
     }
 

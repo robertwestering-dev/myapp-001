@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Journal\UpsertJournalEntry;
 use App\Http\Requests\UpsertJournalEntryRequest;
 use App\Models\JournalEntry;
 use App\Models\User;
@@ -14,6 +15,7 @@ class JournalController extends Controller
 {
     public function __construct(
         private readonly PositiveFoundationStrengthCatalog $strengthCatalog,
+        private readonly UpsertJournalEntry $upsertJournalEntry,
     ) {}
 
     public function index(Request $request): View|RedirectResponse
@@ -50,19 +52,7 @@ class JournalController extends Controller
 
     public function store(UpsertJournalEntryRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
-        $user = $request->user();
-
-        $entry = $user->journalEntries()
-            ->whereDate('entry_date', $validated['entry_date'])
-            ->where('entry_type', $validated['entry_type'])
-            ->first();
-
-        if ($entry !== null) {
-            $entry->update($this->entryPayload($validated));
-        } else {
-            $user->journalEntries()->create($this->entryPayload($validated));
-        }
+        ($this->upsertJournalEntry)($request->user(), $request->validated());
 
         return redirect()
             ->route('journal.index')
@@ -73,7 +63,7 @@ class JournalController extends Controller
     {
         $entry = $this->resolveOwnedEntry($request, $journalEntry);
 
-        $entry->update($this->entryPayload($request->validated()));
+        $entry->update($this->upsertJournalEntry->payload($request->validated()));
 
         return redirect()
             ->route('journal.index')
@@ -96,24 +86,5 @@ class JournalController extends Controller
         abort_unless($journalEntry->user_id === $request->user()->getKey(), 404);
 
         return $journalEntry;
-    }
-
-    /**
-     * @param  array{entry_date: string, entry_type: string, content: array<string, mixed>}  $validated
-     * @return array<string, mixed>
-     */
-    protected function entryPayload(array $validated): array
-    {
-        $content = $validated['content'];
-
-        return [
-            ...$validated,
-            'what_went_well' => $validated['entry_type'] === JournalEntry::TYPE_THREE_GOOD_THINGS
-                ? (string) ($content['what_went_well'] ?? '')
-                : '',
-            'my_contribution' => $validated['entry_type'] === JournalEntry::TYPE_THREE_GOOD_THINGS
-                ? (string) ($content['my_contribution'] ?? '')
-                : '',
-        ];
     }
 }

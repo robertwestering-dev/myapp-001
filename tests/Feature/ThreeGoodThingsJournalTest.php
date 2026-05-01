@@ -31,9 +31,11 @@ test('pro users can view only their own journal entries', function () {
         ->get(route('journal.index'))
         ->assertOk()
         ->assertSee('Hier kun je op een centrale plaats je dagboek en reflecties bijhouden. Dat geeft je een mooi beeld van de positieve dingen die in je leven gebeuren en de manieren waarop jij jouw sterke punten gebruikt. Dat is belangrijk voor gevoel van welbevinden, ook in moeilijke tijden.')
-        ->assertSee('Mijn 3 goede dingen')
-        ->assertSee('Mijn sterke punten')
+        ->assertSee('3 goede dingen vandaag')
+        ->assertSee('Mijn sterke punten gebruikt')
+        ->assertSee('Mijn voornemens')
         ->assertSee('Beschrijf jouw 3 goede dingen van vandaag in dit veld, of neem de tijd en ruimte om voor elk van jouw goede dingen een eigen invoer te maken. De keuze is aan jouw.')
+        ->assertSee('Weet u zeker dat u dit item wilt verwijderen?')
         ->assertSee($visibleEntry->contentValue('what_went_well'))
         ->assertSee($visibleEntry->contentValue('my_contribution'))
         ->assertDontSee('Deze tekst mag niet zichtbaar zijn')
@@ -95,6 +97,18 @@ test('pro users can save one journal entry per day and type and update it later'
         ->assertRedirect(route('journal.index'));
 
     $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-30',
+            'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
+            'content' => [
+                'strength_key' => 'nieuwsgierigheid',
+                'planned_strength_use' => 'Ik plan elke dag een verkenmoment voor nieuwe inzichten.',
+                'general_intention' => 'Ik wil bewuster ruimte maken om te leren en rust te houden.',
+            ],
+        ])
+        ->assertRedirect(route('journal.index'));
+
+    $this->actingAs($user)
         ->put(route('journal.update', $entry), [
             'entry_date' => '2026-04-30',
             'entry_type' => JournalEntry::TYPE_THREE_GOOD_THINGS,
@@ -105,7 +119,7 @@ test('pro users can save one journal entry per day and type and update it later'
         ])
         ->assertRedirect(route('journal.index'));
 
-    expect($user->journalEntries()->count())->toBe(2);
+    expect($user->journalEntries()->count())->toBe(3);
 
     expect($entry->fresh())
         ->not->toBeNull()
@@ -160,6 +174,31 @@ test('pro users can save a strengths reflection entry', function () {
     expect($entry->contentValue('reflection'))->toBe('Het hielp om sneller richting te vinden.');
 });
 
+test('pro users can save a weekly intention entry', function () {
+    $user = User::factory()->pro()->create([
+        'selected_strengths' => ['leiderschap', 'teamwerk', 'nieuwsgierigheid'],
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-25',
+            'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
+            'content' => [
+                'strength_key' => 'teamwerk',
+                'planned_strength_use' => 'Ik begin elk overleg met een korte afstemming op ieders bijdrage.',
+                'general_intention' => 'Ik wil deze week meer rust en samenwerking brengen in mijn agenda.',
+            ],
+        ])
+        ->assertRedirect(route('journal.index'));
+
+    $entry = $user->journalEntries()->latest('id')->firstOrFail();
+
+    expect($entry->entry_type)->toBe(JournalEntry::TYPE_WEEKLY_INTENTION);
+    expect($entry->contentValue('strength_key'))->toBe('teamwerk');
+    expect($entry->contentValue('planned_strength_use'))->toBe('Ik begin elk overleg met een korte afstemming op ieders bijdrage.');
+    expect($entry->contentValue('general_intention'))->toBe('Ik wil deze week meer rust en samenwerking brengen in mijn agenda.');
+});
+
 test('strengths reflections only accept one of the users three saved strengths', function () {
     $user = User::factory()->pro()->create([
         'selected_strengths' => ['teamwerk', 'leiderschap', 'nieuwsgierigheid'],
@@ -182,6 +221,30 @@ test('strengths reflections only accept one of the users three saved strengths',
         'user_id' => $user->getKey(),
         'entry_date' => '2026-04-26',
         'entry_type' => JournalEntry::TYPE_STRENGTHS_REFLECTION,
+    ]);
+});
+
+test('weekly intentions only accept one of the users three saved strengths', function () {
+    $user = User::factory()->pro()->create([
+        'selected_strengths' => ['teamwerk', 'leiderschap', 'nieuwsgierigheid'],
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-24',
+            'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
+            'content' => [
+                'strength_key' => 'vriendelijkheid',
+                'planned_strength_use' => 'Ik ga vaker actief iemand helpen.',
+                'general_intention' => 'Ik wil deze week meer aandacht geven aan anderen.',
+            ],
+        ])
+        ->assertSessionHasErrors('content.strength_key');
+
+    $this->assertDatabaseMissing('three_good_things_entries', [
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-24',
+        'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
     ]);
 });
 

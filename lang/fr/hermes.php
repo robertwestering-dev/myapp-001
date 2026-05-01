@@ -31,6 +31,9 @@ return [
         'save' => 'Enregistrer la réflexion',
         'update' => 'Enregistrer les modifications',
         'delete' => 'Supprimer',
+        'cancel' => 'Non',
+        'confirm_delete' => 'Oui',
+        'delete_confirmation' => 'Voulez-vous vraiment supprimer cet élément ?',
         'pro_required' => 'Ce journal personnel est réservé aux utilisateurs Pro.',
         'empty' => [
             'title' => 'Votre journal est encore vide',

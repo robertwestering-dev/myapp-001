@@ -47,4 +47,31 @@
             <span class="journal-helper">{{ __($baseKey.'.helper.reflection') }}</span>
         </div>
     </div>
+@elseif ($type === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION)
+    <div class="journal-fields">
+        <div class="journal-field">
+            <label for="{{ $suffix }}_strength_key">{{ __($baseKey.'.fields.strength_key') }}</label>
+            <select id="{{ $suffix }}_strength_key" name="{{ $prefix }}[strength_key]" required>
+                <option value="">{{ __('hermes.settings.profile.fields.choose_option') }}</option>
+                @foreach ($strengthOptions as $option)
+                    <option value="{{ $option['key'] }}" @selected(($values['strength_key'] ?? '') === $option['key'])>
+                        {{ $option['label'] }}
+                    </option>
+                @endforeach
+            </select>
+            <span class="journal-helper">{{ __($baseKey.'.selected_strengths_hint') }}</span>
+        </div>
+
+        <div class="journal-field">
+            <label for="{{ $suffix }}_planned_strength_use">{{ __($baseKey.'.fields.planned_strength_use') }}</label>
+            <textarea id="{{ $suffix }}_planned_strength_use" name="{{ $prefix }}[planned_strength_use]" maxlength="255" required>{{ $values['planned_strength_use'] ?? '' }}</textarea>
+            <span class="journal-helper">{{ __($baseKey.'.helper.planned_strength_use') }}</span>
+        </div>
+
+        <div class="journal-field">
+            <label for="{{ $suffix }}_general_intention">{{ __($baseKey.'.fields.general_intention') }}</label>
+            <textarea id="{{ $suffix }}_general_intention" name="{{ $prefix }}[general_intention]" maxlength="1000" required>{{ $values['general_intention'] ?? '' }}</textarea>
+            <span class="journal-helper">{{ __($baseKey.'.helper.general_intention') }}</span>
+        </div>
+    </div>
 @endif

@@ -54,6 +54,24 @@
                 justify-content: center;
             }
 
+            .journal-hero__actions .journal-pill--orange {
+                background: linear-gradient(135deg, #d96a2b 0%, #b54d17 100%);
+                color: #fff7f0;
+                border-color: rgba(181, 77, 23, 0.35);
+            }
+
+            .journal-hero__actions .journal-pill--gray {
+                background: linear-gradient(135deg, #e5e2dc 0%, #ccc5bb 100%);
+                color: #21302b;
+                border-color: rgba(33, 48, 43, 0.16);
+            }
+
+            .journal-hero__actions .journal-pill--green {
+                background: linear-gradient(135deg, #20453a 0%, #162d26 100%);
+                color: #f4efe6;
+                border-color: rgba(22, 45, 38, 0.32);
+            }
+
             .journal-form {
                 gap: 18px;
                 margin-top: 24px;
@@ -129,7 +147,7 @@
 
             .journal-log-main {
                 display: grid;
-                gap: 6px;
+                gap: 0;
                 min-width: 0;
             }
 
@@ -138,6 +156,8 @@
                 grid-template-columns: minmax(0, 1fr) auto;
                 gap: 12px;
                 align-items: center;
+                padding-bottom: 14px;
+                border-bottom: 1px solid rgba(22, 33, 29, 0.08);
             }
 
             .journal-log-date,
@@ -159,6 +179,7 @@
             .journal-log-summary {
                 color: #16211d;
                 line-height: 1.5;
+                padding-top: 14px;
             }
 
             .journal-entry__pill {
@@ -191,6 +212,12 @@
                 pointer-events: none;
             }
 
+            .journal-delete-toggle {
+                position: absolute;
+                opacity: 0;
+                pointer-events: none;
+            }
+
             .journal-icon-button {
                 display: inline-flex;
                 align-items: center;
@@ -211,9 +238,21 @@
                 color: #a84a19;
             }
 
+            .journal-icon-button__symbol {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 1.3rem;
+                font-weight: 700;
+                line-height: 1;
+            }
+
+            .journal-icon-button__symbol--collapse {
+                display: none;
+            }
+
             .journal-icon-button svg {
                 width: 17px;
                 height: 17px;
+                flex-shrink: 0;
             }
 
             .journal-log-item:has(.journal-edit-toggle:checked) .journal-icon-button {
@@ -221,11 +260,28 @@
                 color: #a84a19;
             }
 
+            .journal-log-item:has(.journal-edit-toggle:checked) .journal-icon-button__symbol--expand {
+                display: none;
+            }
+
+            .journal-log-item:has(.journal-edit-toggle:checked) .journal-icon-button__symbol--collapse {
+                display: inline;
+            }
+
+            .journal-delete-button {
+                color: #8b3a16;
+            }
+
+            .journal-delete-button:hover,
+            .journal-delete-button:focus-visible {
+                border-color: rgba(139, 58, 22, 0.35);
+                color: #6f2406;
+            }
+
             .journal-entry {
                 display: none;
                 gap: 18px;
                 padding-top: 18px;
-                border-top: 1px solid rgba(22, 33, 29, 0.08);
             }
 
             .journal-log-item:has(.journal-edit-toggle:checked) .journal-entry {
@@ -249,6 +305,62 @@
             .journal-entry__body strong {
                 display: block;
                 margin-bottom: 4px;
+            }
+
+            .journal-delete-dialog {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                z-index: 80;
+            }
+
+            .journal-log-item:has(.journal-delete-toggle:checked) .journal-delete-dialog {
+                display: flex;
+            }
+
+            .journal-delete-dialog__backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(22, 33, 29, 0.35);
+            }
+
+            .journal-delete-dialog__card {
+                position: relative;
+                display: grid;
+                gap: 18px;
+                width: min(100%, 28rem);
+                padding: 28px;
+                border-radius: 24px;
+                background: #fffdf8;
+                border: 1px solid rgba(22, 33, 29, 0.08);
+                box-shadow: 0 24px 60px rgba(22, 33, 29, 0.18);
+            }
+
+            .journal-delete-dialog__card p {
+                margin: 0;
+                color: #16211d;
+                font-family: Arial, Helvetica, sans-serif;
+                line-height: 1.6;
+            }
+
+            .journal-delete-dialog__actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+
+            .journal-delete-dialog__actions button {
+                border: 0;
+            }
+
+            .journal-delete-dialog__dismiss {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
             }
 
             .journal-section-anchor {
@@ -293,8 +405,9 @@
             </div>
 
             <div class="journal-hero__actions">
-                <a href="#journal-three-good-things-form" class="pill">{{ __('hermes.journal.actions.three_good_things') }}</a>
-                <a href="#journal-strengths-form" class="pill pill--neutral">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
+                <a href="#journal-three-good-things-form" class="pill journal-pill--orange">{{ __('hermes.journal.actions.three_good_things') }}</a>
+                <a href="#journal-strengths-form" class="pill journal-pill--gray">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
+                <a href="#journal-weekly-intention-form" class="pill journal-pill--green">{{ __('hermes.journal.actions.weekly_intention') }}</a>
             </div>
         </x-user-surface-card>
 
@@ -308,13 +421,20 @@
                             $typeKey = "hermes.journal.types.{$entry->entry_type}";
                             $summary = $entry->isThreeGoodThings()
                                 ? $entry->contentValue('what_went_well')
-                                : trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('situation') ?? ''));
+                                : ($entry->isStrengthsReflection()
+                                    ? trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('situation') ?? ''))
+                                    : trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('planned_strength_use') ?? '')));
                         @endphp
                         <x-user-surface-card variant="soft" class="journal-log-item">
                             <input
                                 id="journal_edit_{{ $entry->getKey() }}"
                                 type="checkbox"
                                 class="journal-edit-toggle"
+                            >
+                            <input
+                                id="journal_delete_{{ $entry->getKey() }}"
+                                type="checkbox"
+                                class="journal-delete-toggle"
                             >
 
                             <div class="journal-log-row">
@@ -326,26 +446,23 @@
                                             <span class="journal-entry__pill">{{ __($typeKey.'.label') }}</span>
 
                                             <label for="journal_edit_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.edit') }}">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M12 20h9" />
-                                                    <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z" />
-                                                </svg>
+                                                <span class="journal-icon-button__symbol journal-icon-button__symbol--expand" aria-hidden="true">+</span>
+                                                <span class="journal-icon-button__symbol journal-icon-button__symbol--collapse" aria-hidden="true">-</span>
                                             </label>
 
-                                            <form method="POST" action="{{ route('journal.destroy', $entry) }}">
-                                                @csrf
-                                                @method('DELETE')
-
-                                                <button type="submit" class="journal-icon-button" aria-label="{{ __('hermes.journal.delete') }}">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                        <path d="M3 6h18" />
-                                                        <path d="M8 6V4h8v2" />
-                                                        <path d="M19 6l-1 14H6L5 6" />
-                                                        <path d="M10 11v6" />
-                                                        <path d="M14 11v6" />
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            <label
+                                                for="journal_delete_{{ $entry->getKey() }}"
+                                                class="journal-icon-button journal-delete-button"
+                                                aria-label="{{ __('hermes.journal.delete') }}"
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M8 6V4h8v2" />
+                                                    <path d="M19 6l-1 14H6L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                </svg>
+                                            </label>
                                         </div>
                                     </div>
 
@@ -353,6 +470,25 @@
                                         <strong>{{ __($typeKey.'.label') }}</strong>
                                         {{ \Illuminate\Support\Str::limit($summary ?? '', 120) }}
                                     </span>
+                                </div>
+                            </div>
+
+                            <div class="journal-delete-dialog">
+                                <label for="journal_delete_{{ $entry->getKey() }}" class="journal-delete-dialog__backdrop" aria-hidden="true"></label>
+
+                                <div class="journal-delete-dialog__card" role="dialog" aria-modal="true" aria-labelledby="journal_delete_title_{{ $entry->getKey() }}">
+                                    <p id="journal_delete_title_{{ $entry->getKey() }}">{{ __('hermes.journal.delete_confirmation') }}</p>
+
+                                    <div class="journal-delete-dialog__actions">
+                                        <label for="journal_delete_{{ $entry->getKey() }}" class="pill pill--neutral journal-delete-dialog__dismiss">{{ __('hermes.journal.cancel') }}</label>
+
+                                        <form method="POST" action="{{ route('journal.destroy', $entry) }}">
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit" class="pill">{{ __('hermes.journal.confirm_delete') }}</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
 
@@ -366,6 +502,10 @@
                                         <p><strong>{{ __($typeKey.'.fields.situation') }}</strong>{{ $entry->contentValue('situation') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.how_used') }}</strong>{{ $entry->contentValue('how_used') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.reflection') }}</strong>{{ $entry->contentValue('reflection') }}</p>
+                                    @elseif ($entry->isWeeklyIntention())
+                                        <p><strong>{{ __($typeKey.'.fields.strength_key') }}</strong>{{ $entry->strengthLabel() }}</p>
+                                        <p><strong>{{ __($typeKey.'.fields.planned_strength_use') }}</strong>{{ $entry->contentValue('planned_strength_use') }}</p>
+                                        <p><strong>{{ __($typeKey.'.fields.general_intention') }}</strong>{{ $entry->contentValue('general_intention') }}</p>
                                     @endif
                                 </div>
 
@@ -459,6 +599,37 @@
                         'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? old('content', []) : [],
                         'prefix' => 'content',
                         'suffix' => 'strengths_reflection',
+                        'strengthOptions' => $strengthOptions,
+                        'selectedStrengthKeys' => $selectedStrengthKeys,
+                    ])
+
+                    <x-user-action-row align="end">
+                        <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
+                    </x-user-action-row>
+                </form>
+            </x-user-surface-card>
+
+            <x-user-surface-card id="journal-weekly-intention-form" class="journal-card journal-section-anchor">
+                <x-user-section-heading
+                    :eyebrow="__('hermes.journal.types.weekly_intention.eyebrow')"
+                    :title="__('hermes.journal.sections.weekly_intention')"
+                    :text="__('hermes.journal.types.weekly_intention.text')"
+                />
+
+                <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
+                    @csrf
+                    <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION }}">
+
+                    <div class="journal-field">
+                        <label for="entry_date_weekly_intention">{{ __('hermes.journal.fields.entry_date') }}</label>
+                        <input id="entry_date_weekly_intention" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                    </div>
+
+                    @include('journal.partials.entry-fields', [
+                        'type' => \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION,
+                        'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('content', []) : [],
+                        'prefix' => 'content',
+                        'suffix' => 'weekly_intention',
                         'strengthOptions' => $strengthOptions,
                         'selectedStrengthKeys' => $selectedStrengthKeys,
                     ])

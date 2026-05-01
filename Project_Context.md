@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-04-30`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-01`.
 
 ## Product In Het Kort
 
@@ -147,6 +147,9 @@ Journaalafspraken:
 - `JournalController::store()` werkt als upsert: als er al een entry bestaat voor dezelfde `entry_date` + `entry_type`, wordt die bijgewerkt; anders aangemaakt — de DB-level unique constraint op `(user_id, entry_date, entry_type)` voorkomt echte duplicaten
 - `UpsertJournalEntryRequest` past de `Rule::unique`-validatie op `entry_date` **alleen toe bij `update`** (wanneer `journalEntry` als route-binding aanwezig is); bij `store` is de unique-check weggelaten omdat het upsert-gedrag dit vereist
 - gebruik altijd `whereDate('entry_date', ...)` voor zoekopdrachten op journaalentries — plain `where('entry_date', ...)` matcht niet betrouwbaar door de Eloquent `date`-cast
+- `JournalEntry` kent nu 3 entry-types: `three_good_things`, `strengths_reflection` en `weekly_intention`
+- `weekly_intention` gebruikt dezelfde 3 eerder gekozen sterke kanten van de gebruiker als keuzebron; validatie op `content.strength_key` accepteert dus alleen waarden uit `users.selected_strengths`
+- `UpsertJournalEntryRequest` heeft een widget-specifieke uitzondering voor `academy.widgets.weekly-intention.store`: in die compacte embed-flow is `content.general_intention` niet verplicht, terwijl het veld op de gewone journal-pagina wel blijft bestaan
 
 Organisatie-scoping:
 
@@ -1255,6 +1258,54 @@ Gerichte teststatus uit deze sessie:
 
 - `tests/Feature/AcademyStrengthsWidgetTest.php` groen
 - `tests/Feature/SecurityHeadersTest.php` groen
+
+## Sessie-update 2026-05-01
+
+Journal-uitbreiding en academy-widgets:
+
+- het persoonlijke journal heeft nu naast `3 goede dingen vandaag` en `Mijn sterke punten gebruikt` ook het type `Mijn voornemens`
+- `Mijn voornemens` laat de gebruiker een van zijn 3 eerder gekozen sterke kanten selecteren en vastleggen hoe die komende week bewust wordt ingezet
+- op de gewone journal-pagina blijft daarnaast ook het veld voor een algemener weekvoornemen aanwezig
+- de 3 journal-actieknoppen bovenaan de pagina hebben nu expliciete label- en kleurafspraken:
+  - `3 goede dingen vandaag` = oranje
+  - `Mijn sterke punten gebruikt` = grijs
+  - `Mijn voornemens` = donkergroen
+
+Compacte Academy/iSpring-widgets:
+
+- naast `/academy/widgets/perma-scores.html` en `/academy/widgets/strengths.html` bestaan nu ook:
+  - `/academy/widgets/three-good-things.html`
+  - `/academy/widgets/weekly-intention.html`
+- beide journal-widgets gebruiken geen standaard app-layout en bevatten dus geen header, footer of menu
+- de journal-widgets zijn bewust geoptimaliseerd voor 16:9 PowerPoint/iSpring web objects: compacte spacing, brede horizontale layout en minimale hulpteksten
+- de `three-good-things`-widget bevat alleen datum, `Wat goed ging` en `Mijn aandeel hierin`
+- de `weekly-intention`-widget bevat alleen datum, `Sterke kant` en `Hoe ik deze sterke kant komende week bewust inzet`; het algemenere weekvoornemen is **bewust alleen op de gewone journal-pagina zichtbaar**
+- de `weekly-intention`-widget gebruikt nog steeds een verborgen `content[general_intention]` om bestaande data bij een update niet weg te schrijven, maar toont dit veld niet meer in de widget-UI
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Http/Controllers/AcademyThreeGoodThingsWidgetController.php`
+- `app/Http/Controllers/AcademyWeeklyIntentionWidgetController.php`
+- `app/Http/Requests/UpsertJournalEntryRequest.php`
+- `app/Models/JournalEntry.php`
+- `database/factories/JournalEntryFactory.php`
+- `resources/views/academy/three-good-things-widget.blade.php`
+- `resources/views/academy/weekly-intention-widget.blade.php`
+- `resources/views/journal/index.blade.php`
+- `resources/views/journal/partials/entry-fields.blade.php`
+- `routes/web.php`
+- `tests/Feature/AcademyThreeGoodThingsWidgetTest.php`
+- `tests/Feature/AcademyWeeklyIntentionWidgetTest.php`
+- `tests/Feature/ThreeGoodThingsJournalTest.php`
+- `lang/nl/hermes.php`
+- `lang/en/hermes.php`
+- `lang/de/hermes.php`
+
+Gerichte teststatus uit deze sessie:
+
+- `tests/Feature/AcademyThreeGoodThingsWidgetTest.php` groen
+- `tests/Feature/AcademyWeeklyIntentionWidgetTest.php` groen
+- `tests/Feature/ThreeGoodThingsJournalTest.php` groen
 
 ## Sessie-update 2026-04-30 (beveiligingshardening)
 

@@ -25,6 +25,8 @@ class JournalEntry extends Model
 
     public const TYPE_STRENGTHS_REFLECTION = 'strengths_reflection';
 
+    public const TYPE_WEEKLY_INTENTION = 'weekly_intention';
+
     protected $table = 'three_good_things_entries';
 
     protected $attributes = [
@@ -47,6 +49,7 @@ class JournalEntry extends Model
         return [
             self::TYPE_THREE_GOOD_THINGS,
             self::TYPE_STRENGTHS_REFLECTION,
+            self::TYPE_WEEKLY_INTENTION,
         ];
     }
 
@@ -85,6 +88,11 @@ class JournalEntry extends Model
     public function isStrengthsReflection(): bool
     {
         return $this->entry_type === self::TYPE_STRENGTHS_REFLECTION;
+    }
+
+    public function isWeeklyIntention(): bool
+    {
+        return $this->entry_type === self::TYPE_WEEKLY_INTENTION;
     }
 
     public function contentValue(string $key): ?string
