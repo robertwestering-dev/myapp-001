@@ -84,6 +84,37 @@ test('admin can create a blog post with only dutch content filled in', function 
     expect($blogPost->translation('title', 'de'))->toBeNull();
 });
 
+test('blog validation errors are translated for oversized localized fields', function () {
+    $admin = User::factory()->admin()->create();
+
+    $response = $this->from(route('admin.blog-posts.create'))
+        ->actingAs($admin)
+        ->post(route('admin.blog-posts.store'), [
+            'slug' => 'te-lange-blogpost',
+            'title' => [
+                'nl' => str_repeat('a', 256),
+                'en' => '',
+                'de' => '',
+            ],
+            'excerpt' => [
+                'nl' => 'Korte samenvatting',
+                'en' => '',
+                'de' => '',
+            ],
+            'content' => [
+                'nl' => 'Inhoud',
+                'en' => '',
+                'de' => '',
+            ],
+        ]);
+
+    $response->assertRedirect(route('admin.blog-posts.create'));
+    $response->assertSessionHasErrors(['title.nl']);
+
+    expect(session('errors')->first('title.nl'))
+        ->toBe('Het veld Nederlandse titel mag niet groter zijn dan 255 tekens.');
+});
+
 test('admin blog overview shows scheduled status and preview action', function () {
     $admin = User::factory()->admin()->create();
     $scheduledPost = BlogPost::factory()->create([

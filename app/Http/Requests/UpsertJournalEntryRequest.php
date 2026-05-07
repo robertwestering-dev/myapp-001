@@ -21,6 +21,7 @@ class UpsertJournalEntryRequest extends FormRequest
             ->filter(fn (mixed $strength): bool => is_string($strength) && $strength !== '')
             ->values()
             ->all();
+        $isDailyNote = $this->entryType() === JournalEntry::TYPE_DAILY_NOTE;
         $isThreeGoodThings = $this->entryType() === JournalEntry::TYPE_THREE_GOOD_THINGS;
         $isStrengthsReflection = $this->entryType() === JournalEntry::TYPE_STRENGTHS_REFLECTION;
         $isWeeklyIntention = $this->entryType() === JournalEntry::TYPE_WEEKLY_INTENTION;
@@ -40,7 +41,9 @@ class UpsertJournalEntryRequest extends FormRequest
                     : null,
             ]),
             'entry_type' => ['required', 'string', Rule::in(JournalEntry::entryTypeOptions())],
-            'content' => ['required', 'array:what_went_well,my_contribution,strength_key,situation,how_used,reflection,planned_strength_use,general_intention'],
+            'content' => ['required', 'array:title,body,what_went_well,my_contribution,strength_key,situation,how_used,reflection,planned_strength_use,general_intention'],
+            'content.title' => [Rule::requiredIf($isDailyNote), 'nullable', 'string', 'max:120'],
+            'content.body' => [Rule::requiredIf($isDailyNote), 'nullable', 'string', 'max:4000'],
             'content.what_went_well' => [Rule::requiredIf($isThreeGoodThings), 'nullable', 'string', 'max:255'],
             'content.my_contribution' => [Rule::requiredIf($isThreeGoodThings), 'nullable', 'string', 'max:255'],
             'content.strength_key' => [Rule::requiredIf($isStrengthsReflection || $isWeeklyIntention), 'nullable', 'string', Rule::in($strengthKeys)],
@@ -68,6 +71,8 @@ class UpsertJournalEntryRequest extends FormRequest
         return [
             'entry_date' => __('hermes.journal.fields.entry_date'),
             'entry_type' => __('hermes.journal.fields.entry_type'),
+            'content.title' => __('hermes.journal.types.daily_note.fields.title'),
+            'content.body' => __('hermes.journal.types.daily_note.fields.body'),
             'content.what_went_well' => __('hermes.journal.types.three_good_things.fields.what_went_well'),
             'content.my_contribution' => __('hermes.journal.types.three_good_things.fields.my_contribution'),
             'content.strength_key' => __('hermes.journal.types.strengths_reflection.fields.strength_key'),

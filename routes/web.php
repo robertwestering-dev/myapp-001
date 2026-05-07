@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
     Route::redirect('/three-good-things', '/journal');
     Route::get('/journal', [JournalController::class, 'index'])->name('journal.index');
+    Route::get('/timeline', [JournalController::class, 'timeline'])->name('journal.timeline');
     Route::post('/journal', [JournalController::class, 'store'])->middleware('throttle:30,1')->name('journal.store');
     Route::put('/journal/{journalEntry}', [JournalController::class, 'update'])->middleware('throttle:30,1')->name('journal.update');
     Route::delete('/journal/{journalEntry}', [JournalController::class, 'destroy'])->middleware('throttle:30,1')->name('journal.destroy');

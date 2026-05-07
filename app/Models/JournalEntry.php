@@ -21,6 +21,8 @@ class JournalEntry extends Model
     /** @use HasFactory<JournalEntryFactory> */
     use HasFactory;
 
+    public const TYPE_DAILY_NOTE = 'daily_note';
+
     public const TYPE_THREE_GOOD_THINGS = 'three_good_things';
 
     public const TYPE_STRENGTHS_REFLECTION = 'strengths_reflection';
@@ -30,7 +32,7 @@ class JournalEntry extends Model
     protected $table = 'three_good_things_entries';
 
     protected $attributes = [
-        'entry_type' => self::TYPE_THREE_GOOD_THINGS,
+        'entry_type' => self::TYPE_DAILY_NOTE,
     ];
 
     protected function casts(): array
@@ -47,6 +49,7 @@ class JournalEntry extends Model
     public static function entryTypeOptions(): array
     {
         return [
+            self::TYPE_DAILY_NOTE,
             self::TYPE_THREE_GOOD_THINGS,
             self::TYPE_STRENGTHS_REFLECTION,
             self::TYPE_WEEKLY_INTENTION,
@@ -78,6 +81,11 @@ class JournalEntry extends Model
         $query
             ->orderByDesc('entry_date')
             ->orderByDesc('id');
+    }
+
+    public function isDailyNote(): bool
+    {
+        return $this->entry_type === self::TYPE_DAILY_NOTE;
     }
 
     public function isThreeGoodThings(): bool

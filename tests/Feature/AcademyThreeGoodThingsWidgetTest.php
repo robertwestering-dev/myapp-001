@@ -71,7 +71,7 @@ test('the widget prefills todays existing three good things entry', function () 
 
     $user = User::factory()->pro()->create();
 
-    JournalEntry::factory()->create([
+    JournalEntry::factory()->threeGoodThings()->create([
         'user_id' => $user->getKey(),
         'entry_date' => '2026-05-01',
         'entry_type' => JournalEntry::TYPE_THREE_GOOD_THINGS,

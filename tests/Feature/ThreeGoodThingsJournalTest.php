@@ -8,7 +8,7 @@ test('pro users can view only their own journal entries', function () {
     $user = User::factory()->pro()->create();
     $otherUser = User::factory()->pro()->create();
 
-    $visibleEntry = JournalEntry::factory()->create([
+    $visibleEntry = JournalEntry::factory()->threeGoodThings()->create([
         'user_id' => $user->getKey(),
         'entry_date' => '2026-04-28',
         'content' => [
@@ -30,11 +30,12 @@ test('pro users can view only their own journal entries', function () {
     $this->actingAs($user)
         ->get(route('journal.index'))
         ->assertOk()
-        ->assertSee('Hier kun je op een centrale plaats je dagboek en reflecties bijhouden. Dat geeft je een mooi beeld van de positieve dingen die in je leven gebeuren en de manieren waarop jij jouw sterke punten gebruikt. Dat is belangrijk voor gevoel van welbevinden, ook in moeilijke tijden.')
-        ->assertSee('3 goede dingen vandaag')
-        ->assertSee('Mijn sterke punten gebruikt')
+        ->assertSee('Maak van je dagboek een klein dagelijks ritueel. Schrijf vrij, kies een begeleide reflectie en bouw zo aan meer overzicht, focus en welbevinden.')
+        ->assertSee('Vrij schrijven')
+        ->assertSee('Three good things')
+        ->assertSee('Sterke punten')
         ->assertSee('Mijn voornemens')
-        ->assertSee('Beschrijf jouw 3 goede dingen van vandaag in dit veld, of neem de tijd en ruimte om voor elk van jouw goede dingen een eigen invoer te maken. De keuze is aan jouw.')
+        ->assertSee('Noteer je drie goede dingen van vandaag, of beschrijf het belangrijkste positieve moment dat je wilt onthouden.')
         ->assertSee('Weet u zeker dat u dit item wilt verwijderen?')
         ->assertSee($visibleEntry->contentValue('what_went_well'))
         ->assertSee($visibleEntry->contentValue('my_contribution'))
@@ -50,10 +51,139 @@ test('regular users are redirected to the pro upgrade page for the journal', fun
         ->assertRedirect(route('pro-upgrade.show'));
 });
 
+test('pro users can view the compact timeline page with only their own journal entries', function () {
+    $user = User::factory()->pro()->create();
+    $otherUser = User::factory()->pro()->create();
+
+    $dailyNote = JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-21',
+        'content' => [
+            'title' => 'Een rustig moment',
+            'body' => 'Ik nam vandaag bewust gas terug en dat voelde goed.',
+        ],
+    ]);
+
+    JournalEntry::factory()->threeGoodThings()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-03-18',
+        'content' => [
+            'what_went_well' => 'Alleen zichtbaar in maart.',
+            'my_contribution' => 'Niet zichtbaar in april.',
+        ],
+    ]);
+
+    JournalEntry::factory()->weeklyIntention()->create([
+        'user_id' => $otherUser->getKey(),
+        'content' => [
+            'strength_key' => 'teamwerk',
+            'planned_strength_use' => 'Niet zichtbaar in de timeline.',
+            'general_intention' => 'Deze tekst hoort verborgen te blijven.',
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline', ['month' => '2026-04']))
+        ->assertOk()
+        ->assertSee('April 2026')
+        ->assertSee(route('journal.timeline', ['month' => '2026-03']), false)
+        ->assertSee(route('journal.timeline', ['month' => '2026-05']), false)
+        ->assertSee($dailyNote->contentValue('title'))
+        ->assertSee('Ik nam vandaag bewust gas terug en dat voelde goed.')
+        ->assertDontSee('Alleen zichtbaar in maart.')
+        ->assertDontSee('Niet zichtbaar in de timeline.')
+        ->assertDontSee('Deze tekst hoort verborgen te blijven.');
+});
+
+test('regular users are redirected to the pro upgrade page for the compact timeline', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline'))
+        ->assertRedirect(route('pro-upgrade.show'));
+});
+
+test('pro users can filter the compact timeline by one or more entry types', function () {
+    $user = User::factory()->pro()->create([
+        'selected_strengths' => ['teamwerk', 'leiderschap', 'nieuwsgierigheid'],
+    ]);
+
+    JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-10',
+        'content' => [
+            'title' => 'Vrije notitie',
+            'body' => 'Deze moet verborgen zijn bij filteren op specifieke types.',
+        ],
+    ]);
+
+    JournalEntry::factory()->threeGoodThings()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-11',
+        'content' => [
+            'what_went_well' => 'Goed gesprek gehad',
+            'my_contribution' => 'Ik nam rustig de tijd.',
+        ],
+    ]);
+
+    JournalEntry::factory()->strengthsReflection()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-12',
+        'content' => [
+            'strength_key' => 'teamwerk',
+            'situation' => 'Samen scherp gebleven onder druk.',
+            'how_used' => 'Ik bracht overzicht in het overleg.',
+            'reflection' => 'Dat gaf vertrouwen in het team.',
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline', [
+            'month' => '2026-04',
+            'types' => [
+                JournalEntry::TYPE_THREE_GOOD_THINGS,
+                JournalEntry::TYPE_STRENGTHS_REFLECTION,
+            ],
+        ]))
+        ->assertOk()
+        ->assertSee('Goed gesprek gehad')
+        ->assertSee('Samen scherp gebleven onder druk.')
+        ->assertDontSee('Vrije notitie')
+        ->assertDontSee('Deze moet verborgen zijn bij filteren op specifieke types.');
+});
+
+test('saving a new entry from the compact timeline returns to the same timeline month', function () {
+    $user = User::factory()->pro()->create();
+
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-14',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'return_to' => 'journal.timeline',
+            'return_month' => '2026-04',
+            'content' => [
+                'title' => 'Compact toegevoegd',
+                'body' => 'Deze notitie is toegevoegd vanuit de timeline.',
+            ],
+        ])
+        ->assertRedirect(route('journal.timeline', ['month' => '2026-04']));
+});
+
 test('pro users can save one journal entry per day and type and update it later', function () {
     $user = User::factory()->pro()->create([
         'selected_strengths' => ['teamwerk', 'leiderschap', 'nieuwsgierigheid'],
     ]);
+
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-30',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'content' => [
+                'title' => 'Kleine doorbraak',
+                'body' => 'Ik merkte vandaag dat ik rustiger reageerde dan vorige week.',
+            ],
+        ])
+        ->assertRedirect(route('journal.index'));
 
     $this->actingAs($user)
         ->post(route('journal.store'), [
@@ -66,9 +196,11 @@ test('pro users can save one journal entry per day and type and update it later'
         ])
         ->assertRedirect(route('journal.index'));
 
-    expect($user->journalEntries()->count())->toBe(1);
+    expect($user->journalEntries()->count())->toBe(2);
 
-    $entry = $user->journalEntries()->firstOrFail();
+    $entry = $user->journalEntries()
+        ->where('entry_type', JournalEntry::TYPE_THREE_GOOD_THINGS)
+        ->firstOrFail();
 
     $this->actingAs($user)
         ->post(route('journal.store'), [
@@ -81,7 +213,7 @@ test('pro users can save one journal entry per day and type and update it later'
         ])
         ->assertRedirect(route('journal.index'));
 
-    expect($user->journalEntries()->count())->toBe(1);
+    expect($user->journalEntries()->count())->toBe(2);
 
     $this->actingAs($user)
         ->post(route('journal.store'), [
@@ -119,7 +251,7 @@ test('pro users can save one journal entry per day and type and update it later'
         ])
         ->assertRedirect(route('journal.index'));
 
-    expect($user->journalEntries()->count())->toBe(3);
+    expect($user->journalEntries()->count())->toBe(4);
 
     expect($entry->fresh())
         ->not->toBeNull()
@@ -129,10 +261,31 @@ test('pro users can save one journal entry per day and type and update it later'
         ->contentValue('my_contribution')->toBe('Ik blokte tijd in mijn agenda en zette meldingen uit.');
 });
 
+test('pro users can save a generic daily journal note', function () {
+    $user = User::factory()->pro()->create();
+
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-04-23',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'content' => [
+                'title' => 'Nieuwe rust in mijn dag',
+                'body' => 'Ik nam meer pauzes en merkte dat ik daardoor helderder bleef denken.',
+            ],
+        ])
+        ->assertRedirect(route('journal.index'));
+
+    $entry = $user->journalEntries()->latest('id')->firstOrFail();
+
+    expect($entry->entry_type)->toBe(JournalEntry::TYPE_DAILY_NOTE);
+    expect($entry->contentValue('title'))->toBe('Nieuwe rust in mijn dag');
+    expect($entry->contentValue('body'))->toBe('Ik nam meer pauzes en merkte dat ik daardoor helderder bleef denken.');
+});
+
 test('users cannot update entries that belong to another user', function () {
     $user = User::factory()->pro()->create();
     $otherUser = User::factory()->pro()->create();
-    $entry = JournalEntry::factory()->create([
+    $entry = JournalEntry::factory()->threeGoodThings()->create([
         'user_id' => $otherUser->getKey(),
         'entry_date' => Carbon::parse('2026-04-29')->toDateString(),
     ]);
@@ -250,7 +403,7 @@ test('weekly intentions only accept one of the users three saved strengths', fun
 
 test('pro users can delete their own journal entries', function () {
     $user = User::factory()->pro()->create();
-    $entry = JournalEntry::factory()->create([
+    $entry = JournalEntry::factory()->threeGoodThings()->create([
         'user_id' => $user->getKey(),
     ]);
 

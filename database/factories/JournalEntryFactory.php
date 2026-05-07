@@ -21,6 +21,32 @@ class JournalEntryFactory extends Factory
         return [
             'user_id' => User::factory(),
             'entry_date' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'what_went_well' => '',
+            'my_contribution' => '',
+            'content' => [
+                'title' => fake()->sentence(4),
+                'body' => fake()->paragraph(),
+            ],
+        ];
+    }
+
+    public function dailyNote(): static
+    {
+        return $this->state(fn (): array => [
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'what_went_well' => '',
+            'my_contribution' => '',
+            'content' => [
+                'title' => fake()->sentence(4),
+                'body' => fake()->paragraph(),
+            ],
+        ]);
+    }
+
+    public function threeGoodThings(): static
+    {
+        return $this->state(fn (): array => [
             'entry_type' => JournalEntry::TYPE_THREE_GOOD_THINGS,
             'what_went_well' => fake()->sentence(6),
             'my_contribution' => fake()->sentence(6),
@@ -28,7 +54,7 @@ class JournalEntryFactory extends Factory
                 'what_went_well' => fake()->sentence(6),
                 'my_contribution' => fake()->sentence(6),
             ],
-        ];
+        ]);
     }
 
     public function strengthsReflection(): static

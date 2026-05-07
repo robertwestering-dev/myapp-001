@@ -1,6 +1,20 @@
 @php($baseKey = "hermes.journal.types.{$type}")
 
-@if ($type === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS)
+@if ($type === \App\Models\JournalEntry::TYPE_DAILY_NOTE)
+    <div class="journal-fields">
+        <div class="journal-field">
+            <label for="{{ $suffix }}_title">{{ __($baseKey.'.fields.title') }}</label>
+            <input id="{{ $suffix }}_title" name="{{ $prefix }}[title]" type="text" maxlength="120" placeholder="{{ __($baseKey.'.placeholder.title') }}" value="{{ $values['title'] ?? '' }}" required>
+            <span class="journal-helper">{{ __($baseKey.'.helper.title') }}</span>
+        </div>
+
+        <div class="journal-field">
+            <label for="{{ $suffix }}_body">{{ __($baseKey.'.fields.body') }}</label>
+            <textarea id="{{ $suffix }}_body" name="{{ $prefix }}[body]" maxlength="4000" placeholder="{{ __($baseKey.'.placeholder.body') }}" required>{{ $values['body'] ?? '' }}</textarea>
+            <span class="journal-helper">{{ __($baseKey.'.helper.body') }}</span>
+        </div>
+    </div>
+@elseif ($type === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS)
     <div class="journal-fields">
         <div class="journal-field">
             <label for="{{ $suffix }}_what_went_well">{{ __($baseKey.'.fields.what_went_well') }}</label>

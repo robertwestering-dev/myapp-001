@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-01`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-03`.
 
 ## Product In Het Kort
 
@@ -32,6 +32,8 @@ De belangrijkste actieve onderdelen zijn:
 - Fortify-auth met registratie, login, wachtwoord reset en e-mailverificatie
 - gebruikersdashboard
 - pagina `/vragenlijsten` voor ingelogde gebruikers
+- centrale journal-pagina op `/journal`
+- compacte journal-timeline op `/timeline`
 - Academy-catalogus voor ingelogde gebruikers
 - forum voor ingelogde gebruikers
 - centrale profielpagina op `/settings/profile`
@@ -147,9 +149,17 @@ Journaalafspraken:
 - `JournalController::store()` werkt als upsert: als er al een entry bestaat voor dezelfde `entry_date` + `entry_type`, wordt die bijgewerkt; anders aangemaakt — de DB-level unique constraint op `(user_id, entry_date, entry_type)` voorkomt echte duplicaten
 - `UpsertJournalEntryRequest` past de `Rule::unique`-validatie op `entry_date` **alleen toe bij `update`** (wanneer `journalEntry` als route-binding aanwezig is); bij `store` is de unique-check weggelaten omdat het upsert-gedrag dit vereist
 - gebruik altijd `whereDate('entry_date', ...)` voor zoekopdrachten op journaalentries — plain `where('entry_date', ...)` matcht niet betrouwbaar door de Eloquent `date`-cast
-- `JournalEntry` kent nu 3 entry-types: `three_good_things`, `strengths_reflection` en `weekly_intention`
+- `JournalEntry` kent nu 4 entry-types: `daily_note`, `three_good_things`, `strengths_reflection` en `weekly_intention`
+- `daily_note` is het generieke basisdagboektype met `content.title` en `content.body`; dit type is de standaard `entry_type` op model- en factory-niveau
 - `weekly_intention` gebruikt dezelfde 3 eerder gekozen sterke kanten van de gebruiker als keuzebron; validatie op `content.strength_key` accepteert dus alleen waarden uit `users.selected_strengths`
 - `UpsertJournalEntryRequest` heeft een widget-specifieke uitzondering voor `academy.widgets.weekly-intention.store`: in die compacte embed-flow is `content.general_intention` niet verplicht, terwijl het veld op de gewone journal-pagina wel blijft bestaan
+- de gewone journal-pagina op `/journal` positioneert het journal nu als hoofdfeature: vrij schrijven + 3 begeleide formats, met overzichtsstatistieken en een prominentere schrijfruimte
+- `/timeline` is een aparte compacte journal-feed in Day One-achtige stijl: maandnavigatie via querystring (`month=YYYY-MM`), typefiltering via querystring (`types[]=`) en compacte type-iconen in plaats van thumbnails
+- `JournalController::timeline()` gebruikt `paginate(...)->withQueryString()` zodat gekozen maand en typefilters behouden blijven tijdens paginatie
+- de compacte timeline heeft twee bovenliggende interactiepaden:
+  - `+` opent eerst een compact keuzemenu met alleen de 4 journaling-types; daarna wordt exact één formulier getoond
+  - het trechter-icoon opent een compact filterpaneel waarin 1 of meer entry-types kunnen worden aangevinkt; de lijst toont daarna alleen die types
+- de compacte timeline bewaart na opslaan de actieve maand en eventuele typefilters via verborgen `return_month` en `return_types[]` velden; na opslaan keert de gebruiker terug naar dezelfde gefilterde timeline
 
 Organisatie-scoping:
 
@@ -1258,6 +1268,48 @@ Gerichte teststatus uit deze sessie:
 
 - `tests/Feature/AcademyStrengthsWidgetTest.php` groen
 - `tests/Feature/SecurityHeadersTest.php` groen
+
+## Sessie-update 2026-05-03
+
+Journal herpositionering en compacte timeline:
+
+- het persoonlijke journal is doorgegroeid van bij-product naar kernfeature, met een generiek dagboektype `daily_note` naast de 3 bestaande begeleide formats
+- `/journal` heeft nu een duidelijkere “journal-first” opzet met vrij schrijven, begeleide formats en prominente overzichtsblokken
+- `/timeline` is toegevoegd als aparte compacte timeline-view voor Pro-gebruikers; deze toont uitsluitend de feed en niet de uitgebreide schrijfinterface
+- de timeline gebruikt rechts type-iconen in plaats van afbeeldingen:
+  - `daily_note` = document/notitie
+  - `three_good_things` = ster/sparkle
+  - `strengths_reflection` = hart/check
+  - `weekly_intention` = klok/voornemen
+- maandnavigatie op de timeline loopt via `<` en `>` in de kop; de actieve maand wordt uit de querystring gelezen en bepaalt welke entries worden getoond
+- de timeline heeft nu ook een compacte quick-add flow:
+  - klik op `+` opent een compact menu met alleen typekeuzes
+  - na typekeuze verschijnt alleen het bijbehorende formulier
+  - na `Opslaan` of `Annuleren` verdwijnt het formulier weer en wordt de lijst opnieuw zichtbaar
+- naast `+` staat een trechter-icoon voor typefilters; gebruikers kunnen 1 of meer journaling-types aanvinken waarna alleen die entries zichtbaar blijven
+- de timeline bewaart filters en maandselectie tijdens paginatie en ook na opslaan vanuit de quick-add flow
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Http/Controllers/JournalController.php`
+- `app/Http/Requests/UpsertJournalEntryRequest.php`
+- `app/Models/JournalEntry.php`
+- `database/factories/JournalEntryFactory.php`
+- `resources/views/journal/index.blade.php`
+- `resources/views/journal/timeline.blade.php`
+- `resources/views/journal/partials/entry-fields.blade.php`
+- `routes/web.php`
+- `tests/Feature/ThreeGoodThingsJournalTest.php`
+- `tests/Feature/AcademyThreeGoodThingsWidgetTest.php`
+- `lang/nl/hermes.php`
+- `lang/en/hermes.php`
+- `lang/de/hermes.php`
+- `lang/fr/hermes.php`
+
+Gerichte teststatus uit deze sessies:
+
+- `tests/Feature/ThreeGoodThingsJournalTest.php` groen
+- `tests/Feature/AcademyThreeGoodThingsWidgetTest.php` groen
 
 ## Sessie-update 2026-05-01
 

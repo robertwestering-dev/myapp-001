@@ -7,74 +7,191 @@
             .journal-entry,
             .journal-fields,
             .journal-hero,
-            .journal-log {
+            .journal-log,
+            .journal-type-grid,
+            .journal-stat-grid,
+            .journal-guided-grid {
                 display: grid;
                 gap: 24px;
             }
 
             .journal-page {
-                gap: 28px;
-            }
-
-            .journal-hero {
-                grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-                align-items: start;
+                gap: 30px;
             }
 
             .journal-card {
                 padding: 32px;
+                border-radius: 30px;
             }
 
             .journal-card h2,
+            .journal-card h3,
             .journal-card p {
                 margin: 0;
             }
 
-            .journal-hero__copy {
+            .journal-hero {
+                grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+                align-items: start;
+                background:
+                    radial-gradient(circle at top left, rgba(217, 106, 43, 0.18), transparent 35%),
+                    radial-gradient(circle at bottom right, rgba(32, 69, 58, 0.22), transparent 42%),
+                    linear-gradient(145deg, #fcf7ef 0%, #f1e5d5 100%);
+            }
+
+            .journal-hero__copy,
+            .journal-hero__panel,
+            .journal-guided-card {
                 display: grid;
                 gap: 16px;
             }
 
-            .journal-hero__message {
-                max-width: 36rem;
-                color: #5a6762;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 1.05rem;
+            .journal-hero__title,
+            .journal-guided-card h3,
+            .journal-log-summary strong,
+            .journal-empty h2 {
+                font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+                color: #17231f;
+            }
+
+            .journal-hero__title {
+                font-size: clamp(2.2rem, 4vw, 3.8rem);
+                line-height: 1.02;
+                max-width: 10ch;
+            }
+
+            .journal-hero__message,
+            .journal-hero__note,
+            .journal-guided-card p,
+            .journal-helper,
+            .journal-hint,
+            .journal-empty p,
+            .journal-log-summary,
+            .journal-stat-label,
+            .journal-field label,
+            .journal-entry__meta,
+            .journal-entry__body p {
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
                 line-height: 1.7;
+                color: #55635e;
             }
 
-            .journal-hero__actions {
+            .journal-hero__message {
+                max-width: 40rem;
+                font-size: 1.04rem;
+                color: #33413d;
+            }
+
+            .journal-hero__panel {
+                padding: 24px;
+                border-radius: 26px;
+                background: rgba(255, 252, 247, 0.72);
+                border: 1px solid rgba(22, 33, 29, 0.08);
+            }
+
+            .journal-stat-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .journal-stat {
                 display: grid;
-                gap: 14px;
-                align-content: start;
+                gap: 8px;
+                padding: 16px;
+                border-radius: 22px;
+                background: rgba(255, 255, 255, 0.65);
             }
 
-            .journal-hero__actions .pill {
-                width: 100%;
+            .journal-stat-value {
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
+                font-size: 1.7rem;
+                font-weight: 700;
+                color: #1f4a3d;
+            }
+
+            .journal-quick-links,
+            .journal-log-actions,
+            .journal-entry__meta,
+            .journal-delete-dialog__actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .journal-quick-links .pill {
                 justify-content: center;
             }
 
-            .journal-hero__actions .journal-pill--orange {
-                background: linear-gradient(135deg, #d96a2b 0%, #b54d17 100%);
-                color: #fff7f0;
-                border-color: rgba(181, 77, 23, 0.35);
-            }
-
-            .journal-hero__actions .journal-pill--gray {
-                background: linear-gradient(135deg, #e5e2dc 0%, #ccc5bb 100%);
+            .journal-pill--sand {
+                background: linear-gradient(135deg, #f4e4cc 0%, #e7cfab 100%);
                 color: #21302b;
-                border-color: rgba(33, 48, 43, 0.16);
+                border-color: rgba(33, 48, 43, 0.14);
             }
 
-            .journal-hero__actions .journal-pill--green {
+            .journal-pill--orange {
+                background: linear-gradient(135deg, #d96a2b 0%, #b54d17 100%);
+                color: #fff8f2;
+                border-color: rgba(181, 77, 23, 0.28);
+            }
+
+            .journal-pill--gray {
+                background: linear-gradient(135deg, #e3e7e4 0%, #cfd7d3 100%);
+                color: #21302b;
+                border-color: rgba(33, 48, 43, 0.14);
+            }
+
+            .journal-pill--green {
                 background: linear-gradient(135deg, #20453a 0%, #162d26 100%);
                 color: #f4efe6;
-                border-color: rgba(22, 45, 38, 0.32);
+                border-color: rgba(22, 45, 38, 0.28);
             }
 
-            .journal-form {
-                gap: 18px;
-                margin-top: 24px;
+            .journal-guided-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 16px;
+            }
+
+            .journal-guided-card {
+                padding: 22px;
+                border-radius: 24px;
+                border: 1px solid rgba(22, 33, 29, 0.08);
+                background: rgba(255, 255, 255, 0.66);
+            }
+
+            .journal-guided-card--sand {
+                background: linear-gradient(180deg, rgba(252, 246, 236, 0.95), rgba(244, 235, 219, 0.92));
+            }
+
+            .journal-guided-card--orange {
+                background: linear-gradient(180deg, rgba(251, 237, 226, 0.95), rgba(246, 224, 207, 0.92));
+            }
+
+            .journal-guided-card--gray {
+                background: linear-gradient(180deg, rgba(239, 243, 241, 0.95), rgba(228, 235, 232, 0.92));
+            }
+
+            .journal-guided-card--green {
+                background: linear-gradient(180deg, rgba(230, 237, 234, 0.95), rgba(220, 229, 225, 0.92));
+            }
+
+            .journal-guided-card__eyebrow,
+            .journal-entry__pill,
+            .journal-log-date {
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
+                font-size: 0.82rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .journal-guided-card__eyebrow {
+                color: #7b4b28;
+            }
+
+            .journal-type-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 20px;
             }
 
             .journal-field {
@@ -82,22 +199,9 @@
                 gap: 8px;
             }
 
-            .journal-type-grid {
-                display: grid;
-                gap: 20px;
-            }
-
-            .journal-field label,
-            .journal-entry__meta,
-            .journal-helper,
-            .journal-hint {
-                font-family: Arial, Helvetica, sans-serif;
-            }
-
-            .journal-field label,
-            .journal-entry__meta strong {
-                color: #16211d;
+            .journal-field label {
                 font-weight: 700;
+                color: #16211d;
             }
 
             .journal-field input,
@@ -110,7 +214,7 @@
                 background: rgba(255, 255, 255, 0.92);
                 color: #16211d;
                 font: inherit;
-                font-family: Arial, Helvetica, sans-serif;
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
                 line-height: 1.5;
             }
 
@@ -119,36 +223,19 @@
                 resize: vertical;
             }
 
-            .journal-helper,
-            .journal-hint,
-            .journal-empty p {
-                color: #5a6762;
-                line-height: 1.6;
-            }
-
             .journal-log-list {
                 display: grid;
-                gap: 12px;
+                gap: 14px;
                 margin-top: 18px;
             }
 
             .journal-log-item {
                 display: grid;
-                gap: 14px;
+                gap: 16px;
                 padding: 18px 20px;
-                border-radius: 22px;
+                border-radius: 24px;
                 background: rgba(255, 255, 255, 0.78);
                 border: 1px solid rgba(22, 33, 29, 0.08);
-            }
-
-            .journal-log-row {
-                display: block;
-            }
-
-            .journal-log-main {
-                display: grid;
-                gap: 0;
-                min-width: 0;
             }
 
             .journal-log-top {
@@ -160,26 +247,13 @@
                 border-bottom: 1px solid rgba(22, 33, 29, 0.08);
             }
 
-            .journal-log-date,
-            .journal-log-summary,
-            .journal-log-actions,
-            .journal-icon-button,
-            .journal-entry__meta {
-                font-family: Arial, Helvetica, sans-serif;
-            }
-
             .journal-log-date {
-                font-size: 0.92rem;
-                font-weight: 700;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
                 color: #5a6762;
             }
 
             .journal-log-summary {
-                color: #16211d;
-                line-height: 1.5;
-                padding-top: 14px;
+                display: grid;
+                gap: 8px;
             }
 
             .journal-entry__pill {
@@ -189,29 +263,9 @@
                 border-radius: 999px;
                 background: rgba(32, 69, 58, 0.1);
                 color: #20453a;
-                font-size: 0.88rem;
-                font-weight: 700;
             }
 
-            .journal-log-actions {
-                display: inline-flex;
-                align-items: center;
-                gap: 10px;
-                flex-shrink: 0;
-                justify-self: end;
-                white-space: nowrap;
-            }
-
-            .journal-log-actions form {
-                display: inline-flex;
-            }
-
-            .journal-edit-toggle {
-                position: absolute;
-                opacity: 0;
-                pointer-events: none;
-            }
-
+            .journal-edit-toggle,
             .journal-delete-toggle {
                 position: absolute;
                 opacity: 0;
@@ -232,32 +286,19 @@
                 cursor: pointer;
             }
 
-            .journal-icon-button:hover,
-            .journal-icon-button:focus-visible {
-                border-color: rgba(217, 106, 43, 0.45);
-                color: #a84a19;
-            }
-
             .journal-icon-button__symbol {
-                font-family: Arial, Helvetica, sans-serif;
                 font-size: 1.3rem;
                 font-weight: 700;
                 line-height: 1;
             }
 
-            .journal-icon-button__symbol--collapse {
+            .journal-icon-button__symbol--collapse,
+            .journal-entry {
                 display: none;
             }
 
-            .journal-icon-button svg {
-                width: 17px;
-                height: 17px;
-                flex-shrink: 0;
-            }
-
-            .journal-log-item:has(.journal-edit-toggle:checked) .journal-icon-button {
-                border-color: rgba(217, 106, 43, 0.45);
-                color: #a84a19;
+            .journal-log-item:has(.journal-edit-toggle:checked) .journal-entry {
+                display: grid;
             }
 
             .journal-log-item:has(.journal-edit-toggle:checked) .journal-icon-button__symbol--expand {
@@ -268,43 +309,10 @@
                 display: inline;
             }
 
-            .journal-delete-button {
-                color: #8b3a16;
-            }
-
-            .journal-delete-button:hover,
-            .journal-delete-button:focus-visible {
-                border-color: rgba(139, 58, 22, 0.35);
-                color: #6f2406;
-            }
-
-            .journal-entry {
-                display: none;
-                gap: 18px;
-                padding-top: 18px;
-            }
-
-            .journal-log-item:has(.journal-edit-toggle:checked) .journal-entry {
-                display: grid;
-            }
-
-            .journal-entry__meta {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .journal-entry__body p,
-            .journal-empty h2,
-            .journal-empty p {
-                margin: 0;
-            }
-
             .journal-entry__body strong {
                 display: block;
                 margin-bottom: 4px;
+                color: #16211d;
             }
 
             .journal-delete-dialog {
@@ -339,51 +347,39 @@
                 box-shadow: 0 24px 60px rgba(22, 33, 29, 0.18);
             }
 
-            .journal-delete-dialog__card p {
-                margin: 0;
-                color: #16211d;
-                font-family: Arial, Helvetica, sans-serif;
-                line-height: 1.6;
-            }
-
-            .journal-delete-dialog__actions {
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
-            }
-
-            .journal-delete-dialog__actions button {
-                border: 0;
-            }
-
-            .journal-delete-dialog__dismiss {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-            }
-
             .journal-section-anchor {
                 scroll-margin-top: 110px;
             }
 
-            @media (max-width: 920px) {
-                .journal-hero {
+            @media (max-width: 1080px) {
+                .journal-hero,
+                .journal-type-grid,
+                .journal-guided-grid {
                     grid-template-columns: 1fr;
                 }
 
+                .journal-stat-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+
+            @media (max-width: 760px) {
                 .journal-log-top {
                     grid-template-columns: 1fr;
                 }
 
-                .journal-log-actions {
-                    justify-self: start;
+                .journal-stat-grid {
+                    grid-template-columns: 1fr;
                 }
             }
         </style>
     </x-slot:head>
 
     <div class="journal-page">
+        @php
+            $latestEntryLabel = $latestEntryDate ? \Illuminate\Support\Carbon::parse($latestEntryDate)->format('d-m-Y') : __('hermes.journal.latest_fallback');
+        @endphp
+
         @if (session('status'))
             <div class="user-feedback user-feedback--status">
                 {{ session('status') }}
@@ -401,76 +397,246 @@
         <x-user-surface-card class="journal-card journal-hero">
             <div class="journal-hero__copy">
                 <x-user-section-heading :eyebrow="__('hermes.journal.eyebrow')" />
+                <h1 class="journal-hero__title">{{ __('hermes.journal.heading') }}</h1>
                 <p class="journal-hero__message">{{ __('hermes.journal.hero_message') }}</p>
+                <p class="journal-hero__note">{{ __('hermes.journal.hero_note') }}</p>
+
+                <div class="journal-quick-links">
+                    <a href="#journal-daily-note-form" class="pill journal-pill--sand">{{ __('hermes.journal.actions.daily_note') }}</a>
+                    <a href="#journal-three-good-things-form" class="pill journal-pill--orange">{{ __('hermes.journal.actions.three_good_things') }}</a>
+                    <a href="#journal-strengths-form" class="pill journal-pill--gray">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
+                    <a href="#journal-weekly-intention-form" class="pill journal-pill--green">{{ __('hermes.journal.actions.weekly_intention') }}</a>
+                    <a href="{{ route('journal.timeline') }}" class="pill pill--neutral">{{ __('hermes.journal.timeline_action') }}</a>
+                </div>
             </div>
 
-            <div class="journal-hero__actions">
-                <a href="#journal-three-good-things-form" class="pill journal-pill--orange">{{ __('hermes.journal.actions.three_good_things') }}</a>
-                <a href="#journal-strengths-form" class="pill journal-pill--gray">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
-                <a href="#journal-weekly-intention-form" class="pill journal-pill--green">{{ __('hermes.journal.actions.weekly_intention') }}</a>
+            <div class="journal-hero__panel">
+                <div class="journal-stat-grid">
+                    <div class="journal-stat">
+                        <span class="journal-stat-value">{{ $totalEntries }}</span>
+                        <span class="journal-stat-label">{{ __('hermes.journal.stats.entries') }}</span>
+                    </div>
+
+                    <div class="journal-stat">
+                        <span class="journal-stat-value">{{ $latestEntryLabel }}</span>
+                        <span class="journal-stat-label">{{ __('hermes.journal.stats.latest') }}</span>
+                    </div>
+
+                    <div class="journal-stat">
+                        <span class="journal-stat-value">{{ collect($entryCounts)->filter(fn ($count) => $count > 0)->count() }}</span>
+                        <span class="journal-stat-label">{{ __('hermes.journal.stats.formats') }}</span>
+                    </div>
+                </div>
+
+                <p class="journal-hint"><strong>{{ __('hermes.journal.privacy_note') }}</strong><br>{{ __('hermes.journal.intro') }}</p>
+            </div>
+        </x-user-surface-card>
+
+        <x-user-surface-card class="journal-card">
+            <x-user-section-heading
+                :eyebrow="__('hermes.journal.compose_eyebrow')"
+                :title="__('hermes.journal.compose_title')"
+                :text="__('hermes.journal.compose_text')"
+            />
+
+            <div class="journal-guided-grid">
+                <div class="journal-guided-card journal-guided-card--sand">
+                    <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.daily_note.eyebrow') }}</span>
+                    <h3>{{ __('hermes.journal.types.daily_note.title') }}</h3>
+                    <p>{{ __('hermes.journal.types.daily_note.text') }}</p>
+                </div>
+
+                <div class="journal-guided-card journal-guided-card--orange">
+                    <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.three_good_things.eyebrow') }}</span>
+                    <h3>{{ __('hermes.journal.types.three_good_things.title') }}</h3>
+                    <p>{{ __('hermes.journal.types.three_good_things.text') }}</p>
+                </div>
+
+                <div class="journal-guided-card journal-guided-card--gray">
+                    <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.strengths_reflection.eyebrow') }}</span>
+                    <h3>{{ __('hermes.journal.types.strengths_reflection.title') }}</h3>
+                    <p>{{ __('hermes.journal.types.strengths_reflection.text') }}</p>
+                </div>
+
+                <div class="journal-guided-card journal-guided-card--green">
+                    <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.weekly_intention.eyebrow') }}</span>
+                    <h3>{{ __('hermes.journal.types.weekly_intention.title') }}</h3>
+                    <p>{{ __('hermes.journal.types.weekly_intention.text') }}</p>
+                </div>
+            </div>
+
+            <div class="journal-type-grid">
+                <x-user-surface-card id="journal-daily-note-form" class="journal-card journal-section-anchor">
+                    <x-user-section-heading
+                        :eyebrow="__('hermes.journal.types.daily_note.eyebrow')"
+                        :title="__('hermes.journal.sections.daily_note')"
+                        :text="__('hermes.journal.types.daily_note.text')"
+                    />
+
+                    <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
+                        @csrf
+                        <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_DAILY_NOTE }}">
+
+                        <div class="journal-field">
+                            <label for="entry_date_daily_note">{{ __('hermes.journal.fields.entry_date') }}</label>
+                            <input id="entry_date_daily_note" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_DAILY_NOTE ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                        </div>
+
+                        @include('journal.partials.entry-fields', [
+                            'type' => \App\Models\JournalEntry::TYPE_DAILY_NOTE,
+                            'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_DAILY_NOTE ? old('content', []) : [],
+                            'prefix' => 'content',
+                            'suffix' => 'daily_note',
+                            'strengthOptions' => $strengthOptions,
+                            'selectedStrengthKeys' => $selectedStrengthKeys,
+                        ])
+
+                        <x-user-action-row align="end">
+                            <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
+                        </x-user-action-row>
+                    </form>
+                </x-user-surface-card>
+
+                <x-user-surface-card id="journal-three-good-things-form" class="journal-card journal-section-anchor">
+                    <x-user-section-heading
+                        :eyebrow="__('hermes.journal.types.three_good_things.eyebrow')"
+                        :title="__('hermes.journal.sections.three_good_things')"
+                        :text="__('hermes.journal.types.three_good_things.text')"
+                    />
+
+                    <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
+                        @csrf
+                        <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS }}">
+
+                        <div class="journal-field">
+                            <label for="entry_date_three_good_things">{{ __('hermes.journal.fields.entry_date') }}</label>
+                            <input id="entry_date_three_good_things" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                        </div>
+
+                        @include('journal.partials.entry-fields', [
+                            'type' => \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS,
+                            'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS ? old('content', []) : [],
+                            'prefix' => 'content',
+                            'suffix' => 'three_good_things',
+                            'strengthOptions' => $strengthOptions,
+                            'selectedStrengthKeys' => $selectedStrengthKeys,
+                        ])
+
+                        <x-user-action-row align="end">
+                            <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
+                        </x-user-action-row>
+                    </form>
+                </x-user-surface-card>
+
+                <x-user-surface-card id="journal-strengths-form" class="journal-card journal-section-anchor">
+                    <x-user-section-heading
+                        :eyebrow="__('hermes.journal.types.strengths_reflection.eyebrow')"
+                        :title="__('hermes.journal.sections.strengths_reflection')"
+                        :text="__('hermes.journal.types.strengths_reflection.text')"
+                    />
+
+                    <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
+                        @csrf
+                        <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION }}">
+
+                        <div class="journal-field">
+                            <label for="entry_date_strengths_reflection">{{ __('hermes.journal.fields.entry_date') }}</label>
+                            <input id="entry_date_strengths_reflection" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                        </div>
+
+                        @include('journal.partials.entry-fields', [
+                            'type' => \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION,
+                            'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? old('content', []) : [],
+                            'prefix' => 'content',
+                            'suffix' => 'strengths_reflection',
+                            'strengthOptions' => $strengthOptions,
+                            'selectedStrengthKeys' => $selectedStrengthKeys,
+                        ])
+
+                        <x-user-action-row align="end">
+                            <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
+                        </x-user-action-row>
+                    </form>
+                </x-user-surface-card>
+
+                <x-user-surface-card id="journal-weekly-intention-form" class="journal-card journal-section-anchor">
+                    <x-user-section-heading
+                        :eyebrow="__('hermes.journal.types.weekly_intention.eyebrow')"
+                        :title="__('hermes.journal.sections.weekly_intention')"
+                        :text="__('hermes.journal.types.weekly_intention.text')"
+                    />
+
+                    <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
+                        @csrf
+                        <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION }}">
+
+                        <div class="journal-field">
+                            <label for="entry_date_weekly_intention">{{ __('hermes.journal.fields.entry_date') }}</label>
+                            <input id="entry_date_weekly_intention" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                        </div>
+
+                        @include('journal.partials.entry-fields', [
+                            'type' => \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION,
+                            'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('content', []) : [],
+                            'prefix' => 'content',
+                            'suffix' => 'weekly_intention',
+                            'strengthOptions' => $strengthOptions,
+                            'selectedStrengthKeys' => $selectedStrengthKeys,
+                        ])
+
+                        <x-user-action-row align="end">
+                            <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
+                        </x-user-action-row>
+                    </form>
+                </x-user-surface-card>
             </div>
         </x-user-surface-card>
 
         <div class="journal-stack">
             <x-user-surface-card class="journal-card journal-log">
-                <x-user-section-heading :eyebrow="__('hermes.journal.entries_eyebrow')" />
+                <x-user-section-heading
+                    :eyebrow="__('hermes.journal.entries_eyebrow')"
+                    :title="__('hermes.journal.entries_title')"
+                    :text="__('hermes.journal.entries_text')"
+                />
 
                 <div class="journal-log-list">
                     @forelse ($entries as $entry)
                         @php
                             $typeKey = "hermes.journal.types.{$entry->entry_type}";
-                            $summary = $entry->isThreeGoodThings()
-                                ? $entry->contentValue('what_went_well')
-                                : ($entry->isStrengthsReflection()
-                                    ? trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('situation') ?? ''))
-                                    : trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('planned_strength_use') ?? '')));
+                            $summary = $entry->isDailyNote()
+                                ? ($entry->contentValue('title') ?: \Illuminate\Support\Str::limit($entry->contentValue('body') ?? '', 120))
+                                : ($entry->isThreeGoodThings()
+                                    ? $entry->contentValue('what_went_well')
+                                    : ($entry->isStrengthsReflection()
+                                        ? trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('situation') ?? ''))
+                                        : trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('planned_strength_use') ?? ''))));
                         @endphp
+
                         <x-user-surface-card variant="soft" class="journal-log-item">
-                            <input
-                                id="journal_edit_{{ $entry->getKey() }}"
-                                type="checkbox"
-                                class="journal-edit-toggle"
-                            >
-                            <input
-                                id="journal_delete_{{ $entry->getKey() }}"
-                                type="checkbox"
-                                class="journal-delete-toggle"
-                            >
+                            <input id="journal_edit_{{ $entry->getKey() }}" type="checkbox" class="journal-edit-toggle">
+                            <input id="journal_delete_{{ $entry->getKey() }}" type="checkbox" class="journal-delete-toggle">
 
-                            <div class="journal-log-row">
-                                <div class="journal-log-main">
-                                    <div class="journal-log-top">
-                                        <span class="journal-log-date">{{ $entry->entry_date->format('d-m-Y') }}</span>
+                            <div class="journal-log-top">
+                                <span class="journal-log-date">{{ $entry->entry_date->format('d-m-Y') }}</span>
 
-                                        <div class="journal-log-actions">
-                                            <span class="journal-entry__pill">{{ __($typeKey.'.label') }}</span>
+                                <div class="journal-log-actions">
+                                    <span class="journal-entry__pill">{{ __($typeKey.'.label') }}</span>
 
-                                            <label for="journal_edit_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.edit') }}">
-                                                <span class="journal-icon-button__symbol journal-icon-button__symbol--expand" aria-hidden="true">+</span>
-                                                <span class="journal-icon-button__symbol journal-icon-button__symbol--collapse" aria-hidden="true">-</span>
-                                            </label>
+                                    <label for="journal_edit_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.edit') }}">
+                                        <span class="journal-icon-button__symbol journal-icon-button__symbol--expand" aria-hidden="true">+</span>
+                                        <span class="journal-icon-button__symbol journal-icon-button__symbol--collapse" aria-hidden="true">-</span>
+                                    </label>
 
-                                            <label
-                                                for="journal_delete_{{ $entry->getKey() }}"
-                                                class="journal-icon-button journal-delete-button"
-                                                aria-label="{{ __('hermes.journal.delete') }}"
-                                            >
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M3 6h18" />
-                                                    <path d="M8 6V4h8v2" />
-                                                    <path d="M19 6l-1 14H6L5 6" />
-                                                    <path d="M10 11v6" />
-                                                    <path d="M14 11v6" />
-                                                </svg>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <span class="journal-log-summary">
-                                        <strong>{{ __($typeKey.'.label') }}</strong>
-                                        {{ \Illuminate\Support\Str::limit($summary ?? '', 120) }}
-                                    </span>
+                                    <label for="journal_delete_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.delete') }}">
+                                        <span class="journal-icon-button__symbol" aria-hidden="true">×</span>
+                                    </label>
                                 </div>
+                            </div>
+
+                            <div class="journal-log-summary">
+                                <strong>{{ $summary }}</strong>
+                                <span>{{ __($typeKey.'.text') }}</span>
                             </div>
 
                             <div class="journal-delete-dialog">
@@ -480,7 +646,7 @@
                                     <p id="journal_delete_title_{{ $entry->getKey() }}">{{ __('hermes.journal.delete_confirmation') }}</p>
 
                                     <div class="journal-delete-dialog__actions">
-                                        <label for="journal_delete_{{ $entry->getKey() }}" class="pill pill--neutral journal-delete-dialog__dismiss">{{ __('hermes.journal.cancel') }}</label>
+                                        <label for="journal_delete_{{ $entry->getKey() }}" class="pill pill--neutral">{{ __('hermes.journal.cancel') }}</label>
 
                                         <form method="POST" action="{{ route('journal.destroy', $entry) }}">
                                             @csrf
@@ -494,7 +660,10 @@
 
                             <div class="journal-entry">
                                 <div class="journal-entry__body">
-                                    @if ($entry->isThreeGoodThings())
+                                    @if ($entry->isDailyNote())
+                                        <p><strong>{{ __($typeKey.'.fields.title') }}</strong>{{ $entry->contentValue('title') }}</p>
+                                        <p><strong>{{ __($typeKey.'.fields.body') }}</strong>{{ $entry->contentValue('body') }}</p>
+                                    @elseif ($entry->isThreeGoodThings())
                                         <p><strong>{{ __($typeKey.'.fields.what_went_well') }}</strong>{{ $entry->contentValue('what_went_well') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.my_contribution') }}</strong>{{ $entry->contentValue('my_contribution') }}</p>
                                     @elseif ($entry->isStrengthsReflection())
@@ -502,7 +671,7 @@
                                         <p><strong>{{ __($typeKey.'.fields.situation') }}</strong>{{ $entry->contentValue('situation') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.how_used') }}</strong>{{ $entry->contentValue('how_used') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.reflection') }}</strong>{{ $entry->contentValue('reflection') }}</p>
-                                    @elseif ($entry->isWeeklyIntention())
+                                    @else
                                         <p><strong>{{ __($typeKey.'.fields.strength_key') }}</strong>{{ $entry->strengthLabel() }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.planned_strength_use') }}</strong>{{ $entry->contentValue('planned_strength_use') }}</p>
                                         <p><strong>{{ __($typeKey.'.fields.general_intention') }}</strong>{{ $entry->contentValue('general_intention') }}</p>
@@ -538,6 +707,7 @@
                         <x-user-surface-card variant="soft" class="journal-card journal-empty">
                             <h2>{{ __('hermes.journal.empty.title') }}</h2>
                             <p>{{ __('hermes.journal.empty.text') }}</p>
+                            <p>{{ __('hermes.journal.timeline_empty') }}</p>
                         </x-user-surface-card>
                     @endforelse
                 </div>
@@ -545,99 +715,6 @@
                 @if ($entries->hasPages())
                     {{ $entries->links() }}
                 @endif
-            </x-user-surface-card>
-
-            <x-user-surface-card id="journal-three-good-things-form" class="journal-card journal-section-anchor">
-                <x-user-section-heading
-                    :eyebrow="__('hermes.journal.types.three_good_things.eyebrow')"
-                    :title="__('hermes.journal.sections.three_good_things')"
-                    :text="__('hermes.journal.types.three_good_things.text')"
-                />
-
-                <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
-                    @csrf
-                    <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS }}">
-
-                    <div class="journal-field">
-                        <label for="entry_date_three_good_things">{{ __('hermes.journal.fields.entry_date') }}</label>
-                        <input id="entry_date_three_good_things" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
-                    </div>
-
-                    @include('journal.partials.entry-fields', [
-                        'type' => \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS,
-                        'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS ? old('content', []) : [],
-                        'prefix' => 'content',
-                        'suffix' => 'three_good_things',
-                        'strengthOptions' => $strengthOptions,
-                        'selectedStrengthKeys' => $selectedStrengthKeys,
-                    ])
-
-                    <x-user-action-row align="end">
-                        <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
-                    </x-user-action-row>
-                </form>
-            </x-user-surface-card>
-
-            <x-user-surface-card id="journal-strengths-form" class="journal-card journal-section-anchor">
-                <x-user-section-heading
-                    :eyebrow="__('hermes.journal.types.strengths_reflection.eyebrow')"
-                    :title="__('hermes.journal.sections.strengths_reflection')"
-                    :text="__('hermes.journal.types.strengths_reflection.text')"
-                />
-
-                <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
-                    @csrf
-                    <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION }}">
-
-                    <div class="journal-field">
-                        <label for="entry_date_strengths_reflection">{{ __('hermes.journal.fields.entry_date') }}</label>
-                        <input id="entry_date_strengths_reflection" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
-                    </div>
-
-                    @include('journal.partials.entry-fields', [
-                        'type' => \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION,
-                        'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? old('content', []) : [],
-                        'prefix' => 'content',
-                        'suffix' => 'strengths_reflection',
-                        'strengthOptions' => $strengthOptions,
-                        'selectedStrengthKeys' => $selectedStrengthKeys,
-                    ])
-
-                    <x-user-action-row align="end">
-                        <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
-                    </x-user-action-row>
-                </form>
-            </x-user-surface-card>
-
-            <x-user-surface-card id="journal-weekly-intention-form" class="journal-card journal-section-anchor">
-                <x-user-section-heading
-                    :eyebrow="__('hermes.journal.types.weekly_intention.eyebrow')"
-                    :title="__('hermes.journal.sections.weekly_intention')"
-                    :text="__('hermes.journal.types.weekly_intention.text')"
-                />
-
-                <form method="POST" action="{{ route('journal.store') }}" class="journal-form">
-                    @csrf
-                    <input type="hidden" name="entry_type" value="{{ \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION }}">
-
-                    <div class="journal-field">
-                        <label for="entry_date_weekly_intention">{{ __('hermes.journal.fields.entry_date') }}</label>
-                        <input id="entry_date_weekly_intention" name="entry_date" type="date" value="{{ old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('entry_date', now()->toDateString()) : now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
-                    </div>
-
-                    @include('journal.partials.entry-fields', [
-                        'type' => \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION,
-                        'values' => old('entry_type') === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? old('content', []) : [],
-                        'prefix' => 'content',
-                        'suffix' => 'weekly_intention',
-                        'strengthOptions' => $strengthOptions,
-                        'selectedStrengthKeys' => $selectedStrengthKeys,
-                    ])
-
-                    <x-user-action-row align="end">
-                        <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
-                    </x-user-action-row>
-                </form>
             </x-user-surface-card>
         </div>
     </div>
