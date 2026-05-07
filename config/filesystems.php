@@ -74,7 +74,7 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        rtrim((string) env('APP_PUBLIC_PATH', public_path()), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'storage' => storage_path('app/public'),
     ],
 
 ];

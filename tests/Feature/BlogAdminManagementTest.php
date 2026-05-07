@@ -159,6 +159,8 @@ test('admin blog form includes robust markdown preview support', function () {
     $this->actingAs($admin)
         ->get(route('admin.blog-posts.create'))
         ->assertOk()
+        ->assertSee('<script nonce="', false)
+        ->assertSee('data-insert-snippet="nl"', false)
         ->assertSee('overflow-wrap: anywhere;', false)
         ->assertSee('trimmed.match(/^(#{1,3})\\s*(.+)$/);', false)
         ->assertSee("rendered.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>\$1</strong>');", false)

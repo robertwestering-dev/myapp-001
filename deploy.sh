@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APP_DIR="/webroots/sites/hermesresults.com/hermesresults-app"
+PUBLIC_ROOT="/webroots/sites/hermesresults.com"
 PHP_BIN="php"
 COMPOSER_BIN="composer"
 SEED_CLASS="AcademyCourseSeeder"
@@ -38,6 +39,7 @@ trap cleanup EXIT
 say "Hermes Results deploy-script"
 say "Dit script is bedoeld voor de LIVE server van Hostnet."
 say "Actieve live map: $APP_DIR"
+say "Actieve publieke webroot: $PUBLIC_ROOT"
 
 if [[ ! -d "$APP_DIR" ]]; then
     say "FOUT: de app-map bestaat niet."
@@ -64,20 +66,22 @@ fi
 
 cd "$APP_DIR"
 
-say "1/9 - Controleren of dit een git-repository is"
+export APP_PUBLIC_PATH="$PUBLIC_ROOT"
+
+say "1/10 - Controleren of dit een git-repository is"
 git rev-parse --is-inside-work-tree >/dev/null
 
-say "2/9 - Applicatie in onderhoudsmodus zetten"
+say "2/10 - Applicatie in onderhoudsmodus zetten"
 "$PHP_BIN" artisan down || true
 APP_IS_DOWN=1
 
-say "3/9 - Nieuwe code ophalen met git pull"
+say "3/10 - Nieuwe code ophalen met git pull"
 git pull
 
-say "4/9 - PHP packages installeren"
+say "4/10 - PHP packages installeren"
 "$COMPOSER_BIN" install --no-dev --optimize-autoloader
 
-say "5/9 - Migraties uitvoeren"
+say "5/10 - Migraties uitvoeren"
 "$PHP_BIN" artisan migrate --force
 
 if confirm "Wil je ook de Academy seeder uitvoeren?"; then
@@ -87,20 +91,24 @@ else
     say "Academy seeder wordt overgeslagen"
 fi
 
-say "6/9 - Frontend assets"
+say "6/10 - Publieke storage-link herstellen"
+"$PHP_BIN" artisan storage:unlink || true
+"$PHP_BIN" artisan storage:link
+
+say "7/10 - Frontend assets"
 say "Op deze server is geen npm beschikbaar."
 say "Frontend-builds moet je daarom lokaal op je Mac maken met 'npm run build'."
 say "Upload daarna handmatig de map public/build naar de live server als je frontend hebt aangepast."
 
-say "7/9 - Laravel caches opschonen"
+say "8/10 - Laravel caches opschonen"
 "$PHP_BIN" artisan optimize:clear
 
-say "8/9 - Laravel caches opnieuw opbouwen"
+say "9/10 - Laravel caches opnieuw opbouwen"
 "$PHP_BIN" artisan config:cache
 "$PHP_BIN" artisan route:cache
 "$PHP_BIN" artisan view:cache
 
-say "9/9 - Applicatie weer online zetten"
+say "10/10 - Applicatie weer online zetten"
 "$PHP_BIN" artisan up
 APP_IS_DOWN=0
 

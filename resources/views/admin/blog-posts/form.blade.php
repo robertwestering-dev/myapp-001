@@ -353,7 +353,7 @@
         </form>
     </section>
 
-    <script>
+    <script nonce="{{ Vite::cspNonce() }}">
         document.addEventListener('DOMContentLoaded', () => {
             const escapeHtml = (value) => value
                 .replace(/&/g, '&amp;')
