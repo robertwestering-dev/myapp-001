@@ -48,6 +48,16 @@ class MediaAssetController extends Controller
             ->with('status', __('hermes.admin.media_assets.uploaded'));
     }
 
+    public function destroy(MediaAsset $mediaAsset): RedirectResponse
+    {
+        $mediaAsset->deleteFile();
+        $mediaAsset->delete();
+
+        return redirect()
+            ->route('admin.media-assets.index')
+            ->with('status', __('hermes.admin.media_assets.deleted'));
+    }
+
     protected function detectAssetType(UploadedFile $file): string
     {
         $mimeType = $file->getMimeType() ?: $file->getClientMimeType() ?: '';

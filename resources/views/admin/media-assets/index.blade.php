@@ -12,7 +12,8 @@
         .asset-meta,
         .asset-card,
         .asset-grid,
-        .asset-form {
+        .asset-form,
+        .asset-actions {
             display: grid;
             gap: 16px;
         }
@@ -37,6 +38,10 @@
 
         .asset-grid {
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .asset-actions {
+            grid-template-columns: 1fr;
         }
 
         .asset-card {
@@ -221,6 +226,15 @@
                         <span>Embed-snippet</span>
                         <textarea readonly class="asset-code">{{ $mediaAsset->embedSnippet() }}</textarea>
                     </label>
+
+                    <div class="asset-actions">
+                        <form method="POST" action="{{ route('admin.media-assets.destroy', $mediaAsset) }}">
+                            @csrf
+                            @method('DELETE')
+
+                            <button type="submit" class="danger-pill">Asset verwijderen</button>
+                        </form>
+                    </div>
                 </article>
             @empty
                 <article class="asset-card">

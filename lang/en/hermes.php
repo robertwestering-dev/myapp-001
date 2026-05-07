@@ -980,6 +980,7 @@ return [
         ],
         'media_assets' => [
             'uploaded' => 'Asset successfully uploaded.',
+            'deleted' => 'Asset successfully deleted.',
         ],
         'portal' => [
             'lead_admin' => 'You are logged in as admin with account :email. From this environment you manage organizations, questionnaires and reporting across all organizations.',

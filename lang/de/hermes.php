@@ -941,6 +941,7 @@ return [
         ],
         'media_assets' => [
             'uploaded' => 'Asset erfolgreich hochgeladen.',
+            'deleted' => 'Asset erfolgreich gelöscht.',
         ],
         'portal' => [
             'lead_admin' => 'Sie sind als Admin mit dem Konto :email angemeldet. In dieser Umgebung verwalten Sie Organisationen, Fragebögen und Berichte über alle Organisationen hinweg.',

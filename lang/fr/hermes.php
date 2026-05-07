@@ -625,6 +625,7 @@ return [
         ],
         'media_assets' => [
             'uploaded' => 'Asset téléchargé avec succès.',
+            'deleted' => 'Asset supprimé avec succès.',
         ],
     ],
     'questionnaire' => [

@@ -833,11 +833,19 @@ Huidige functie:
 - upload van losse bestanden naar de server
 - bedoeld voor afbeeldingen, video's, pdf's en vergelijkbare media
 - per asset worden URL, embed-snippet, bestandstype, uploader en bestandsgrootte getoond
+- per asset kan een globale admin het bestand ook direct verwijderen vanuit de bibliotheek
+- asset-URL's lopen niet meer via `Storage::url()` maar via Laravel-routes, zodat de bibliotheek niet afhankelijk is van een Hostnet-`/storage` symlink
 
 Afbakening:
 
 - deze assetbibliotheek is voor losse bestanden
 - complete e-learning exports met eigen mapstructuur horen niet in deze flow
+
+Technische afspraken:
+
+- nieuwe directe asset-URL's gebruiken de publieke route `/media-assets/{mediaAsset}`
+- bestaande of al gekopieerde links onder `/storage/media-assets/...` blijven bewust ondersteund via een Laravel fallback-route
+- `MediaAsset::url()` en `MediaAsset::absoluteUrl()` genereren route-gebaseerde URLs; herintroduceer geen directe `Storage::disk(...)->url(...)` koppeling voor publieke assets
 
 ## Rapportages En Export
 
@@ -967,12 +975,48 @@ Admin, blog en assets:
 - `resources/views/admin/blog-posts/form.blade.php`
 - `app/Http/Controllers/BlogSitemapController.php`
 - `app/Http/Controllers/Admin/MediaAssetController.php`
+- `app/Http/Controllers/MediaAssetFileController.php`
+- `app/Models/MediaAsset.php`
 
 Services en autorisatie:
 
 - `app/Services/SpotlightQuestionnaireService.php`
 - `app/Services/AuditLogger.php`
 - `app/Services/SuccessfulLoginSummary.php`
+
+## Sessie-update 2026-05-07
+
+Blogformulier en assetbibliotheek bijgewerkt:
+
+- het admin-blogformulier gebruikte een inline script zonder CSP nonce; daardoor werkten de knoppen `Afbeelding snippet`, `Video shortcode` en `CTA blok` niet — dit is opgelost met `nonce="{{ Vite::cspNonce() }}"`
+- publieke media-assets worden nu door Laravel zelf uitgeserveerd in plaats van via Hostnet-`/storage`-mapping alleen
+- nieuwe assetlinks gebruiken `/media-assets/{mediaAsset}`
+- oude assetlinks onder `/storage/media-assets/...` blijven werken via een compatibiliteitsroute
+- assets kunnen nu ook vanuit de assetbibliotheek worden verwijderd; daarbij worden zowel het database-record als het fysieke bestand verwijderd
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `resources/views/admin/blog-posts/form.blade.php`
+- `resources/views/admin/media-assets/index.blade.php`
+- `app/Http/Controllers/Admin/MediaAssetController.php`
+- `app/Http/Controllers/MediaAssetFileController.php`
+- `app/Models/MediaAsset.php`
+- `routes/web.php`
+- `config/filesystems.php`
+- `deploy.sh`
+- `tests/Feature/BlogAdminManagementTest.php`
+- `tests/Feature/AssetManagementTest.php`
+- `tests/Unit/FilesystemConfigTest.php`
+- `lang/nl/hermes.php`
+- `lang/en/hermes.php`
+- `lang/de/hermes.php`
+- `lang/fr/hermes.php`
+
+Gerichte teststatus uit deze sessie:
+
+- `tests/Feature/BlogAdminManagementTest.php` groen
+- `tests/Feature/AssetManagementTest.php` groen
+- `tests/Unit/FilesystemConfigTest.php` groen
 - `app/Actions/Fortify/LoginResponse.php`
 - `app/Actions/Fortify/TwoFactorLoginResponse.php`
 - `app/Policies/QuestionnairePolicy.php`

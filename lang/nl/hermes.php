@@ -1004,6 +1004,7 @@ return [
         ],
         'media_assets' => [
             'uploaded' => 'Asset succesvol geüpload.',
+            'deleted' => 'Asset succesvol verwijderd.',
         ],
         'portal' => [
             'lead_admin' => 'U bent ingelogd als admin met het account :email. Vanuit deze omgeving beheer je organisaties, questionnaires en rapportage over alle organisaties heen.',

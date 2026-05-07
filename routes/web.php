@@ -31,6 +31,7 @@ use App\Http\Controllers\ForumReplyController;
 use App\Http\Controllers\ForumThreadController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MediaAssetFileController;
 use App\Http\Controllers\ProUpgradeController;
 use App\Http\Controllers\QuestionnaireLibraryController;
 use App\Http\Controllers\QuestionnaireResponseController;
@@ -63,6 +64,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 Route::view('/privacy', 'privacy')->name('privacy.show');
 Route::view('/voor-organisaties', 'organizations')->name('organizations.landing');
 Route::view('/contact', 'contact')->name('contact.show');
+Route::get('/media-assets/{mediaAsset}', [MediaAssetFileController::class, 'show'])->name('media-assets.show');
+Route::get('/storage/media-assets/{mediaAssetPath}', [MediaAssetFileController::class, 'legacy'])
+    ->where('mediaAssetPath', '.*')
+    ->name('media-assets.legacy');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
 
@@ -176,6 +181,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                     ->group(function (): void {
                         Route::get('/', [MediaAssetController::class, 'index'])->name('index');
                         Route::post('/', [MediaAssetController::class, 'store'])->middleware('throttle:20,1')->name('store');
+                        Route::delete('/{mediaAsset}', [MediaAssetController::class, 'destroy'])->name('destroy');
                     });
 
                 Route::prefix('users')

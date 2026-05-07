@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Number;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Fillable([
     'uploaded_by',
@@ -46,12 +47,34 @@ class MediaAsset extends Model
 
     public function url(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        return route('media-assets.show', ['mediaAsset' => $this], absolute: false);
     }
 
     public function absoluteUrl(): string
     {
-        return url($this->url());
+        return route('media-assets.show', ['mediaAsset' => $this]);
+    }
+
+    public function existsOnDisk(): bool
+    {
+        return Storage::disk($this->disk)->exists($this->path);
+    }
+
+    public function deleteFile(): void
+    {
+        if (! $this->existsOnDisk()) {
+            return;
+        }
+
+        Storage::disk($this->disk)->delete($this->path);
+    }
+
+    public function streamResponse(): StreamedResponse
+    {
+        return Storage::disk($this->disk)->response($this->path, $this->original_name, [
+            'Cache-Control' => 'public, max-age=31536000',
+            'Content-Type' => $this->mime_type,
+        ]);
     }
 
     public function isImage(): bool
