@@ -9,7 +9,6 @@
             .journal-hero,
             .journal-log,
             .journal-type-grid,
-            .journal-stat-grid,
             .journal-guided-grid {
                 display: grid;
                 gap: 24px;
@@ -31,7 +30,6 @@
             }
 
             .journal-hero {
-                grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
                 align-items: start;
                 background:
                     radial-gradient(circle at top left, rgba(217, 106, 43, 0.18), transparent 35%),
@@ -40,13 +38,11 @@
             }
 
             .journal-hero__copy,
-            .journal-hero__panel,
             .journal-guided-card {
                 display: grid;
                 gap: 16px;
             }
 
-            .journal-hero__title,
             .journal-guided-card h3,
             .journal-log-summary strong,
             .journal-empty h2 {
@@ -54,20 +50,11 @@
                 color: #17231f;
             }
 
-            .journal-hero__title {
-                font-size: clamp(2.2rem, 4vw, 3.8rem);
-                line-height: 1.02;
-                max-width: 10ch;
-            }
-
             .journal-hero__message,
-            .journal-hero__note,
             .journal-guided-card p,
             .journal-helper,
-            .journal-hint,
             .journal-empty p,
             .journal-log-summary,
-            .journal-stat-label,
             .journal-field label,
             .journal-entry__meta,
             .journal-entry__body p {
@@ -77,36 +64,13 @@
             }
 
             .journal-hero__message {
-                max-width: 40rem;
+                max-width: none;
                 font-size: 1.04rem;
                 color: #33413d;
             }
 
-            .journal-hero__panel {
-                padding: 24px;
-                border-radius: 26px;
-                background: rgba(255, 252, 247, 0.72);
-                border: 1px solid rgba(22, 33, 29, 0.08);
-            }
-
-            .journal-stat-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 12px;
-            }
-
-            .journal-stat {
-                display: grid;
-                gap: 8px;
-                padding: 16px;
-                border-radius: 22px;
-                background: rgba(255, 255, 255, 0.65);
-            }
-
-            .journal-stat-value {
-                font-family: "Avenir Next", "Segoe UI", sans-serif;
-                font-size: 1.7rem;
-                font-weight: 700;
-                color: #1f4a3d;
+            .journal-card > .user-section-heading > p {
+                max-width: none;
             }
 
             .journal-quick-links,
@@ -192,6 +156,15 @@
             .journal-type-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 20px;
+            }
+
+            .journal-entry-form-card {
+                display: none;
+            }
+
+            .journal-entry-form-card:target,
+            .journal-entry-form-card.is-active {
+                display: block;
             }
 
             .journal-field {
@@ -352,23 +325,14 @@
             }
 
             @media (max-width: 1080px) {
-                .journal-hero,
                 .journal-type-grid,
                 .journal-guided-grid {
                     grid-template-columns: 1fr;
-                }
-
-                .journal-stat-grid {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
             }
 
             @media (max-width: 760px) {
                 .journal-log-top {
-                    grid-template-columns: 1fr;
-                }
-
-                .journal-stat-grid {
                     grid-template-columns: 1fr;
                 }
             }
@@ -377,7 +341,12 @@
 
     <div class="journal-page">
         @php
-            $latestEntryLabel = $latestEntryDate ? \Illuminate\Support\Carbon::parse($latestEntryDate)->format('d-m-Y') : __('hermes.journal.latest_fallback');
+            $activeEntryType = $errors->any() ? old('entry_type') : null;
+            $journalEntryFormClass = 'user-surface-card user-surface-card--default journal-card journal-section-anchor journal-entry-form-card';
+            $dailyNoteFormClass = $journalEntryFormClass.($activeEntryType === \App\Models\JournalEntry::TYPE_DAILY_NOTE ? ' is-active' : '');
+            $threeGoodThingsFormClass = $journalEntryFormClass.($activeEntryType === \App\Models\JournalEntry::TYPE_THREE_GOOD_THINGS ? ' is-active' : '');
+            $strengthsReflectionFormClass = $journalEntryFormClass.($activeEntryType === \App\Models\JournalEntry::TYPE_STRENGTHS_REFLECTION ? ' is-active' : '');
+            $weeklyIntentionFormClass = $journalEntryFormClass.($activeEntryType === \App\Models\JournalEntry::TYPE_WEEKLY_INTENTION ? ' is-active' : '');
         @endphp
 
         @if (session('status'))
@@ -397,38 +366,11 @@
         <x-user-surface-card class="journal-card journal-hero">
             <div class="journal-hero__copy">
                 <x-user-section-heading :eyebrow="__('hermes.journal.eyebrow')" />
-                <h1 class="journal-hero__title">{{ __('hermes.journal.heading') }}</h1>
                 <p class="journal-hero__message">{{ __('hermes.journal.hero_message') }}</p>
-                <p class="journal-hero__note">{{ __('hermes.journal.hero_note') }}</p>
 
                 <div class="journal-quick-links">
-                    <a href="#journal-daily-note-form" class="pill journal-pill--sand">{{ __('hermes.journal.actions.daily_note') }}</a>
-                    <a href="#journal-three-good-things-form" class="pill journal-pill--orange">{{ __('hermes.journal.actions.three_good_things') }}</a>
-                    <a href="#journal-strengths-form" class="pill journal-pill--gray">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
-                    <a href="#journal-weekly-intention-form" class="pill journal-pill--green">{{ __('hermes.journal.actions.weekly_intention') }}</a>
                     <a href="{{ route('journal.timeline') }}" class="pill pill--neutral">{{ __('hermes.journal.timeline_action') }}</a>
                 </div>
-            </div>
-
-            <div class="journal-hero__panel">
-                <div class="journal-stat-grid">
-                    <div class="journal-stat">
-                        <span class="journal-stat-value">{{ $totalEntries }}</span>
-                        <span class="journal-stat-label">{{ __('hermes.journal.stats.entries') }}</span>
-                    </div>
-
-                    <div class="journal-stat">
-                        <span class="journal-stat-value">{{ $latestEntryLabel }}</span>
-                        <span class="journal-stat-label">{{ __('hermes.journal.stats.latest') }}</span>
-                    </div>
-
-                    <div class="journal-stat">
-                        <span class="journal-stat-value">{{ collect($entryCounts)->filter(fn ($count) => $count > 0)->count() }}</span>
-                        <span class="journal-stat-label">{{ __('hermes.journal.stats.formats') }}</span>
-                    </div>
-                </div>
-
-                <p class="journal-hint"><strong>{{ __('hermes.journal.privacy_note') }}</strong><br>{{ __('hermes.journal.intro') }}</p>
             </div>
         </x-user-surface-card>
 
@@ -444,29 +386,36 @@
                     <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.daily_note.eyebrow') }}</span>
                     <h3>{{ __('hermes.journal.types.daily_note.title') }}</h3>
                     <p>{{ __('hermes.journal.types.daily_note.text') }}</p>
+                    <a href="#journal-daily-note-form" class="pill journal-pill--sand">{{ __('hermes.journal.actions.daily_note') }}</a>
                 </div>
 
                 <div class="journal-guided-card journal-guided-card--orange">
                     <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.three_good_things.eyebrow') }}</span>
                     <h3>{{ __('hermes.journal.types.three_good_things.title') }}</h3>
                     <p>{{ __('hermes.journal.types.three_good_things.text') }}</p>
+                    <a href="#journal-three-good-things-form" class="pill journal-pill--orange">{{ __('hermes.journal.actions.three_good_things') }}</a>
                 </div>
 
                 <div class="journal-guided-card journal-guided-card--gray">
                     <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.strengths_reflection.eyebrow') }}</span>
                     <h3>{{ __('hermes.journal.types.strengths_reflection.title') }}</h3>
                     <p>{{ __('hermes.journal.types.strengths_reflection.text') }}</p>
+                    <a href="#journal-strengths-form" class="pill journal-pill--gray">{{ __('hermes.journal.actions.strengths_reflection') }}</a>
                 </div>
 
                 <div class="journal-guided-card journal-guided-card--green">
                     <span class="journal-guided-card__eyebrow">{{ __('hermes.journal.types.weekly_intention.eyebrow') }}</span>
                     <h3>{{ __('hermes.journal.types.weekly_intention.title') }}</h3>
                     <p>{{ __('hermes.journal.types.weekly_intention.text') }}</p>
+                    <a href="#journal-weekly-intention-form" class="pill journal-pill--green">{{ __('hermes.journal.actions.weekly_intention') }}</a>
                 </div>
             </div>
 
             <div class="journal-type-grid">
-                <x-user-surface-card id="journal-daily-note-form" class="journal-card journal-section-anchor">
+                <article
+                    id="journal-daily-note-form"
+                    class="{{ $dailyNoteFormClass }}"
+                >
                     <x-user-section-heading
                         :eyebrow="__('hermes.journal.types.daily_note.eyebrow')"
                         :title="__('hermes.journal.sections.daily_note')"
@@ -495,9 +444,12 @@
                             <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
                         </x-user-action-row>
                     </form>
-                </x-user-surface-card>
+                </article>
 
-                <x-user-surface-card id="journal-three-good-things-form" class="journal-card journal-section-anchor">
+                <article
+                    id="journal-three-good-things-form"
+                    class="{{ $threeGoodThingsFormClass }}"
+                >
                     <x-user-section-heading
                         :eyebrow="__('hermes.journal.types.three_good_things.eyebrow')"
                         :title="__('hermes.journal.sections.three_good_things')"
@@ -526,9 +478,12 @@
                             <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
                         </x-user-action-row>
                     </form>
-                </x-user-surface-card>
+                </article>
 
-                <x-user-surface-card id="journal-strengths-form" class="journal-card journal-section-anchor">
+                <article
+                    id="journal-strengths-form"
+                    class="{{ $strengthsReflectionFormClass }}"
+                >
                     <x-user-section-heading
                         :eyebrow="__('hermes.journal.types.strengths_reflection.eyebrow')"
                         :title="__('hermes.journal.sections.strengths_reflection')"
@@ -557,9 +512,12 @@
                             <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
                         </x-user-action-row>
                     </form>
-                </x-user-surface-card>
+                </article>
 
-                <x-user-surface-card id="journal-weekly-intention-form" class="journal-card journal-section-anchor">
+                <article
+                    id="journal-weekly-intention-form"
+                    class="{{ $weeklyIntentionFormClass }}"
+                >
                     <x-user-section-heading
                         :eyebrow="__('hermes.journal.types.weekly_intention.eyebrow')"
                         :title="__('hermes.journal.sections.weekly_intention')"
@@ -588,7 +546,7 @@
                             <button type="submit" class="pill">{{ __('hermes.journal.save') }}</button>
                         </x-user-action-row>
                     </form>
-                </x-user-surface-card>
+                </article>
             </div>
         </x-user-surface-card>
 

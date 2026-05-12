@@ -577,7 +577,6 @@ return [
         'heading' => 'Personliches Tagebuch',
         'intro' => 'Nutzen Sie dieses Tagebuch fur verschiedene Arten von Reflexionen. Zurzeit konnen Sie festhalten, was gut lief und wie Sie Ihre Starken eingesetzt haben. Nur Sie konnen diese Seite sehen.',
         'hero_message' => 'Nutzen Sie dieses Tagebuch fur Ihre Reflexionen. Es wird Ihnen enorm helfen!',
-        'hero_note' => 'Schreiben Sie frei in einer allgemeinen Tagebuchnotiz und nutzen Sie begleitete Formate fur Starken, Three good things und Vorhaben.',
         'actions' => [
             'daily_note' => 'Freies Schreiben',
             'three_good_things' => '3 gute Dinge heute',

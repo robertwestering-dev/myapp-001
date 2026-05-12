@@ -107,8 +107,10 @@ class JournalController extends Controller
 
         $entry->update($this->upsertJournalEntry->payload($request->validated()));
 
+        $returnRoute = $this->resolveReturnRoute($request);
+
         return redirect()
-            ->route('journal.index')
+            ->route($returnRoute, $this->resolveReturnParameters($request, $returnRoute))
             ->with('status', __('hermes.journal.status.updated'));
     }
 
@@ -118,8 +120,10 @@ class JournalController extends Controller
 
         $entry->delete();
 
+        $returnRoute = $this->resolveReturnRoute($request);
+
         return redirect()
-            ->route('journal.index')
+            ->route($returnRoute, $this->resolveReturnParameters($request, $returnRoute))
             ->with('status', __('hermes.journal.status.deleted'));
     }
 

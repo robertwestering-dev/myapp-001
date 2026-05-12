@@ -30,11 +30,46 @@ test('pro users can view only their own journal entries', function () {
     $this->actingAs($user)
         ->get(route('journal.index'))
         ->assertOk()
+        ->assertSee('Jouw dagboek')
+        ->assertDontSee('Jouw persoonlijke dagboek')
+        ->assertDontSee('Privé voor jouw account')
+        ->assertDontSee('Laatste moment')
+        ->assertDontSee('Formats actief')
         ->assertSee('Maak van je dagboek een klein dagelijks ritueel. Schrijf vrij, kies een begeleide reflectie en bouw zo aan meer overzicht, focus en welbevinden.')
-        ->assertSee('Vrij schrijven')
-        ->assertSee('Three good things')
-        ->assertSee('Sterke punten')
-        ->assertSee('Mijn voornemens')
+        ->assertDontSee('Je kunt generiek schrijven en tegelijk gebruikmaken van drie gerichte journalformats: hoe je jouw sterke punten gebruikte, je three-good-things moment en je voornemens voor de komende periode.')
+        ->assertSee('.journal-entry-form-card {', false)
+        ->assertSee('display: none;', false)
+        ->assertSee('.journal-entry-form-card:target', false)
+        ->assertSeeInOrder([
+            'Maak van je dagboek een klein dagelijks ritueel.',
+            'Open compacte timeline',
+            'Kies hoe je vandaag wilt schrijven',
+        ])
+        ->assertSeeInOrder([
+            'Gebruik dit als jouw basisdagboek: open, generiek en flexibel, zonder vast format behalve een titel en je eigen verhaal.',
+            'href="#journal-daily-note-form"',
+            'Vrij schrijven',
+        ], false)
+        ->assertSeeInOrder([
+            'Een warme, praktische dankbaarheidscheck-in waarmee je zichtbaar maakt wat goed ging en welk aandeel jij daarin had.',
+            'href="#journal-three-good-things-form"',
+            'Three good things',
+        ], false)
+        ->assertSeeInOrder([
+            'Koppel een concrete situatie aan een van je gekozen sterke punten en maak zichtbaar wat dat je opleverde.',
+            'href="#journal-strengths-form"',
+            'Sterke punten',
+        ], false)
+        ->assertSeeInOrder([
+            'Kies een van je sterke kanten en vertaal die naar een helder voornemen voor de komende week of periode.',
+            'href="#journal-weekly-intention-form"',
+            'Voornemens',
+        ], false)
+        ->assertSee('id="journal-daily-note-form"', false)
+        ->assertSee('id="journal-three-good-things-form"', false)
+        ->assertSee('id="journal-strengths-form"', false)
+        ->assertSee('id="journal-weekly-intention-form"', false)
+        ->assertSee('class="user-surface-card user-surface-card--default journal-card journal-section-anchor journal-entry-form-card"', false)
         ->assertSee('Noteer je drie goede dingen van vandaag, of beschrijf het belangrijkste positieve moment dat je wilt onthouden.')
         ->assertSee('Weet u zeker dat u dit item wilt verwijderen?')
         ->assertSee($visibleEntry->contentValue('what_went_well'))
@@ -86,13 +121,62 @@ test('pro users can view the compact timeline page with only their own journal e
         ->get(route('journal.timeline', ['month' => '2026-04']))
         ->assertOk()
         ->assertSee('April 2026')
+        ->assertSee('.timeline-toolbar {', false)
+        ->assertSee('display: flex;', false)
+        ->assertSee('grid-template-columns: 32px minmax(0, 1fr) 32px;', false)
         ->assertSee(route('journal.timeline', ['month' => '2026-03']), false)
         ->assertSee(route('journal.timeline', ['month' => '2026-05']), false)
+        ->assertSee('for="timeline_edit_'.$dailyNote->getKey().'"', false)
+        ->assertSee('id="timeline_delete_'.$dailyNote->getKey().'"', false)
+        ->assertSee('class="timeline-action-button" title="Annuleer" aria-label="Annuleer"', false)
+        ->assertSee('form="timeline_update_'.$dailyNote->getKey().'"', false)
+        ->assertSee('class="timeline-action-button timeline-action-button--save"', false)
+        ->assertSee('background: linear-gradient(135deg, #20453a 0%, #162d26 100%);', false)
+        ->assertSee('class="timeline-action-button timeline-action-button--delete"', false)
+        ->assertSee('class="timeline-delete-dialog"', false)
+        ->assertSee('Weet u zeker dat u dit item wilt verwijderen?')
+        ->assertSee(route('journal.update', $dailyNote), false)
+        ->assertSee('name="_method" value="PUT"', false)
+        ->assertSee('name="return_to" value="journal.timeline"', false)
+        ->assertSee('name="return_month" value="2026-04"', false)
         ->assertSee($dailyNote->contentValue('title'))
         ->assertSee('Ik nam vandaag bewust gas terug en dat voelde goed.')
         ->assertDontSee('Alleen zichtbaar in maart.')
         ->assertDontSee('Niet zichtbaar in de timeline.')
         ->assertDontSee('Deze tekst hoort verborgen te blijven.');
+});
+
+test('pro users can update an entry from the compact timeline and return to the same month', function () {
+    $user = User::factory()->pro()->create();
+
+    $entry = JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-21',
+        'content' => [
+            'title' => 'Oude titel',
+            'body' => 'Oude inhoud.',
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->put(route('journal.update', $entry), [
+            'entry_date' => '2026-04-22',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'return_to' => 'journal.timeline',
+            'return_month' => '2026-04',
+            'edit_entry_id' => $entry->getKey(),
+            'content' => [
+                'title' => 'Nieuwe titel',
+                'body' => 'Nieuwe inhoud vanuit de timeline.',
+            ],
+        ])
+        ->assertRedirect(route('journal.timeline', ['month' => '2026-04']));
+
+    $entry->refresh();
+
+    expect($entry->entry_date->toDateString())->toBe('2026-04-22')
+        ->and($entry->contentValue('title'))->toBe('Nieuwe titel')
+        ->and($entry->contentValue('body'))->toBe('Nieuwe inhoud vanuit de timeline.');
 });
 
 test('regular users are redirected to the pro upgrade page for the compact timeline', function () {

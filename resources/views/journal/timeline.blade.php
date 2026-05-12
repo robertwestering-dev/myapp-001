@@ -5,6 +5,7 @@
     $defaultEntryDate = min(now()->toDateString(), $activeMonth->endOfMonth()->toDateString());
     $isTimelineValidationState = $errors->any() && old('return_to') === 'journal.timeline';
     $selectedType = $isTimelineValidationState ? old('entry_type') : null;
+    $activeEditEntryId = $isTimelineValidationState && old('edit_entry_id') ? (int) old('edit_entry_id') : null;
     $hasActiveFilters = $selectedTypes !== [];
 
     $typeCards = [
@@ -47,24 +48,25 @@
             }
 
             .timeline-toolbar {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: flex;
                 align-items: center;
-                gap: 16px;
+                gap: 12px;
                 padding: 6px 4px 18px;
             }
 
             .timeline-monthbar {
-                display: flex;
+                display: grid;
+                grid-template-columns: 34px minmax(0, 1fr) 34px;
                 align-items: center;
-                justify-content: space-between;
                 gap: 12px;
-                width: 100%;
+                flex: 1 1 auto;
+                min-width: 0;
                 max-width: 100%;
             }
 
             .timeline-toolbar__actions {
                 display: flex;
+                flex: 0 0 auto;
                 justify-content: flex-end;
                 gap: 10px;
             }
@@ -81,7 +83,8 @@
             .timeline-form label,
             .timeline-form input,
             .timeline-form select,
-            .timeline-form textarea {
+            .timeline-form textarea,
+            .timeline-item__edit-trigger {
                 margin: 0;
                 font-family: "Avenir Next", "Segoe UI", sans-serif;
             }
@@ -91,7 +94,10 @@
                 font-weight: 700;
                 color: #3b4a45;
                 text-align: center;
-                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             .timeline-monthbar__nav,
@@ -358,6 +364,25 @@
                 background: rgba(255, 255, 255, 0.94);
             }
 
+            .timeline-item:has(.timeline-item__edit-toggle:checked),
+            .timeline-item.is-editing {
+                display: grid;
+                grid-template-columns: 56px minmax(0, 1fr) 72px;
+                align-items: start;
+            }
+
+            .timeline-item__edit-toggle {
+                position: absolute;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .timeline-item__delete-toggle {
+                position: absolute;
+                opacity: 0;
+                pointer-events: none;
+            }
+
             .timeline-item__leading {
                 display: flex;
                 width: 56px;
@@ -393,6 +418,20 @@
                 min-width: 0;
                 gap: 4px;
                 padding-right: 8px;
+            }
+
+            .timeline-item__edit-trigger {
+                display: grid;
+                gap: 4px;
+                text-align: left;
+                cursor: pointer;
+            }
+
+            .timeline-item__edit-trigger:hover .timeline-item__title,
+            .timeline-item__edit-trigger:focus-visible .timeline-item__title {
+                color: #1f4a3d;
+                text-decoration: underline;
+                text-underline-offset: 3px;
             }
 
             .timeline-item__title,
@@ -457,6 +496,113 @@
                 height: 28px;
             }
 
+            .timeline-item__editor {
+                display: none;
+                grid-column: 2 / -1;
+                padding-top: 4px;
+            }
+
+            .timeline-item:has(.timeline-item__edit-toggle:checked) .timeline-item__editor,
+            .timeline-item.is-editing .timeline-item__editor {
+                display: grid;
+            }
+
+            .timeline-item__editor-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .timeline-item__delete-form {
+                display: contents;
+            }
+
+            .timeline-action-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                padding: 0;
+                border: 1px solid rgba(22, 33, 29, 0.12);
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.92);
+                color: #20453a;
+                cursor: pointer;
+                transition: transform 160ms ease, box-shadow 160ms ease;
+            }
+
+            .timeline-action-button:hover,
+            .timeline-action-button:focus-visible {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 22px rgba(22, 33, 29, 0.1);
+            }
+
+            .timeline-action-button svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .timeline-action-button--save {
+                color: #fff8f2;
+                border-color: rgba(32, 69, 58, 0.28);
+                background: linear-gradient(135deg, #20453a 0%, #162d26 100%);
+            }
+
+            .timeline-action-button--delete {
+                color: #fff8f2;
+                border-color: rgba(154, 56, 36, 0.28);
+                background: linear-gradient(135deg, #b74c35 0%, #8e2f21 100%);
+            }
+
+            .timeline-delete-dialog {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                z-index: 80;
+            }
+
+            .timeline-item:has(.timeline-item__delete-toggle:checked) .timeline-delete-dialog {
+                display: flex;
+            }
+
+            .timeline-delete-dialog__backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(22, 33, 29, 0.35);
+            }
+
+            .timeline-delete-dialog__card {
+                position: relative;
+                display: grid;
+                gap: 18px;
+                width: min(100%, 28rem);
+                padding: 28px;
+                border-radius: 24px;
+                background: #fffdf8;
+                border: 1px solid rgba(22, 33, 29, 0.08);
+                box-shadow: 0 24px 60px rgba(22, 33, 29, 0.18);
+            }
+
+            .timeline-delete-dialog__card p {
+                margin: 0;
+                color: #21302b;
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
+                font-weight: 700;
+                line-height: 1.5;
+            }
+
+            .timeline-delete-dialog__actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
             .timeline-footer {
                 padding: 16px 22px 22px;
                 background: rgba(255, 252, 248, 0.98);
@@ -487,16 +633,43 @@
                 }
 
                 .timeline-toolbar {
-                    grid-template-columns: 1fr;
+                    gap: 8px;
+                    padding: 4px 0 16px;
+                }
+
+                .timeline-monthbar {
+                    grid-template-columns: 32px minmax(0, 1fr) 32px;
+                    gap: 8px;
                 }
 
                 .timeline-toolbar__actions {
-                    justify-content: start;
+                    gap: 8px;
+                    justify-content: flex-end;
+                }
+
+                .timeline-monthbar__nav {
+                    width: 32px;
+                    height: 32px;
+                }
+
+                .timeline-toolbar__filter,
+                .timeline-toolbar__add {
+                    width: 36px;
+                    height: 36px;
+                }
+
+                .timeline-monthbar__title {
+                    font-size: 0.95rem;
                 }
 
                 .timeline-item {
                     gap: 14px;
                     padding: 16px;
+                }
+
+                .timeline-item:has(.timeline-item__edit-toggle:checked),
+                .timeline-item.is-editing {
+                    grid-template-columns: 48px minmax(0, 1fr) 56px;
                 }
 
                 .timeline-item__icon {
@@ -667,7 +840,10 @@
                             };
                         @endphp
 
-                        <article class="timeline-item">
+                        <article class="timeline-item {{ $activeEditEntryId === $entry->getKey() ? 'is-editing' : '' }}">
+                            <input id="timeline_edit_{{ $entry->getKey() }}" type="checkbox" class="timeline-item__edit-toggle" @checked($activeEditEntryId === $entry->getKey())>
+                            <input id="timeline_delete_{{ $entry->getKey() }}" type="checkbox" class="timeline-item__delete-toggle">
+
                             <div class="timeline-item__leading">
                                 <div class="timeline-item__calendar">
                                     <span class="timeline-item__weekday">{{ $entry->entry_date->translatedFormat('D') }}</span>
@@ -676,8 +852,10 @@
                             </div>
 
                             <div class="timeline-item__content">
-                                <p class="timeline-item__title">{{ $title }}</p>
-                                <p class="timeline-item__summary">{{ $summary }}</p>
+                                <label for="timeline_edit_{{ $entry->getKey() }}" class="timeline-item__edit-trigger">
+                                    <span class="timeline-item__title">{{ $title }}</span>
+                                    <span class="timeline-item__summary">{{ $summary }}</span>
+                                </label>
                                 <div class="timeline-item__meta">
                                     <span class="timeline-item__time">{{ $entry->created_at?->format('H:i') }}</span>
                                 </div>
@@ -708,6 +886,112 @@
                                         <path d="M12 4v1.5" />
                                     </svg>
                                 @endif
+                            </div>
+
+                            <div class="timeline-item__editor">
+                                <form id="timeline_update_{{ $entry->getKey() }}" method="POST" action="{{ route('journal.update', $entry) }}" class="timeline-form">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="entry_type" value="{{ $entry->entry_type }}">
+                                    <input type="hidden" name="return_to" value="journal.timeline">
+                                    <input type="hidden" name="return_month" value="{{ $activeMonth->format('Y-m') }}">
+                                    <input type="hidden" name="edit_entry_id" value="{{ $entry->getKey() }}">
+                                    @foreach ($selectedTypes as $selectedFilterType)
+                                        <input type="hidden" name="return_types[]" value="{{ $selectedFilterType }}">
+                                    @endforeach
+
+                                    <div class="timeline-form__header">
+                                        <p class="timeline-form__type-title">{{ __('hermes.journal.edit') }}: {{ $typeCards[$entry->entry_type] }}</p>
+                                        <p class="timeline-form__type-text">{{ __($typeKey.'.text') }}</p>
+                                    </div>
+
+                                    <div class="timeline-form__fields">
+                                        <label for="timeline_edit_entry_date_{{ $entry->getKey() }}">
+                                            {{ __('hermes.journal.fields.entry_date') }}
+                                            <input
+                                                id="timeline_edit_entry_date_{{ $entry->getKey() }}"
+                                                name="entry_date"
+                                                type="date"
+                                                value="{{ $activeEditEntryId === $entry->getKey() ? old('entry_date', $entry->entry_date->toDateString()) : $entry->entry_date->toDateString() }}"
+                                                max="{{ now()->toDateString() }}"
+                                                required
+                                            >
+                                        </label>
+
+                                        @include('journal.partials.entry-fields', [
+                                            'type' => $entry->entry_type,
+                                            'values' => $activeEditEntryId === $entry->getKey() ? old('content', $entry->content ?? []) : ($entry->content ?? []),
+                                            'prefix' => 'content',
+                                            'suffix' => 'timeline_edit_'.$entry->getKey(),
+                                            'strengthOptions' => $strengthOptions,
+                                            'selectedStrengthKeys' => $selectedStrengthKeys,
+                                        ])
+                                    </div>
+                                </form>
+
+                                <div class="timeline-item__editor-actions">
+                                    <label for="timeline_edit_{{ $entry->getKey() }}" class="timeline-action-button" title="{{ __('hermes.journal.cancel') }}" aria-label="{{ __('hermes.journal.cancel') }}">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M18 6 6 18" />
+                                            <path d="m6 6 12 12" />
+                                        </svg>
+                                    </label>
+
+                                    <button type="submit" form="timeline_update_{{ $entry->getKey() }}" class="timeline-action-button timeline-action-button--save" title="{{ __('hermes.journal.update') }}" aria-label="{{ __('hermes.journal.update') }}">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+                                            <path d="M17 21v-8H7v8" />
+                                            <path d="M7 3v5h8" />
+                                        </svg>
+                                    </button>
+
+                                    <label for="timeline_delete_{{ $entry->getKey() }}" class="timeline-action-button timeline-action-button--delete" title="{{ __('hermes.journal.delete') }}" aria-label="{{ __('hermes.journal.delete') }}">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M3 6h18" />
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                        </svg>
+                                    </label>
+                                </div>
+
+                                <div class="timeline-delete-dialog">
+                                    <label for="timeline_delete_{{ $entry->getKey() }}" class="timeline-delete-dialog__backdrop" aria-hidden="true"></label>
+
+                                    <div class="timeline-delete-dialog__card" role="dialog" aria-modal="true" aria-labelledby="timeline_delete_title_{{ $entry->getKey() }}">
+                                        <p id="timeline_delete_title_{{ $entry->getKey() }}">{{ __('hermes.journal.delete_confirmation') }}</p>
+
+                                        <div class="timeline-delete-dialog__actions">
+                                            <label for="timeline_delete_{{ $entry->getKey() }}" class="timeline-action-button" title="{{ __('hermes.journal.cancel') }}" aria-label="{{ __('hermes.journal.cancel') }}">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M18 6 6 18" />
+                                                    <path d="m6 6 12 12" />
+                                                </svg>
+                                            </label>
+
+                                            <form method="POST" action="{{ route('journal.destroy', $entry) }}" class="timeline-item__delete-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="return_to" value="journal.timeline">
+                                                <input type="hidden" name="return_month" value="{{ $activeMonth->format('Y-m') }}">
+                                                @foreach ($selectedTypes as $selectedFilterType)
+                                                    <input type="hidden" name="return_types[]" value="{{ $selectedFilterType }}">
+                                                @endforeach
+
+                                                <button type="submit" class="timeline-action-button timeline-action-button--delete" title="{{ __('hermes.journal.confirm_delete') }}" aria-label="{{ __('hermes.journal.confirm_delete') }}">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M3 6h18" />
+                                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                        <path d="M10 11v6" />
+                                                        <path d="M14 11v6" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </article>
                     @empty

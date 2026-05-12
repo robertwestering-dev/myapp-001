@@ -637,11 +637,10 @@ return [
     ],
     'journal' => [
         'title' => 'Persoonlijk dagboek',
-        'eyebrow' => 'Hermes Journal',
+        'eyebrow' => 'Jouw dagboek',
         'heading' => 'Jouw persoonlijke dagboek',
         'intro' => 'Eén rustige plek voor dagelijkse reflectie, dankbaarheid, sterke punten en bewuste voornemens. Alleen jij kunt deze pagina zien.',
         'hero_message' => 'Maak van je dagboek een klein dagelijks ritueel. Schrijf vrij, kies een begeleide reflectie en bouw zo aan meer overzicht, focus en welbevinden.',
-        'hero_note' => 'Je kunt generiek schrijven en tegelijk gebruikmaken van drie gerichte journalformats: hoe je jouw sterke punten gebruikte, je three-good-things moment en je voornemens voor de komende periode.',
         'actions' => [
             'daily_note' => 'Vrij schrijven',
             'three_good_things' => 'Three good things',
@@ -683,8 +682,8 @@ return [
         'save' => 'Notitie opslaan',
         'update' => 'Wijzigingen opslaan',
         'delete' => 'Verwijderen',
-        'cancel' => 'Nee',
-        'confirm_delete' => 'Ja',
+        'cancel' => 'Annuleer',
+        'confirm_delete' => 'Verwijderen',
         'delete_confirmation' => 'Weet u zeker dat u dit item wilt verwijderen?',
         'pro_required' => 'Dit persoonlijke dagboek is beschikbaar voor Pro-gebruikers.',
         'empty' => [

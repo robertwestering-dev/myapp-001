@@ -11,7 +11,6 @@ return [
         'heading' => 'Journal personnel',
         'intro' => 'Utilisez ce journal pour différents types de réflexion. Pour l’instant, vous pouvez noter ce qui s’est bien passé et comment vous avez utilisé vos points forts. Seul votre compte peut voir cette page.',
         'hero_message' => 'Utilisez ce journal pour vos réflexions. Cela va énormément vous aider !',
-        'hero_note' => 'Écrivez librement dans une note de journal générale et utilisez des formats guidés pour vos points forts, vos three good things et vos intentions.',
         'actions' => [
             'daily_note' => 'Écriture libre',
             'three_good_things' => 'Mes 3 bonnes choses',

@@ -616,7 +616,6 @@ return [
         'heading' => 'Personal journal',
         'intro' => 'Use this journal for different kinds of reflections. Right now you can record what went well and how you used your strengths. Only you can see this page.',
         'hero_message' => 'Use this journal for your reflections. It will help you tremendously!',
-        'hero_note' => 'Write freely in a general journal note and use guided formats for strengths, three good things, and intentions.',
         'actions' => [
             'daily_note' => 'Free writing',
             'three_good_things' => '3 good things today',
