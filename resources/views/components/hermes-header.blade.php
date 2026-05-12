@@ -7,6 +7,7 @@
 @php
     $currentLocale = app()->getLocale();
     $contactHref = route('contact.show', absolute: false);
+    $authenticatedUser = auth()->user();
     $localeNames = [
         'nl' => 'Nederlands',
         'en' => 'English',
@@ -17,12 +18,15 @@
 
 <style>
     .header-utility-link,
+    .user-menu__trigger,
+    .user-menu__item,
     .locale-menu__trigger,
     .locale-menu__item {
         font-family: Arial, Helvetica, sans-serif;
     }
 
     .header-utility-link,
+    .user-menu__trigger,
     .locale-menu__trigger {
         display: inline-flex;
         align-items: center;
@@ -42,22 +46,27 @@
     }
 
     .header-utility-link:hover,
+    .user-menu__trigger:hover,
+    .user-menu:focus-within .user-menu__trigger,
     .locale-menu__trigger:hover {
         border-color: rgba(30, 71, 61, 0.18);
         background: rgba(255, 255, 255, 0.92);
     }
 
     .header-utility-link svg,
+    .user-menu__trigger svg,
     .locale-menu__trigger svg {
         width: 25px;
         height: 25px;
         flex: 0 0 auto;
     }
 
+    .user-menu,
     .locale-menu {
         position: relative;
     }
 
+    .user-menu__trigger,
     .locale-menu__trigger {
         appearance: none;
     }
@@ -68,6 +77,7 @@
         letter-spacing: 0.02em;
     }
 
+    .user-menu__panel,
     .locale-menu__panel {
         position: absolute;
         right: 0;
@@ -85,6 +95,7 @@
         z-index: 30;
     }
 
+    .user-menu__panel::before,
     .locale-menu__panel::before {
         content: "";
         position: absolute;
@@ -98,11 +109,43 @@
         transform: rotate(45deg);
     }
 
+    .user-menu:hover .user-menu__panel,
+    .user-menu:focus-within .user-menu__panel,
     .locale-menu:hover .locale-menu__panel,
     .locale-menu:focus-within .locale-menu__panel {
         opacity: 1;
         visibility: visible;
         transform: translateY(0);
+    }
+
+    .user-menu__item {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 14px;
+        border-radius: 18px;
+        color: var(--ink, #16211d);
+        font-size: 1.02rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .user-menu__item:hover,
+    .user-menu__item:focus-visible {
+        background: rgba(30, 71, 61, 0.08);
+        outline: none;
+    }
+
+    .user-menu__item[aria-current="page"] {
+        background: rgba(188, 91, 44, 0.1);
+    }
+
+    .user-menu__item svg {
+        width: 21px;
+        height: 21px;
+        flex: 0 0 auto;
     }
 
     .locale-menu__form + .locale-menu__form {
@@ -297,6 +340,7 @@
     }
 
     .mobile-menu__nav .home-menu-dropdown:not([open]) .home-submenu,
+    .mobile-menu__account:not([open]) .mobile-menu__account-list,
     .mobile-menu__submenu:not([open]) .mobile-menu__locale-list {
         display: none;
     }
@@ -305,6 +349,11 @@
         padding-left: 18px;
         font-size: 0.96rem;
         font-weight: 500;
+    }
+
+    .mobile-menu__account-list {
+        display: grid;
+        gap: 8px;
     }
 
     .mobile-menu__locale-form {
@@ -349,6 +398,7 @@
 
     @media (max-width: 720px) {
         .header-utility-link,
+        .user-menu__trigger,
         .locale-menu__trigger {
             padding: 10px 14px;
         }
@@ -418,6 +468,34 @@
                         @endif
                     @endisset
 
+                    @if ($showContactLink && $authenticatedUser)
+                        <section class="mobile-menu__section" aria-label="Gebruikersmenu mobiel">
+                            <details class="mobile-menu__submenu mobile-menu__account">
+                                <summary class="mobile-menu__locale-item">
+                                    <span class="mobile-menu__locale-meta">
+                                        <span class="mobile-menu__badge">
+                                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M12 21.25a9.25 9.25 0 1 0 0-18.5 9.25 9.25 0 0 0 0 18.5Z" stroke="currentColor" stroke-width="1.7"/>
+                                                <path d="M12 12.35a3.05 3.05 0 1 0 0-6.1 3.05 3.05 0 0 0 0 6.1Z" stroke="currentColor" stroke-width="1.7"/>
+                                                <path d="M5.82 18.88c.44-3.33 2.72-5.38 6.18-5.38s5.74 2.05 6.18 5.38" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                            </svg>
+                                        </span>
+                                        <span>Persoonlijk</span>
+                                    </span>
+                                    <span aria-hidden="true">▾</span>
+                                </summary>
+
+                                <nav class="mobile-menu__nav mobile-menu__account-list">
+                                    <a class="mobile-menu__account-link" href="{{ route('dashboard') }}" @if (request()->routeIs('dashboard')) aria-current="page" @endif>{{ __('hermes.dashboard.title') }}</a>
+                                    <a class="mobile-menu__account-link" href="{{ route('journal.timeline') }}" @if (request()->routeIs('journal.timeline')) aria-current="page" @endif>{{ __('hermes.journal.timeline_page_title') }}</a>
+                                    <a class="mobile-menu__account-link" href="{{ route('profile.edit') }}" @if (request()->routeIs('profile.edit')) aria-current="page" @endif>{{ __('hermes.nav.profile') }}</a>
+                                    <a class="mobile-menu__account-link" href="{{ route('blog.index') }}" @if (request()->routeIs('blog.*')) aria-current="page" @endif>{{ __('hermes.nav.blog') }}</a>
+                                    <a class="mobile-menu__account-link" href="{{ $contactHref }}">{{ __('hermes.nav.contact') }}</a>
+                                </nav>
+                            </details>
+                        </section>
+                    @endif
+
                     <section class="mobile-menu__section" aria-label="Taalmenu mobiel">
                         <details class="mobile-menu__submenu">
                             <summary class="mobile-menu__locale-item">
@@ -449,11 +527,11 @@
                         </details>
                     </section>
 
-                    @if ($showContactLink || $showBooking || trim((string) $slot) !== '')
+                    @if (($showContactLink && ! $authenticatedUser) || $showBooking || trim((string) $slot) !== '')
                         <section class="mobile-menu__section" aria-label="Snelle acties">
                             <p class="mobile-menu__heading">{{ __('hermes.nav.actions') }}</p>
 
-                            @if ($showContactLink)
+                            @if ($showContactLink && ! $authenticatedUser)
                                 <a
                                     class="mobile-menu__link"
                                     href="{{ $contactHref }}"
@@ -487,7 +565,59 @@
                 </div>
             </details>
 
-            @if ($showContactLink)
+            @if ($showContactLink && $authenticatedUser)
+                <div class="user-menu">
+                    <button type="button" class="user-menu__trigger" aria-label="Open gebruikersmenu">
+                        <svg class="user-menu__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 21.25a9.25 9.25 0 1 0 0-18.5 9.25 9.25 0 0 0 0 18.5Z" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M12 12.35a3.05 3.05 0 1 0 0-6.1 3.05 3.05 0 0 0 0 6.1Z" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M5.82 18.88c.44-3.33 2.72-5.38 6.18-5.38s5.74 2.05 6.18 5.38" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+
+                    <nav class="user-menu__panel" aria-label="Gebruikersmenu">
+                        <a class="user-menu__item" href="{{ route('dashboard') }}" @if (request()->routeIs('dashboard')) aria-current="page" @endif>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 5.75A1.75 1.75 0 0 1 5.75 4h4.5A1.75 1.75 0 0 1 12 5.75v4.5A1.75 1.75 0 0 1 10.25 12h-4.5A1.75 1.75 0 0 1 4 10.25v-4.5Z" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M14 5.75A1.75 1.75 0 0 1 15.75 4h2.5A1.75 1.75 0 0 1 20 5.75v12.5A1.75 1.75 0 0 1 18.25 20h-2.5A1.75 1.75 0 0 1 14 18.25V5.75Z" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M4 15.75A1.75 1.75 0 0 1 5.75 14h4.5A1.75 1.75 0 0 1 12 15.75v2.5A1.75 1.75 0 0 1 10.25 20h-4.5A1.75 1.75 0 0 1 4 18.25v-2.5Z" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                            <span>{{ __('hermes.dashboard.title') }}</span>
+                        </a>
+                        <a class="user-menu__item" href="{{ route('journal.timeline') }}" @if (request()->routeIs('journal.timeline')) aria-current="page" @endif>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M7 5.5h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                <path d="M7 12h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                <path d="M7 18.5h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                <path d="M4 5.5h.01M4 12h.01M4 18.5h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                            </svg>
+                            <span>{{ __('hermes.journal.timeline_page_title') }}</span>
+                        </a>
+                        <a class="user-menu__item" href="{{ route('profile.edit') }}" @if (request()->routeIs('profile.edit')) aria-current="page" @endif>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M12 12.25a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M5.75 19.25c.58-3.35 2.9-5.25 6.25-5.25s5.67 1.9 6.25 5.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                            <span>{{ __('hermes.nav.profile') }}</span>
+                        </a>
+                        <a class="user-menu__item" href="{{ route('blog.index') }}" @if (request()->routeIs('blog.*')) aria-current="page" @endif>
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M6.25 4.75h8.5L18.75 9v10.25H6.25V4.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M14.75 4.75V9h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M9 13h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                            <span>{{ __('hermes.nav.blog') }}</span>
+                        </a>
+                        <a class="user-menu__item" href="{{ $contactHref }}">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M5 6.75h14A1.75 1.75 0 0 1 20.75 8.5v7A2.75 2.75 0 0 1 18 18.25H6A2.75 2.75 0 0 1 3.25 15.5v-7A1.75 1.75 0 0 1 5 6.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="m4 8.25 6.98 5.08a1.75 1.75 0 0 0 2.04 0L20 8.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{{ __('hermes.nav.contact') }}</span>
+                        </a>
+                    </nav>
+                </div>
+            @elseif ($showContactLink)
                 <a
                     class="header-utility-link"
                     href="{{ $contactHref }}"

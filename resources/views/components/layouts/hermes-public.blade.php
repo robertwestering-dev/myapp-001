@@ -598,8 +598,6 @@
                     <a href="{{ route('questionnaires.index') }}">{{ __('hermes.nav.questionnaires') }}</a>
                     <a href="{{ route('academy.index') }}">{{ __('hermes.nav.academy') }}</a>
                     <a href="{{ route('forum.index') }}">{{ __('hermes.nav.forum') }}</a>
-                    <a href="{{ route('blog.index') }}" aria-current="page">{{ __('hermes.nav.blog') }}</a>
-                    <a href="{{ route('profile.edit') }}">{{ __('hermes.nav.profile') }}</a>
                 @else
                     <a href="{{ route('home') }}#diensten">{{ __('hermes.nav.services') }}</a>
                     <a href="{{ route('blog.index') }}">{{ __('hermes.nav.blog') }}</a>

@@ -328,6 +328,8 @@ De ingelogde gebruikersomgeving is geharmoniseerd rond één Hermes-stijl.
 Actuele UX-status:
 
 - overal hetzelfde hoofdmenu voor ingelogde gebruikers
+- ingelogde gebruikers zien rechts in de header een persoonlijk gebruikersicoon in plaats van de losse contact-envelop; hover/focus opent een submenu met Dashboard, Timeline, Profiel, Blog en Contact
+- op mobiel staat ditzelfde gebruikersmenu als inklapbaar submenu `Persoonlijk` binnen het hamburgermenu; Blog en Profiel staan niet meer los in het hoofdmenu
 - consistente heading-, card-, feedback-, CTA- en metadata-patronen
 - gedeelde gebruikerscomponenten voor pagina-opbouw, lege staten en actieblokken
 - donkere `accent`-kaarten gebruiken witte titels, tekst en metadata voor leesbaarheid
@@ -904,6 +906,29 @@ Status:
 
 - deze migraties zijn lokaal uitgevoerd
 - op live moeten ze expliciet worden meegenomen als dat nog niet is gebeurd
+
+## Sessie-update 2026-05-12 — Headernavigatie ingelogde gebruikers
+
+Headernavigatie voor ingelogde gebruikers bijgewerkt:
+
+- de losse contact-envelop rechts in de header is vervangen door een persoonlijk gebruikersicoon
+- hover/focus op dit icoon opent een submenu met Dashboard, Timeline, Profiel, Blog en Contact
+- Blog en Profiel zijn verwijderd uit het hoofdmenu voor ingelogde gebruikers, maar blijven beschikbaar in het persoonlijke submenu
+- op mobiel staat hetzelfde persoonlijke menu als inklapbaar submenu `Persoonlijk` binnen het hamburgermenu
+- Contact wordt voor ingelogde gebruikers op mobiel niet meer dubbel getoond als losse snelle actie
+
+Belangrijke gewijzigde bestanden:
+
+- `resources/views/components/hermes-header.blade.php`
+- `resources/views/components/layouts/hermes-dashboard.blade.php`
+- `resources/views/components/layouts/hermes-public.blade.php`
+- `tests/Feature/DashboardTest.php`
+- `tests/Feature/BlogTest.php`
+
+Gerichte teststatus:
+
+- `tests/Feature/DashboardTest.php` groen voor header-, mobiel-menu- en gebruikerssubmenu-cases
+- `tests/Feature/BlogTest.php` groen voor ingelogde blognavigatie
 
 ## Sessie-update 2026-05-12 — Resterende open bevindingen gesloten
 

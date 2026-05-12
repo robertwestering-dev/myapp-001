@@ -627,8 +627,6 @@
                 <a href="{{ route('journal.index') }}" @if ($activeMenu === 'journal') aria-current="page" @endif>{{ __('hermes.nav.journal') }}</a>
             @endif
             <a href="{{ route('forum.index') }}" @if ($activeMenu === 'forum') aria-current="page" @endif>{{ __('hermes.nav.forum') }}</a>
-            <a href="{{ route('blog.index') }}" @if ($activeMenu === 'blog') aria-current="page" @endif>{{ __('hermes.nav.blog') }}</a>
-            <a href="{{ route('profile.edit') }}" @if ($activeMenu === 'profile') aria-current="page" @endif>{{ __('hermes.nav.profile') }}</a>
             @if (auth()->user()?->isAdmin())
                 <a href="{{ route('admin.portal') }}">{{ __('hermes.admin_menu.portal') }}</a>
             @endif

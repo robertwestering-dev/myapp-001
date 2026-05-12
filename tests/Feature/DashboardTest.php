@@ -91,7 +91,7 @@ test('dashboard uses the hermes favicon instead of the laravel default icons', f
         ->assertSee('/apple-touch-icon.png?v=', false);
 });
 
-test('dashboard header shows academy and profile menu options without the booking button', function () {
+test('dashboard header keeps blog and profile out of the primary menu without the booking button', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
@@ -100,10 +100,35 @@ test('dashboard header shows academy and profile menu options without the bookin
         ->assertSee(route('questionnaires.index', absolute: false), false)
         ->assertSee(__('hermes.nav.questionnaires'))
         ->assertSee(__('hermes.nav.academy'))
-        ->assertSee(__('hermes.nav.blog'))
-        ->assertSee(__('hermes.nav.profile'))
+        ->assertSee(__('hermes.nav.forum'))
+        ->assertDontSee('<a href="'.route('blog.index').'"', false)
+        ->assertDontSee('<a href="'.route('profile.edit').'"', false)
         ->assertDontSee(route('admin.portal', absolute: false), false)
         ->assertDontSee(__('hermes.header.booking'));
+});
+
+test('authenticated dashboard header shows the account hover menu links', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('class="user-menu"', false)
+        ->assertSee('aria-label="Open gebruikersmenu"', false)
+        ->assertSee('class="user-menu__icon"', false)
+        ->assertDontSee('class="header-utility-link"', false)
+        ->assertSee(route('dashboard', absolute: false), false)
+        ->assertSee(route('journal.timeline', absolute: false), false)
+        ->assertSee(route('profile.edit', absolute: false), false)
+        ->assertSee(route('blog.index', absolute: false), false)
+        ->assertSee(route('contact.show', absolute: false), false)
+        ->assertSee('<a class="user-menu__item" href="'.route('profile.edit').'"', false)
+        ->assertSee('<a class="user-menu__item" href="'.route('blog.index').'"', false)
+        ->assertSee(__('hermes.dashboard.title'))
+        ->assertSee(__('hermes.journal.timeline_page_title'))
+        ->assertSee(__('hermes.nav.profile'))
+        ->assertSee(__('hermes.nav.blog'))
+        ->assertSee(__('hermes.nav.contact'));
 });
 
 test('authenticated mobile header stays compact and gives the menu its own scroll area', function () {
@@ -117,6 +142,28 @@ test('authenticated mobile header stays compact and gives the menu its own scrol
         ->assertSee('.mobile-menu[open] .mobile-menu__panel', false)
         ->assertSee('overflow-y: auto;', false)
         ->assertSee('overscroll-behavior: contain;', false);
+});
+
+test('authenticated mobile header includes the account submenu links inside the hamburger panel', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('class="mobile-menu__submenu mobile-menu__account"', false)
+        ->assertSee('class="mobile-menu__nav mobile-menu__account-list"', false)
+        ->assertSee('aria-label="Gebruikersmenu mobiel"', false)
+        ->assertSee('Persoonlijk')
+        ->assertSee('<a class="mobile-menu__account-link" href="'.route('dashboard').'"', false)
+        ->assertSee('<a class="mobile-menu__account-link" href="'.route('journal.timeline').'"', false)
+        ->assertSee('<a class="mobile-menu__account-link" href="'.route('profile.edit').'"', false)
+        ->assertSee('<a class="mobile-menu__account-link" href="'.route('blog.index').'"', false)
+        ->assertSee('<a class="mobile-menu__account-link" href="'.route('contact.show', absolute: false).'"', false)
+        ->assertDontSee('class="mobile-menu__link"', false)
+        ->assertSee(__('hermes.journal.timeline_page_title'))
+        ->assertSee(__('hermes.nav.profile'))
+        ->assertSee(__('hermes.nav.blog'))
+        ->assertSee(__('hermes.nav.contact'));
 });
 
 test('admins are redirected from dashboard to the admin portal', function () {
