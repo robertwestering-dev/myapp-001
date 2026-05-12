@@ -7,6 +7,10 @@
     $selectedType = $isTimelineValidationState ? old('entry_type') : null;
     $activeEditEntryId = $isTimelineValidationState && old('edit_entry_id') ? (int) old('edit_entry_id') : null;
     $hasActiveFilters = $selectedTypes !== [];
+    $timelineEmbedded = $timelineEmbedded ?? false;
+    $timelineRouteName = $timelineRouteName ?? 'journal.timeline';
+    $timelineReturnTo = $timelineReturnTo ?? 'journal.timeline';
+    $timelineAnchor = $timelineAnchor ?? '';
 
     $typeCards = [
         JournalEntry::TYPE_DAILY_NOTE => __('hermes.journal.sections.daily_note'),
@@ -16,9 +20,7 @@
     ];
 @endphp
 
-<x-layouts.hermes-dashboard :title="__('hermes.journal.timeline_page_title')">
-    <x-slot:head>
-        <style>
+<style>
             .timeline-page,
             .timeline-list,
             .timeline-item__content,
@@ -156,6 +158,17 @@
             .timeline-monthbar__nav:focus-visible {
                 color: #1f4a3d;
                 border-color: rgba(31, 74, 61, 0.2);
+            }
+
+            .timeline-monthbar__nav.is-disabled {
+                opacity: 0.38;
+                cursor: default;
+            }
+
+            .timeline-monthbar__nav.is-disabled:hover,
+            .timeline-monthbar__nav.is-disabled:focus-visible {
+                color: #41514c;
+                border-color: rgba(23, 35, 31, 0.1);
             }
 
             .timeline-toolbar__filter:hover,
@@ -696,8 +709,7 @@
                     justify-content: stretch;
                 }
             }
-        </style>
-    </x-slot:head>
+</style>
 
     <div class="timeline-page">
         @if (session('status'))
@@ -709,9 +721,19 @@
         <div class="timeline-shell">
             <div class="timeline-toolbar">
                 <div class="timeline-monthbar">
-                    <a href="{{ route('journal.timeline', ['month' => $previousMonth->format('Y-m'), 'types' => $selectedTypes]) }}" class="timeline-monthbar__nav" aria-label="Previous month">&lt;</a>
+                    @if ($previousMonth)
+                        <a href="{{ route($timelineRouteName, ['month' => $previousMonth->format('Y-m'), 'types' => $selectedTypes]).$timelineAnchor }}" class="timeline-monthbar__nav" aria-label="Previous month">&lt;</a>
+                    @else
+                        <span class="timeline-monthbar__nav is-disabled" aria-label="Previous month" aria-disabled="true">&lt;</span>
+                    @endif
+
                     <p class="timeline-monthbar__title">{{ ucfirst($activeMonth->translatedFormat('F Y')) }}</p>
-                    <a href="{{ route('journal.timeline', ['month' => $nextMonth->format('Y-m'), 'types' => $selectedTypes]) }}" class="timeline-monthbar__nav" aria-label="Next month">&gt;</a>
+
+                    @if ($nextMonth)
+                        <a href="{{ route($timelineRouteName, ['month' => $nextMonth->format('Y-m'), 'types' => $selectedTypes]).$timelineAnchor }}" class="timeline-monthbar__nav" aria-label="Next month">&gt;</a>
+                    @else
+                        <span class="timeline-monthbar__nav is-disabled" aria-label="Next month" aria-disabled="true">&gt;</span>
+                    @endif
                 </div>
 
                 <div class="timeline-toolbar__actions">
@@ -736,7 +758,7 @@
                 <input type="radio" name="timeline_panel" id="timeline-panel-weekly_intention" class="timeline-panel-toggle" @checked($selectedType === JournalEntry::TYPE_WEEKLY_INTENTION)>
 
                 <div class="timeline-panel--filter timeline-filter">
-                    <form method="GET" action="{{ route('journal.timeline') }}" class="timeline-filter__form">
+                    <form method="GET" action="{{ route($timelineRouteName) }}" class="timeline-filter__form">
                         <input type="hidden" name="month" value="{{ $activeMonth->format('Y-m') }}">
 
                         <div class="timeline-filter__options">
@@ -749,7 +771,7 @@
                         </div>
 
                         <div class="timeline-filter__actions">
-                            <a href="{{ route('journal.timeline', ['month' => $activeMonth->format('Y-m')]) }}" class="pill pill--neutral">{{ __('hermes.journal.timeline_filter_clear') }}</a>
+                            <a href="{{ route($timelineRouteName, ['month' => $activeMonth->format('Y-m')]) }}" class="pill pill--neutral">{{ __('hermes.journal.timeline_filter_clear') }}</a>
                             <label for="timeline-panel-closed" class="pill pill--neutral">{{ __('hermes.journal.timeline_cancel') }}</label>
                             <button type="submit" class="pill">{{ __('hermes.journal.timeline_filter_apply') }}</button>
                         </div>
@@ -775,7 +797,7 @@
                             <form method="POST" action="{{ route('journal.store') }}" class="timeline-form">
                                 @csrf
                                 <input type="hidden" name="entry_type" value="{{ $entryType }}">
-                                <input type="hidden" name="return_to" value="journal.timeline">
+                                <input type="hidden" name="return_to" value="{{ $timelineReturnTo }}">
                                 <input type="hidden" name="return_month" value="{{ $activeMonth->format('Y-m') }}">
                                 @foreach ($selectedTypes as $selectedFilterType)
                                     <input type="hidden" name="return_types[]" value="{{ $selectedFilterType }}">
@@ -893,7 +915,7 @@
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="entry_type" value="{{ $entry->entry_type }}">
-                                    <input type="hidden" name="return_to" value="journal.timeline">
+                                    <input type="hidden" name="return_to" value="{{ $timelineReturnTo }}">
                                     <input type="hidden" name="return_month" value="{{ $activeMonth->format('Y-m') }}">
                                     <input type="hidden" name="edit_entry_id" value="{{ $entry->getKey() }}">
                                     @foreach ($selectedTypes as $selectedFilterType)
@@ -973,7 +995,7 @@
                                             <form method="POST" action="{{ route('journal.destroy', $entry) }}" class="timeline-item__delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <input type="hidden" name="return_to" value="journal.timeline">
+                                                <input type="hidden" name="return_to" value="{{ $timelineReturnTo }}">
                                                 <input type="hidden" name="return_month" value="{{ $activeMonth->format('Y-m') }}">
                                                 @foreach ($selectedTypes as $selectedFilterType)
                                                     <input type="hidden" name="return_types[]" value="{{ $selectedFilterType }}">
@@ -996,9 +1018,7 @@
                         </article>
                     @empty
                         <div class="timeline-empty">
-                            <h2>{{ __('hermes.journal.empty.title') }}</h2>
-                            <p>{{ __('hermes.journal.empty.text') }}</p>
-                            <p>{{ __('hermes.journal.timeline_empty') }}</p>
+                            <h2>{{ __('hermes.journal.timeline_empty') }}</h2>
                         </div>
                     @endforelse
                 </div>
@@ -1011,4 +1031,3 @@
             </div>
         </div>
     </div>
-</x-layouts.hermes-dashboard>

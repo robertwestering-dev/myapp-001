@@ -608,7 +608,7 @@ return [
         'latest_label' => 'Gespeicherte Reflexion',
         'latest_fallback' => 'Noch nicht erfasst',
         'privacy_note' => 'Privat fur Ihr Konto',
-        'timeline_empty' => 'Ihre Timeline fullt sich, sobald Sie Ihre erste Notiz speichern.',
+        'timeline_empty' => 'In diesem Monat ist Ihr Tagebuch noch leer.',
         'stats' => [
             'entries' => 'Notizen',
             'latest' => 'Letzter Moment',

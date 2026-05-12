@@ -108,21 +108,21 @@ class BlogController extends Controller
      */
     protected function tagCounts(): Collection
     {
-        /** @var array<string, int> $cached */
         $cached = Cache::get('blog:tag_counts');
 
         if (! is_array($cached)) {
             Cache::forget('blog:tag_counts');
 
-            $cached = BlogPost::query()
-                ->published()
-                ->get(['tags'])
-                ->flatMap(fn (BlogPost $blogPost): array => $blogPost->tagsList())
-                ->countBy()
-                ->sortDesc()
-                ->all();
-
-            Cache::put('blog:tag_counts', $cached, now()->addMinutes(5));
+            /** @var array<string, int> $cached */
+            $cached = Cache::remember('blog:tag_counts', now()->addMinutes(5), function (): array {
+                return BlogPost::query()
+                    ->published()
+                    ->get(['tags'])
+                    ->flatMap(fn (BlogPost $blogPost): array => $blogPost->tagsList())
+                    ->countBy()
+                    ->sortDesc()
+                    ->all();
+            });
         }
 
         return collect($cached);

@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMediaAssetRequest;
 use App\Models\MediaAsset;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 
 class MediaAssetController extends Controller
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     public function index(): View
     {
         return view('admin.media-assets.index', [
@@ -31,7 +35,7 @@ class MediaAssetController extends Controller
         /** @var User $actor */
         $actor = $request->user();
 
-        MediaAsset::query()->create([
+        $asset = MediaAsset::query()->create([
             'uploaded_by' => $actor->id,
             'disk' => 'public',
             'path' => $file->store('media-assets/'.now()->format('Y/m'), 'public'),
@@ -43,6 +47,8 @@ class MediaAssetController extends Controller
             'alt_text' => $request->validated('alt_text') ?: null,
         ]);
 
+        $this->audit->log(AuditAction::MediaAssetUploaded, "Media-asset geüpload: {$asset->original_name}", $asset);
+
         return redirect()
             ->route('admin.media-assets.index')
             ->with('status', __('hermes.admin.media_assets.uploaded'));
@@ -50,6 +56,8 @@ class MediaAssetController extends Controller
 
     public function destroy(MediaAsset $mediaAsset): RedirectResponse
     {
+        $this->audit->log(AuditAction::MediaAssetDeleted, "Media-asset verwijderd: {$mediaAsset->original_name}", $mediaAsset);
+
         $mediaAsset->deleteFile();
         $mediaAsset->delete();
 

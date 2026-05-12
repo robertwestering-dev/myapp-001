@@ -28,7 +28,7 @@ test('pro users can view only their own journal entries', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('journal.index'))
+        ->get(route('journal.index', ['month' => '2026-04']))
         ->assertOk()
         ->assertSee('Jouw dagboek')
         ->assertDontSee('Jouw persoonlijke dagboek')
@@ -42,9 +42,10 @@ test('pro users can view only their own journal entries', function () {
         ->assertSee('.journal-entry-form-card:target', false)
         ->assertSeeInOrder([
             'Maak van je dagboek een klein dagelijks ritueel.',
+            route('journal.timeline'),
             'Open compacte timeline',
             'Kies hoe je vandaag wilt schrijven',
-        ])
+        ], false)
         ->assertSeeInOrder([
             'Gebruik dit als jouw basisdagboek: open, generiek en flexibel, zonder vast format behalve een titel en je eigen verhaal.',
             'href="#journal-daily-note-form"',
@@ -70,6 +71,10 @@ test('pro users can view only their own journal entries', function () {
         ->assertSee('id="journal-strengths-form"', false)
         ->assertSee('id="journal-weekly-intention-form"', false)
         ->assertSee('class="user-surface-card user-surface-card--default journal-card journal-section-anchor journal-entry-form-card"', false)
+        ->assertSee('id="journal-compact-timeline"', false)
+        ->assertSee('name="return_to" value="journal.index"', false)
+        ->assertSee('aria-label="Previous month" aria-disabled="true"', false)
+        ->assertDontSee(route('journal.index', ['month' => '2026-05']).'#journal-compact-timeline', false)
         ->assertSee('Noteer je drie goede dingen van vandaag, of beschrijf het belangrijkste positieve moment dat je wilt onthouden.')
         ->assertSee('Weet u zeker dat u dit item wilt verwijderen?')
         ->assertSee($visibleEntry->contentValue('what_went_well'))
@@ -125,7 +130,8 @@ test('pro users can view the compact timeline page with only their own journal e
         ->assertSee('display: flex;', false)
         ->assertSee('grid-template-columns: 32px minmax(0, 1fr) 32px;', false)
         ->assertSee(route('journal.timeline', ['month' => '2026-03']), false)
-        ->assertSee(route('journal.timeline', ['month' => '2026-05']), false)
+        ->assertDontSee(route('journal.timeline', ['month' => '2026-05']), false)
+        ->assertSee('aria-label="Next month" aria-disabled="true"', false)
         ->assertSee('for="timeline_edit_'.$dailyNote->getKey().'"', false)
         ->assertSee('id="timeline_delete_'.$dailyNote->getKey().'"', false)
         ->assertSee('class="timeline-action-button" title="Annuleer" aria-label="Annuleer"', false)
@@ -144,6 +150,76 @@ test('pro users can view the compact timeline page with only their own journal e
         ->assertDontSee('Alleen zichtbaar in maart.')
         ->assertDontSee('Niet zichtbaar in de timeline.')
         ->assertDontSee('Deze tekst hoort verborgen te blijven.');
+});
+
+test('compact timeline empty state is specific to the selected month', function () {
+    $user = User::factory()->pro()->create();
+
+    JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-03-21',
+        'content' => [
+            'title' => 'Wel in maart',
+            'body' => 'Niet zichtbaar in april.',
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline', ['month' => '2026-04']))
+        ->assertOk()
+        ->assertSee('In deze maand is je dagboek nog leeg.')
+        ->assertDontSee('Je dagboek is nog leeg')
+        ->assertDontSee('Voeg je eerste notitie toe en bouw een rustig, persoonlijk archief')
+        ->assertDontSee('Je timeline vult zich vanzelf zodra je je eerste notitie opslaat.')
+        ->assertDontSee('Wel in maart');
+});
+
+test('compact timeline navigation jumps to adjacent months that contain matching entries', function () {
+    $user = User::factory()->pro()->create();
+
+    JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-01-10',
+        'content' => [
+            'title' => 'Januari notitie',
+            'body' => 'Eerste maand met inhoud.',
+        ],
+    ]);
+
+    JournalEntry::factory()->dailyNote()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-04-10',
+        'content' => [
+            'title' => 'April notitie',
+            'body' => 'Huidige maand met inhoud.',
+        ],
+    ]);
+
+    JournalEntry::factory()->threeGoodThings()->create([
+        'user_id' => $user->getKey(),
+        'entry_date' => '2026-05-05',
+        'content' => [
+            'what_went_well' => 'Mei moment',
+            'my_contribution' => 'Ik maakte tijd vrij.',
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline', ['month' => '2026-04']))
+        ->assertOk()
+        ->assertSee(route('journal.timeline', ['month' => '2026-01']), false)
+        ->assertSee(route('journal.timeline', ['month' => '2026-05']), false)
+        ->assertDontSee(route('journal.timeline', ['month' => '2026-03']), false);
+
+    $this->actingAs($user)
+        ->get(route('journal.timeline', [
+            'month' => '2026-04',
+            'types' => [JournalEntry::TYPE_DAILY_NOTE],
+        ]))
+        ->assertOk()
+        ->assertSee(route('journal.timeline', ['month' => '2026-01']), false)
+        ->assertSee('types%5B0%5D=daily_note', false)
+        ->assertDontSee('month=2026-05&amp;types%5B0%5D=daily_note', false);
 });
 
 test('pro users can update an entry from the compact timeline and return to the same month', function () {

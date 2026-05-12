@@ -301,10 +301,12 @@ test('anonymize confirmation modal is shown on the profile page', function () {
 
     $this->actingAs($user);
 
+    [$confirmationWarning, $confirmationQuestion] = explode("\n\n", __('hermes.settings.delete_account.confirmation'));
+
     $this->get(route('profile.edit'))
         ->assertOk()
-        ->assertSee('Als u doorgaat, dan worden uw gegevens verwijderd, en kunt u niet meer inloggen!')
-        ->assertSee('Weet u zeker dat u uw account wilt verwijderen?')
+        ->assertSee($confirmationWarning)
+        ->assertSee($confirmationQuestion)
         ->assertSee(__('hermes.settings.delete_account.cancel'))
         ->assertSee(__('hermes.settings.delete_account.confirm'))
         ->assertSee('delete-user-modal-actions', false)

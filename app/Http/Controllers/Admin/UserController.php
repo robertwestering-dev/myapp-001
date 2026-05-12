@@ -257,7 +257,7 @@ class UserController extends Controller
             return [User::ROLE_USER, User::ROLE_USER_PRO, User::ROLE_MANAGER, User::ROLE_ADMIN];
         }
 
-        return [User::ROLE_USER, User::ROLE_USER_PRO, User::ROLE_MANAGER];
+        return [User::ROLE_USER, User::ROLE_USER_PRO];
     }
 
     /**

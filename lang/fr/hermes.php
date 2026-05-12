@@ -42,7 +42,7 @@ return [
         'latest_label' => 'Réflexion enregistrée',
         'latest_fallback' => 'Pas encore enregistré',
         'privacy_note' => 'Privé pour votre compte',
-        'timeline_empty' => 'Votre timeline se remplira dès que vous enregistrerez votre première note.',
+        'timeline_empty' => 'Votre journal est vide pour ce mois.',
         'stats' => [
             'entries' => 'Notes',
             'latest' => 'Dernier moment',

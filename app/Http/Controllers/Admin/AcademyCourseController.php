@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Concerns\HandlesLocalizedPayload;
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAcademyCourseRequest;
 use App\Http\Requests\Admin\UpdateAcademyCourseRequest;
 use App\Models\AcademyCourse;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +16,8 @@ use Illuminate\Http\Request;
 class AcademyCourseController extends Controller
 {
     use HandlesLocalizedPayload;
+
+    public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(): View
     {
@@ -49,6 +53,8 @@ class AcademyCourseController extends Controller
     {
         $academyCourse = AcademyCourse::create($this->academyCoursePayload($request));
 
+        $this->audit->log(AuditAction::AcademyCourseCreated, "Academy-cursus aangemaakt: {$academyCourse->slug}", $academyCourse);
+
         return redirect()
             ->route('admin.academy-courses.edit', $academyCourse)
             ->with('status', __('hermes.admin.academy_courses.created'));
@@ -71,6 +77,8 @@ class AcademyCourseController extends Controller
     {
         $academyCourse->update($this->academyCoursePayload($request));
 
+        $this->audit->log(AuditAction::AcademyCourseUpdated, "Academy-cursus bijgewerkt: {$academyCourse->slug}", $academyCourse);
+
         return redirect()
             ->route('admin.academy-courses.edit', $academyCourse)
             ->with('status', __('hermes.admin.academy_courses.updated'));
@@ -85,6 +93,8 @@ class AcademyCourseController extends Controller
 
     public function destroy(AcademyCourse $academyCourse): RedirectResponse
     {
+        $this->audit->log(AuditAction::AcademyCourseDeleted, "Academy-cursus verwijderd: {$academyCourse->slug}", $academyCourse);
+
         $academyCourse->delete();
 
         return redirect()

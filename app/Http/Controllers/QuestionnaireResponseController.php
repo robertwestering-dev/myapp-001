@@ -95,6 +95,7 @@ class QuestionnaireResponseController extends Controller
             ->where('user_id', $user->id)
             ->where('resume_token', $token)
             ->whereNull('submitted_at')
+            ->where('resume_token_expires_at', '>', now())
             ->firstOrFail();
 
         $this->ensureAccessible($request, $response->organizationQuestionnaire()->with('questionnaire')->firstOrFail(), $user);
@@ -179,7 +180,10 @@ class QuestionnaireResponseController extends Controller
             $response->current_questionnaire_category_id = $currentCategory?->id;
             $response->last_saved_at = now();
             $response->submitted_at = $isDraft ? null : now();
-            $response->resume_token ??= Str::lower(Str::random(40));
+            if ($response->resume_token === null) {
+                $response->resume_token = Str::lower(Str::random(40));
+            }
+            $response->resume_token_expires_at = now()->addDays(30);
             $response->save();
 
             $response->answers()->delete();

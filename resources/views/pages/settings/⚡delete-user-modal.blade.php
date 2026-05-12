@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AuditAction;
 use App\Livewire\Actions\Logout;
 use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ new class extends Component {
             return;
         }
 
-        $audit->log('user.anonymized', "Account geanonimiseerd: {$user->name} ({$user->email})", $user);
+        $audit->log(AuditAction::UserAnonymized, "Account geanonimiseerd: {$user->name} ({$user->email})", $user);
 
         $user->anonymizeForStatistics();
 

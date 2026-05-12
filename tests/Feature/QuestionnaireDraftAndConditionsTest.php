@@ -122,7 +122,7 @@ test('autosave stores draft progress and the active questionnaire step', functio
     $this->actingAs($user)
         ->get(route('questionnaire-responses.show', $availability))
         ->assertOk()
-        ->assertSee('Automatisch opslaan staat aan terwijl u invult.')
+        ->assertSee(__('hermes.questionnaire.autosave_ready'))
         ->assertSee('data-initial-step="1"', false)
         ->assertSee('value="'.$secondCategory->id.'"', false);
 });
@@ -596,4 +596,33 @@ test('admin reports can be filtered to draft questionnaire responses', function 
         ->assertSee('<div>Draft Gebruiker</div>', false)
         ->assertSee(__('hermes.reports.state_draft'))
         ->assertDontSee('<div>Voltooide Gebruiker</div>', false);
+});
+
+test('expired resume token returns 404', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create([
+        'org_id' => $organization->org_id,
+    ]);
+    $questionnaire = Questionnaire::factory()->create();
+    $category = QuestionnaireCategory::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $response = QuestionnaireResponse::factory()->draft()->create([
+        'organization_questionnaire_id' => $availability->id,
+        'user_id' => $user->id,
+        'resume_token' => 'expired-token-abc123',
+        'resume_token_expires_at' => now()->subDay(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('questionnaire-responses.resume', $response->resume_token))
+        ->assertNotFound();
 });

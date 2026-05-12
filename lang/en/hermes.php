@@ -647,7 +647,7 @@ return [
         'latest_label' => 'Saved reflection',
         'latest_fallback' => 'Not recorded yet',
         'privacy_note' => 'Private to your account',
-        'timeline_empty' => 'Your timeline will fill up as soon as you save your first note.',
+        'timeline_empty' => 'Your journal is empty for this month.',
         'stats' => [
             'entries' => 'Notes',
             'latest' => 'Latest moment',

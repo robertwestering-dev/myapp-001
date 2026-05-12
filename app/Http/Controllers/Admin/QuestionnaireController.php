@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Concerns\ProvidesOrganizationOptions;
+use App\Enums\AuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQuestionnaireRequest;
 use App\Http\Requests\Admin\UpdateQuestionnaireRequest;
 use App\Models\Questionnaire;
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Services\SpotlightQuestionnaireService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +19,10 @@ class QuestionnaireController extends Controller
 {
     use ProvidesOrganizationOptions;
 
-    public function __construct(private readonly SpotlightQuestionnaireService $spotlightService) {}
+    public function __construct(
+        private readonly SpotlightQuestionnaireService $spotlightService,
+        private readonly AuditLogger $audit,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -66,6 +71,8 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::create($request->validated());
 
+        $this->audit->log(AuditAction::QuestionnaireCreated, "Questionnaire aangemaakt: {$questionnaire->title}", $questionnaire);
+
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
             ->with('status', __('hermes.admin.questionnaires.created'));
@@ -92,6 +99,8 @@ class QuestionnaireController extends Controller
     {
         $questionnaire->update($request->validated());
 
+        $this->audit->log(AuditAction::QuestionnaireUpdated, "Questionnaire bijgewerkt: {$questionnaire->title}", $questionnaire);
+
         return redirect()
             ->route('admin.questionnaires.edit', $questionnaire)
             ->with('status', __('hermes.admin.questionnaires.updated'));
@@ -102,6 +111,9 @@ class QuestionnaireController extends Controller
         $this->authorize('manage', Questionnaire::class);
 
         $questionnaire->update(['is_active' => ! $questionnaire->is_active]);
+
+        $action = $questionnaire->is_active ? AuditAction::QuestionnaireActivated : AuditAction::QuestionnaireDeactivated;
+        $this->audit->log($action, "Questionnaire {$questionnaire->title} ".($questionnaire->is_active ? 'geactiveerd' : 'gedeactiveerd'), $questionnaire);
 
         return redirect()
             ->route('admin.questionnaires.index')
@@ -114,6 +126,8 @@ class QuestionnaireController extends Controller
     public function destroy(Request $request, Questionnaire $questionnaire): RedirectResponse
     {
         $this->authorize('manage', Questionnaire::class);
+
+        $this->audit->log(AuditAction::QuestionnaireDeleted, "Questionnaire verwijderd: {$questionnaire->title}", $questionnaire);
 
         $questionnaire->delete();
 

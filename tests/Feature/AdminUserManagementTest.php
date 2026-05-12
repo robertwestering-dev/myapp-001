@@ -142,7 +142,7 @@ test('admins can update a user', function () {
         'role' => User::ROLE_USER,
     ]);
 
-    $response = $this->actingAs($admin)->put(route('admin.users.update', $user), [
+    $response = $this->actingAs($admin)->withPasswordConfirmed()->put(route('admin.users.update', $user), [
         'name' => 'Nieuwe Naam',
         'first_name' => 'Nina',
         'gender' => User::GENDER_OTHER,
@@ -173,7 +173,7 @@ test('admins can delete a user', function () {
     $admin = User::factory()->admin()->create();
     $user = User::factory()->create();
 
-    $response = $this->actingAs($admin)->delete(route('admin.users.destroy', $user));
+    $response = $this->actingAs($admin)->withPasswordConfirmed()->delete(route('admin.users.destroy', $user));
 
     $response->assertRedirect(route('admin.users.index'));
     $this->assertDatabaseMissing('users', ['id' => $user->id]);
@@ -189,7 +189,7 @@ test('admins cannot delete a user who is the contact person for an organization'
         'contact_id' => $contact->id,
     ]);
 
-    $response = $this->actingAs($admin)->delete(route('admin.users.destroy', $contact));
+    $response = $this->actingAs($admin)->withPasswordConfirmed()->delete(route('admin.users.destroy', $contact));
 
     $response->assertRedirect(route('admin.users.index'))
         ->assertSessionHasErrors([
@@ -424,7 +424,7 @@ test('non admins cannot create update or delete users', function () {
         ->get(route('admin.users.confirm-delete', $otherUser))
         ->assertForbidden();
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withPasswordConfirmed()
         ->put(route('admin.users.update', $otherUser), [
             'name' => 'Verboden Update',
             'email' => 'verboden-update@example.com',
@@ -433,7 +433,7 @@ test('non admins cannot create update or delete users', function () {
         ])
         ->assertForbidden();
 
-    $this->actingAs($user)
+    $this->actingAs($user)->withPasswordConfirmed()
         ->delete(route('admin.users.destroy', $otherUser))
         ->assertForbidden();
 });
@@ -507,7 +507,7 @@ test('managers can only assign users inside their own organization', function ()
         ->assertSee('Eigen Org')
         ->assertDontSee('Andere Org')
         ->assertSee('<option value="user_pro"', false)
-        ->assertSee('<option value="Beheerder"', false)
+        ->assertDontSee('<option value="Beheerder"', false)
         ->assertDontSee('<option value="Admin"', false);
 
     $this->actingAs($manager)
@@ -520,4 +520,44 @@ test('managers can only assign users inside their own organization', function ()
             'password_confirmation' => 'password123',
         ])
         ->assertSessionHasErrors('org_id');
+});
+
+test('managers cannot assign the beheerder role when creating a user', function () {
+    $organization = Organization::factory()->create();
+    $manager = User::factory()->manager()->create([
+        'org_id' => $organization->org_id,
+    ]);
+
+    $this->actingAs($manager)
+        ->post(route('admin.users.store'), [
+            'name' => 'Privilege Escalation',
+            'email' => 'escalate@example.com',
+            'role' => User::ROLE_MANAGER,
+            'org_id' => $organization->org_id,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])
+        ->assertSessionHasErrors('role');
+
+    $this->assertDatabaseMissing('users', ['email' => 'escalate@example.com']);
+});
+
+test('managers cannot assign the admin role when creating a user', function () {
+    $organization = Organization::factory()->create();
+    $manager = User::factory()->manager()->create([
+        'org_id' => $organization->org_id,
+    ]);
+
+    $this->actingAs($manager)
+        ->post(route('admin.users.store'), [
+            'name' => 'Privilege Escalation Admin',
+            'email' => 'escalate-admin@example.com',
+            'role' => User::ROLE_ADMIN,
+            'org_id' => $organization->org_id,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])
+        ->assertSessionHasErrors('role');
+
+    $this->assertDatabaseMissing('users', ['email' => 'escalate-admin@example.com']);
 });

@@ -2,6 +2,7 @@
 
 use App\Concerns\ProfileValidationRules;
 use App\Concerns\PasswordValidationRules;
+use App\Enums\AuditAction;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -105,7 +106,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
 
         $enable($user);
         Auth::setUser($user->fresh());
-        $audit->log('user.2fa_enabled', "2FA ingeschakeld: {$user->name} ({$user->email})", $user);
+        $audit->log(AuditAction::UserTwoFactorEnabled, "2FA ingeschakeld: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-enabled');
         $this->dispatch('two-factor-updated');
     }
@@ -117,7 +118,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
         $confirm($user, $this->twoFactorCode);
         Auth::setUser($user->fresh());
         $this->twoFactorCode = '';
-        $audit->log('user.2fa_confirmed', "2FA bevestigd: {$user->name} ({$user->email})", $user);
+        $audit->log(AuditAction::UserTwoFactorConfirmed, "2FA bevestigd: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-confirmed');
         $this->dispatch('two-factor-updated');
     }
@@ -128,7 +129,7 @@ new #[Layout('components.layouts.hermes-dashboard')] #[Title('Profiel')] class e
 
         $disable($user);
         Auth::setUser($user->fresh());
-        $audit->log('user.2fa_disabled', "2FA uitgeschakeld: {$user->name} ({$user->email})", $user);
+        $audit->log(AuditAction::UserTwoFactorDisabled, "2FA uitgeschakeld: {$user->name} ({$user->email})", $user);
         Session::flash('status', 'two-factor-authentication-disabled');
         $this->dispatch('two-factor-updated');
     }

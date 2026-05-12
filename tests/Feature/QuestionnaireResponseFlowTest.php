@@ -115,8 +115,8 @@ test('users can submit and revisit questionnaire responses', function () {
         ->get(route('questionnaire-responses.results', $response))
         ->assertOk()
         ->assertSee(__('hermes.questionnaire.results.result_intro', ['datetime' => $response->submitted_at->format('d-m-Y H:i')]))
-        ->assertSee('Analyse van uw resultaten')
-        ->assertSee('Uw antwoorden zijn opgeslagen.');
+        ->assertSee(__('hermes.questionnaire.results.eyebrow'))
+        ->assertSee(__('hermes.questionnaire.results.generic_title'));
 });
 
 test('questionnaire categories are shown as paginated steps', function () {
@@ -532,4 +532,34 @@ test('completed questionnaire responses are preserved when pro users start a new
         'questionnaire_question_id' => $question->id,
         'answer' => 'Poging tot overschrijven',
     ]);
+});
+
+test('questionnaire response store is rate limited to 60 requests per minute', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create(['org_id' => $organization->org_id]);
+    $questionnaire = Questionnaire::factory()->create();
+    QuestionnaireCategory::factory()->create(['questionnaire_id' => $questionnaire->id]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'is_active' => true,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+    ]);
+
+    for ($i = 0; $i < 60; $i++) {
+        $this->actingAs($user)->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'autosave',
+            'answers' => [],
+            'current_category_id' => null,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'autosave',
+            'answers' => [],
+            'current_category_id' => null,
+        ])
+        ->assertTooManyRequests();
 });

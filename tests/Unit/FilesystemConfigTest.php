@@ -1,5 +1,9 @@
 <?php
 
+use Tests\TestCase;
+
+uses(TestCase::class);
+
 it('uses the configured public webroot for storage links', function () {
     $previousAppPublicPath = env('APP_PUBLIC_PATH');
 

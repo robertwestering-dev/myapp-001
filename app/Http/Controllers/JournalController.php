@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\Academy\PositiveFoundationStrengthCatalog;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -28,21 +29,30 @@ class JournalController extends Controller
         }
 
         ['selectedStrengthKeys' => $selectedStrengthKeys, 'strengthOptions' => $strengthOptions] = $this->journalFormContext($user);
-
-        $entriesQuery = JournalEntry::query()->forUser($user);
+        $activeMonth = $this->resolveTimelineMonth($request);
+        $selectedTypes = $this->resolveTimelineTypes($request);
+        $previousMonth = $this->resolveAdjacentTimelineMonth($user, $activeMonth, $selectedTypes, 'previous');
+        $nextMonth = $this->resolveAdjacentTimelineMonth($user, $activeMonth, $selectedTypes, 'next');
+        $entriesQuery = $this->timelineEntriesQuery($user, $activeMonth, $selectedTypes);
+        $allEntriesQuery = JournalEntry::query()->forUser($user);
         $entryCounts = (clone $entriesQuery)
             ->selectRaw('entry_type, COUNT(*) as aggregate')
             ->groupBy('entry_type')
             ->pluck('aggregate', 'entry_type')
             ->map(fn (mixed $count): int => (int) $count)
             ->all();
-        $latestEntryDate = (clone $entriesQuery)->max('entry_date');
+        $latestEntryDate = (clone $allEntriesQuery)->max('entry_date');
 
         return view('journal.index', [
             'entries' => $entriesQuery
                 ->recent()
-                ->paginate(config('app.per_page')),
+                ->paginate(config('app.per_page'))
+                ->withQueryString(),
+            'activeMonth' => $activeMonth,
+            'previousMonth' => $previousMonth,
+            'nextMonth' => $nextMonth,
             'entryTypes' => JournalEntry::entryTypeOptions(),
+            'selectedTypes' => $selectedTypes,
             'selectedStrengthKeys' => $selectedStrengthKeys,
             'strengthOptions' => $strengthOptions,
             'entryCounts' => $entryCounts,
@@ -60,22 +70,13 @@ class JournalController extends Controller
         }
 
         $activeMonth = $this->resolveTimelineMonth($request);
-        $previousMonth = $activeMonth->subMonth();
-        $nextMonth = $activeMonth->addMonth();
         ['selectedStrengthKeys' => $selectedStrengthKeys, 'strengthOptions' => $strengthOptions] = $this->journalFormContext($user);
         $selectedTypes = $this->resolveTimelineTypes($request);
-        $entriesQuery = JournalEntry::query()
-            ->forUser($user)
-            ->whereBetween('entry_date', [
-                $activeMonth->startOfMonth()->toDateString(),
-                $activeMonth->endOfMonth()->toDateString(),
-            ]);
+        $previousMonth = $this->resolveAdjacentTimelineMonth($user, $activeMonth, $selectedTypes, 'previous');
+        $nextMonth = $this->resolveAdjacentTimelineMonth($user, $activeMonth, $selectedTypes, 'next');
+        $entriesQuery = $this->timelineEntriesQuery($user, $activeMonth, $selectedTypes);
 
-        if ($selectedTypes !== []) {
-            $entriesQuery->whereIn('entry_type', $selectedTypes);
-        }
-
-        return view('journal.timeline', [
+        return view('journal.timeline-page', [
             'entries' => $entriesQuery
                 ->recent()
                 ->paginate(config('app.per_page'))
@@ -188,8 +189,8 @@ class JournalController extends Controller
     {
         $returnTo = $request->input('return_to');
 
-        return $returnTo === 'journal.timeline'
-            ? 'journal.timeline'
+        return in_array($returnTo, ['journal.index', 'journal.timeline'], true)
+            ? $returnTo
             : 'journal.index';
     }
 
@@ -198,7 +199,7 @@ class JournalController extends Controller
      */
     protected function resolveReturnParameters(Request $request, string $returnRoute): array
     {
-        if ($returnRoute !== 'journal.timeline') {
+        if (! in_array($returnRoute, ['journal.index', 'journal.timeline'], true)) {
             return [];
         }
 
@@ -237,5 +238,53 @@ class JournalController extends Controller
             ->filter(fn (mixed $type): bool => is_string($type) && in_array($type, $allowedTypes, true))
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $selectedTypes
+     */
+    protected function timelineEntriesQuery(User $user, CarbonImmutable $activeMonth, array $selectedTypes): Builder
+    {
+        $entriesQuery = JournalEntry::query()
+            ->forUser($user)
+            ->whereDate('entry_date', '>=', $activeMonth->startOfMonth()->toDateString())
+            ->whereDate('entry_date', '<=', $activeMonth->endOfMonth()->toDateString());
+
+        if ($selectedTypes !== []) {
+            $entriesQuery->whereIn('entry_type', $selectedTypes);
+        }
+
+        return $entriesQuery;
+    }
+
+    /**
+     * @param  array<int, string>  $selectedTypes
+     */
+    protected function resolveAdjacentTimelineMonth(User $user, CarbonImmutable $activeMonth, array $selectedTypes, string $direction): ?CarbonImmutable
+    {
+        $entriesQuery = JournalEntry::query()->forUser($user);
+
+        if ($selectedTypes !== []) {
+            $entriesQuery->whereIn('entry_type', $selectedTypes);
+        }
+
+        if ($direction === 'previous') {
+            $entriesQuery
+                ->whereDate('entry_date', '<', $activeMonth->startOfMonth()->toDateString())
+                ->orderByDesc('entry_date');
+        } else {
+            $entriesQuery
+                ->whereDate('entry_date', '>', $activeMonth->endOfMonth()->toDateString())
+                ->whereDate('entry_date', '<=', now()->toDateString())
+                ->orderBy('entry_date');
+        }
+
+        $entryDate = $entriesQuery->value('entry_date');
+
+        if ($entryDate === null) {
+            return null;
+        }
+
+        return CarbonImmutable::parse($entryDate)->startOfMonth();
     }
 }

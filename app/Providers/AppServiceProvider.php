@@ -2,15 +2,18 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogFailedLogin;
 use App\Models\BlogPost;
 use App\Models\Questionnaire;
 use App\Models\User;
 use App\Policies\BlogPostPolicy;
 use App\Policies\QuestionnairePolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -33,12 +36,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->registerPolicies();
+        $this->registerListeners();
     }
 
     protected function registerPolicies(): void
     {
         Gate::policy(Questionnaire::class, QuestionnairePolicy::class);
         Gate::policy(BlogPost::class, BlogPostPolicy::class);
+    }
+
+    protected function registerListeners(): void
+    {
+        Event::listen(Failed::class, LogFailedLogin::class);
     }
 
     /**

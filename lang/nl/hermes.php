@@ -672,7 +672,7 @@ return [
         'latest_label' => 'Laatste notitie',
         'latest_fallback' => 'Nog geen notitie',
         'privacy_note' => 'Privé voor jouw account',
-        'timeline_empty' => 'Je timeline vult zich vanzelf zodra je je eerste notitie opslaat.',
+        'timeline_empty' => 'In deze maand is je dagboek nog leeg.',
         'stats' => [
             'entries' => 'Notities',
             'latest' => 'Laatste moment',

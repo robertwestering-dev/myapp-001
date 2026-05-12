@@ -550,130 +550,13 @@
             </div>
         </x-user-surface-card>
 
-        <div class="journal-stack">
-            <x-user-surface-card class="journal-card journal-log">
-                <x-user-section-heading
-                    :eyebrow="__('hermes.journal.entries_eyebrow')"
-                    :title="__('hermes.journal.entries_title')"
-                    :text="__('hermes.journal.entries_text')"
-                />
-
-                <div class="journal-log-list">
-                    @forelse ($entries as $entry)
-                        @php
-                            $typeKey = "hermes.journal.types.{$entry->entry_type}";
-                            $summary = $entry->isDailyNote()
-                                ? ($entry->contentValue('title') ?: \Illuminate\Support\Str::limit($entry->contentValue('body') ?? '', 120))
-                                : ($entry->isThreeGoodThings()
-                                    ? $entry->contentValue('what_went_well')
-                                    : ($entry->isStrengthsReflection()
-                                        ? trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('situation') ?? ''))
-                                        : trim(($entry->strengthLabel() ?? '').' · '.($entry->contentValue('planned_strength_use') ?? ''))));
-                        @endphp
-
-                        <x-user-surface-card variant="soft" class="journal-log-item">
-                            <input id="journal_edit_{{ $entry->getKey() }}" type="checkbox" class="journal-edit-toggle">
-                            <input id="journal_delete_{{ $entry->getKey() }}" type="checkbox" class="journal-delete-toggle">
-
-                            <div class="journal-log-top">
-                                <span class="journal-log-date">{{ $entry->entry_date->format('d-m-Y') }}</span>
-
-                                <div class="journal-log-actions">
-                                    <span class="journal-entry__pill">{{ __($typeKey.'.label') }}</span>
-
-                                    <label for="journal_edit_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.edit') }}">
-                                        <span class="journal-icon-button__symbol journal-icon-button__symbol--expand" aria-hidden="true">+</span>
-                                        <span class="journal-icon-button__symbol journal-icon-button__symbol--collapse" aria-hidden="true">-</span>
-                                    </label>
-
-                                    <label for="journal_delete_{{ $entry->getKey() }}" class="journal-icon-button" aria-label="{{ __('hermes.journal.delete') }}">
-                                        <span class="journal-icon-button__symbol" aria-hidden="true">×</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="journal-log-summary">
-                                <strong>{{ $summary }}</strong>
-                                <span>{{ __($typeKey.'.text') }}</span>
-                            </div>
-
-                            <div class="journal-delete-dialog">
-                                <label for="journal_delete_{{ $entry->getKey() }}" class="journal-delete-dialog__backdrop" aria-hidden="true"></label>
-
-                                <div class="journal-delete-dialog__card" role="dialog" aria-modal="true" aria-labelledby="journal_delete_title_{{ $entry->getKey() }}">
-                                    <p id="journal_delete_title_{{ $entry->getKey() }}">{{ __('hermes.journal.delete_confirmation') }}</p>
-
-                                    <div class="journal-delete-dialog__actions">
-                                        <label for="journal_delete_{{ $entry->getKey() }}" class="pill pill--neutral">{{ __('hermes.journal.cancel') }}</label>
-
-                                        <form method="POST" action="{{ route('journal.destroy', $entry) }}">
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button type="submit" class="pill">{{ __('hermes.journal.confirm_delete') }}</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="journal-entry">
-                                <div class="journal-entry__body">
-                                    @if ($entry->isDailyNote())
-                                        <p><strong>{{ __($typeKey.'.fields.title') }}</strong>{{ $entry->contentValue('title') }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.body') }}</strong>{{ $entry->contentValue('body') }}</p>
-                                    @elseif ($entry->isThreeGoodThings())
-                                        <p><strong>{{ __($typeKey.'.fields.what_went_well') }}</strong>{{ $entry->contentValue('what_went_well') }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.my_contribution') }}</strong>{{ $entry->contentValue('my_contribution') }}</p>
-                                    @elseif ($entry->isStrengthsReflection())
-                                        <p><strong>{{ __($typeKey.'.fields.strength_key') }}</strong>{{ $entry->strengthLabel() }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.situation') }}</strong>{{ $entry->contentValue('situation') }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.how_used') }}</strong>{{ $entry->contentValue('how_used') }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.reflection') }}</strong>{{ $entry->contentValue('reflection') }}</p>
-                                    @else
-                                        <p><strong>{{ __($typeKey.'.fields.strength_key') }}</strong>{{ $entry->strengthLabel() }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.planned_strength_use') }}</strong>{{ $entry->contentValue('planned_strength_use') }}</p>
-                                        <p><strong>{{ __($typeKey.'.fields.general_intention') }}</strong>{{ $entry->contentValue('general_intention') }}</p>
-                                    @endif
-                                </div>
-
-                                <form method="POST" action="{{ route('journal.update', $entry) }}" class="journal-form">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="entry_type" value="{{ $entry->entry_type }}">
-
-                                    <div class="journal-field">
-                                        <label for="entry_date_{{ $entry->getKey() }}">{{ __('hermes.journal.fields.entry_date') }}</label>
-                                        <input id="entry_date_{{ $entry->getKey() }}" name="entry_date" type="date" value="{{ $entry->entry_date->toDateString() }}" max="{{ now()->toDateString() }}" required>
-                                    </div>
-
-                                    @include('journal.partials.entry-fields', [
-                                        'type' => $entry->entry_type,
-                                        'values' => $entry->content ?? [],
-                                        'prefix' => 'content',
-                                        'suffix' => 'entry_'.$entry->getKey(),
-                                        'strengthOptions' => $strengthOptions,
-                                        'selectedStrengthKeys' => $selectedStrengthKeys,
-                                    ])
-
-                                    <x-user-action-row align="end">
-                                        <button type="submit" class="pill">{{ __('hermes.journal.update') }}</button>
-                                    </x-user-action-row>
-                                </form>
-                            </div>
-                        </x-user-surface-card>
-                    @empty
-                        <x-user-surface-card variant="soft" class="journal-card journal-empty">
-                            <h2>{{ __('hermes.journal.empty.title') }}</h2>
-                            <p>{{ __('hermes.journal.empty.text') }}</p>
-                            <p>{{ __('hermes.journal.timeline_empty') }}</p>
-                        </x-user-surface-card>
-                    @endforelse
-                </div>
-
-                @if ($entries->hasPages())
-                    {{ $entries->links() }}
-                @endif
-            </x-user-surface-card>
+        <div id="journal-compact-timeline" class="journal-section-anchor">
+            @include('journal.timeline', [
+                'timelineEmbedded' => true,
+                'timelineRouteName' => 'journal.index',
+                'timelineReturnTo' => 'journal.index',
+                'timelineAnchor' => '#journal-compact-timeline',
+            ])
         </div>
     </div>
 </x-layouts.hermes-dashboard>

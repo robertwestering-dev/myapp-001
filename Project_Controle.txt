@@ -34,3 +34,10 @@ Voer een volledige beveiligings- en kwaliteitsaudit uit op de huidige codebase e
 8. Schrijf of update bestaande tests voor elke fix
 9. Draai `vendor/bin/pint --dirty` en de relevante tests na elke wijziging
 10. Update Project_Context.md met de nieuwe sessie-update
+
+**Pre-existing test failures**
+Na alle audit-fixes: draai de volledige testsuite (`php artisan test --compact`). Zijn er failures die niet door jouw eigen wijzigingen zijn veroorzaakt, fix die dan ook — zonder apart te vragen. Behandel ze als onderdeel van de sessie. Aanpak per type:
+- Hardcoded vertalingen → vervang door `__()` met de juiste sleutel uit de lang-bestanden
+- Type errors door ontbrekende enum-cases → voeg de case toe aan het enum en gebruik het in de aanroep
+- Unit tests die Laravel-helpers gebruiken maar `TestCase` missen → voeg `uses(TestCase::class)` toe
+- Mass assignment of constraint-fouten na een modelwijziging → controleer of de action/service nog naar die kolom schrijft voordat je `$fillable` aanpast; draai de wijziging terug als de DB-kolom NOT NULL is en de schrijver nog actief is

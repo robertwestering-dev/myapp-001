@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+// role, org_id, last_login_at, selected_strengths are intentionally excluded — use forceFill() for those columns.
 #[Fillable(['name', 'first_name', 'gender', 'birth_date', 'city', 'country', 'email', 'password', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail

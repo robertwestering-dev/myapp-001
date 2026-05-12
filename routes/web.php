@@ -109,7 +109,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/resume/{token}', [QuestionnaireResponseController::class, 'resume'])->name('resume');
         Route::get('/results/{response}', [QuestionnaireResponseController::class, 'results'])->name('results');
         Route::get('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'show'])->name('show');
-        Route::post('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'store'])->name('store');
+        Route::post('/{organizationQuestionnaire}', [QuestionnaireResponseController::class, 'store'])->middleware('throttle:60,1')->name('store');
     });
 
 Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
@@ -193,8 +193,8 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])
                         Route::get('/export', [UserController::class, 'export'])->middleware('throttle:10,1')->name('export');
                         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
                         Route::get('/{user}/confirm-delete', [UserController::class, 'confirmDestroy'])->name('confirm-delete');
-                        Route::put('/{user}', [UserController::class, 'update'])->name('update');
-                        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+                        Route::put('/{user}', [UserController::class, 'update'])->middleware('password.confirm')->name('update');
+                        Route::delete('/{user}', [UserController::class, 'destroy'])->middleware('password.confirm')->name('destroy');
                     });
 
                 Route::prefix('organizations')

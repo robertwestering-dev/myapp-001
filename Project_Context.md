@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-03`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-08`.
 
 ## Product In Het Kort
 
@@ -70,6 +70,8 @@ Autorisatie:
 - globale admins gebruiken middleware (`EnsureUserIsGlobalAdmin`) op routeniveau voor blog, vertalingen, assets en Academy
 - beheerder-scoped acties gebruiken `abort_unless($actor->canManageOrganization(...), 403)`
 - gebruik nooit `request()->user()` in controllers — gebruik altijd `$request->user()` via de methode-parameter
+- admin-gebruikersbeheer: `PUT /admin-portal/users/{user}` (update) en `DELETE /admin-portal/users/{user}` (destroy) vereisen wachtwoordbevestiging via `password.confirm` middleware; gebruik `withPasswordConfirmed()` in tests die deze routes aanroepen
+- `resume_token` op `questionnaire_responses` heeft een vervaldatum van 30 dagen (`resume_token_expires_at`); verlopen tokens geven een 404 in de resume-route; het token wordt bij elke draft-opslag verlengd
 - vermijd dubbele autorisatie: als een `FormRequest` de autorisatie al regelt via `authorize()`, roep dan geen `$this->authorize()` aan in de controller — `StoreOrganizationRequest` en `UpdateOrganizationRequest` regelen hun eigen autorisatie volledig; de controllers bevatten geen extra checks
 
 Beveiliging:
@@ -108,12 +110,18 @@ Auditlog:
 - `app/Models/AdminActivityLog.php` + tabel `admin_activity_logs` — slaat op: `user_id`, `action`, `subject_type`, `subject_id`, `description`, `ip_address`, `timestamps`
 - `app/Services/AuditLogger.php` — injecteerbare service die automatisch de ingelogde gebruiker en het IP-adres registreert; `log()` accepteert een `AuditAction` enum (geen vrije string)
 - `app/Enums/AuditAction.php` — enum met alle toegestane auditacties als type-veilige constanten; gebruik altijd `AuditAction::UserCreated` e.d. in plaats van hardcoded strings
-- `UserController` logt `AuditAction::UserCreated`, `UserUpdated`, `UserDeleted`, `UserRoleChanged`
-- `OrganizationController` logt `AuditAction::OrganizationCreated`, `OrganizationUpdated`, `OrganizationDeleted`
-- `ProUpgradeController` logt `AuditAction::UserProUpgrade`
-- `BlogPostController` logt `AuditAction::BlogPostCreated`, `BlogPostUpdated`, `BlogPostPublished`, `BlogPostDeleted`
-- `⚡delete-user-modal` (Livewire) logt `user.anonymized` vóór anonimisering
-- `⚡profile` (Livewire) logt `user.2fa_enabled`, `user.2fa_confirmed`, `user.2fa_disabled`
+- `UserController` logt `UserCreated`, `UserUpdated`, `UserDeleted`, `UserRoleChanged`
+- `OrganizationController` logt `OrganizationCreated`, `OrganizationUpdated`, `OrganizationDeleted`
+- `ProUpgradeController` logt `UserProUpgrade`
+- `BlogPostController` logt `BlogPostCreated`, `BlogPostUpdated`, `BlogPostPublished`, `BlogPostDeleted`
+- `AcademyCourseController` logt `AcademyCourseCreated`, `AcademyCourseUpdated`, `AcademyCourseDeleted`
+- `QuestionnaireController` logt `QuestionnaireCreated`, `QuestionnaireUpdated`, `QuestionnaireActivated`, `QuestionnaireDeactivated`, `QuestionnaireDeleted`
+- `MediaAssetController` logt `MediaAssetUploaded`, `MediaAssetDeleted`
+- `⚡delete-user-modal` (Livewire) logt `UserAnonymized` vóór anonimisering
+- `⚡profile` (Livewire) logt `UserTwoFactorEnabled`, `UserTwoFactorConfirmed`, `UserTwoFactorDisabled`
+- mislukte loginpogingen worden gelogd via de `LogFailedLogin` listener op `Illuminate\Auth\Events\Failed` — `user_id` is null, email staat in de description
+- 403-weigeringen op `/admin-portal/*` worden gelogd via `bootstrap/app.php` `renderable()` handler — `user_id` is de ingelogde actor (of null), path staat in de description
+- `admin_activity_logs.user_id` is nullable — vereist voor mislukte loginpogingen waarbij geen gebruiker geïdentificeerd kan worden
 - auditlogoverzicht beschikbaar op `/admin-portal/audit-logs` — alleen voor globale `Admin`, ondersteunt filteren op actie en omschrijving
 - auditlog-kaart met teller zichtbaar op het admin-portaal; menu-link in de admin-navigatie
 
@@ -153,13 +161,20 @@ Journaalafspraken:
 - `daily_note` is het generieke basisdagboektype met `content.title` en `content.body`; dit type is de standaard `entry_type` op model- en factory-niveau
 - `weekly_intention` gebruikt dezelfde 3 eerder gekozen sterke kanten van de gebruiker als keuzebron; validatie op `content.strength_key` accepteert dus alleen waarden uit `users.selected_strengths`
 - `UpsertJournalEntryRequest` heeft een widget-specifieke uitzondering voor `academy.widgets.weekly-intention.store`: in die compacte embed-flow is `content.general_intention` niet verplicht, terwijl het veld op de gewone journal-pagina wel blijft bestaan
-- de gewone journal-pagina op `/journal` positioneert het journal nu als hoofdfeature: vrij schrijven + 3 begeleide formats, met overzichtsstatistieken en een prominentere schrijfruimte
-- `/timeline` is een aparte compacte journal-feed in Day One-achtige stijl: maandnavigatie via querystring (`month=YYYY-MM`), typefiltering via querystring (`types[]=`) en compacte type-iconen in plaats van thumbnails
-- `JournalController::timeline()` gebruikt `paginate(...)->withQueryString()` zodat gekozen maand en typefilters behouden blijven tijdens paginatie
+- de gewone journal-pagina op `/journal` positioneert het journal nu als hoofdfeature: vrij schrijven + 3 begeleide formats, met de compacte timeline onderaan dezelfde pagina
+- `/timeline` is daarnaast een aparte compacte journal-feed in Day One-achtige stijl; beide plekken gebruiken dezelfde gedeelde partial `resources/views/journal/timeline.blade.php`
+- `/timeline` rendert via de wrapper `resources/views/journal/timeline-page.blade.php`; `/journal` embedt dezelfde partial met `timelineRouteName = journal.index`, `timelineReturnTo = journal.index` en `timelineAnchor = #journal-compact-timeline`
+- maandnavigatie loopt via querystring (`month=YYYY-MM`), typefiltering via querystring (`types[]=`) en compacte type-iconen in plaats van thumbnails
+- `JournalController::index()` en `JournalController::timeline()` gebruiken `paginate(...)->withQueryString()` zodat gekozen maand en typefilters behouden blijven tijdens paginatie
+- de maandpijlen zoeken naar de vorige/volgende maand met notitie(s), niet blind naar `subMonth()`/`addMonth()`; actieve typefilters worden hierbij gerespecteerd en een pijl wordt disabled als er geen zinvolle vorige/volgende maand is
+- op `/journal` krijgen de vorige/volgende maandlinks het anker `#journal-compact-timeline`, zodat de pagina na herladen direct op de timelinehoogte staat
+- de lege maand-state van de compacte timeline toont alleen: “In deze maand is je dagboek nog leeg.”
 - de compacte timeline heeft twee bovenliggende interactiepaden:
   - `+` opent eerst een compact keuzemenu met alleen de 4 journaling-types; daarna wordt exact één formulier getoond
   - het trechter-icoon opent een compact filterpaneel waarin 1 of meer entry-types kunnen worden aangevinkt; de lijst toont daarna alleen die types
-- de compacte timeline bewaart na opslaan de actieve maand en eventuele typefilters via verborgen `return_month` en `return_types[]` velden; na opslaan keert de gebruiker terug naar dezelfde gefilterde timeline
+- klikken op de titel of samenvatting van een timeline-entry opent inline het volledige editformulier voor dat type; annuleren, opslaan en verwijderen zijn compacte icon-knoppen
+- verwijderen vanuit de compacte timeline vereist bevestiging in een popup voordat de DELETE-request wordt verzonden
+- de compacte timeline bewaart na opslaan/bijwerken/verwijderen de actieve maand en eventuele typefilters via verborgen `return_month` en `return_types[]` velden; na de actie keert de gebruiker terug naar dezelfde gefilterde context (`/journal` of `/timeline`)
 
 Organisatie-scoping:
 
@@ -890,6 +905,84 @@ Status:
 - deze migraties zijn lokaal uitgevoerd
 - op live moeten ze expliciet worden meegenomen als dat nog niet is gebeurd
 
+## Sessie-update 2026-05-12 — Resterende open bevindingen gesloten
+
+Alle LAAG-bevindingen uit eerdere auditsessies zijn opgelost. Geen open aanbevelingen meer.
+
+### Doorgevoerde fixes
+
+- **`selected_strengths` niet gedocumenteerd** — Commentaar toegevoegd boven `#[Fillable]` in `User.php`: role, org_id, last_login_at en selected_strengths zijn bewust uitgesloten; gebruik `forceFill()`.
+- **`AuditAction` enum onvolledig** — Nieuwe cases: `AcademyCourseCreated/Updated/Deleted`, `QuestionnaireCreated/Updated/Activated/Deactivated/Deleted`, `MediaAssetUploaded/Deleted`, `LoginFailed`, `AccessDenied`.
+- **Geen audit logging voor Academy/Questionnaire/MediaAsset** — `AcademyCourseController`, `QuestionnaireController` en `MediaAssetController` loggen nu alle CUD-acties via `AuditLogger`.
+- **Geen audit logging bij mislukte loginpogingen** — `LogFailedLogin`-listener geregistreerd op `Illuminate\Auth\Events\Failed`; logt naar `admin_activity_logs` met `user_id = null`.
+- **Geen audit logging bij 403-weigeringen** — `bootstrap/app.php` `renderable()`-handler logt `access.denied` voor alle 403's op `/admin-portal/*`.
+- **`admin_activity_logs.user_id` was NOT NULL** — Migratie maakt kolom nullable zodat failed-login-entries zonder bekende gebruiker opgeslagen kunnen worden.
+- **`resume_token` had geen vervaldatum** — Migratie voegt `resume_token_expires_at` toe; controller zet vervaldatum op 30 dagen bij elke draft-opslag; `resume`-route geeft 404 bij verlopen token.
+- **Geen wachtwoordbevestiging bij admin rolwijzigingen en gebruikersverwijdering** — `password.confirm` middleware toegevoegd op `PUT /admin-portal/users/{user}` en `DELETE /admin-portal/users/{user}`.
+
+### Nieuwe en gewijzigde bestanden
+
+- `app/Models/User.php` — commentaar bij `#[Fillable]`
+- `app/Enums/AuditAction.php` — 10 nieuwe cases
+- `app/Http/Controllers/Admin/AcademyCourseController.php` — AuditLogger geïnjecteerd, 3 log-calls
+- `app/Http/Controllers/Admin/QuestionnaireController.php` — AuditLogger geïnjecteerd, 5 log-calls
+- `app/Http/Controllers/Admin/MediaAssetController.php` — AuditLogger geïnjecteerd, 2 log-calls
+- `app/Listeners/LogFailedLogin.php` — nieuw
+- `app/Providers/AppServiceProvider.php` — `Event::listen(Failed::class, LogFailedLogin::class)`
+- `bootstrap/app.php` — `renderable()` handler voor 403 op admin-portal
+- `database/migrations/2026_05_12_..._make_user_id_nullable_in_admin_activity_logs.php` — nieuw
+- `database/migrations/2026_05_12_..._add_resume_token_expires_at_to_questionnaire_responses.php` — nieuw
+- `app/Http/Controllers/QuestionnaireResponseController.php` — token-vervaldatum gezet en gecontroleerd
+- `routes/web.php` — `password.confirm` op user update + destroy
+- `tests/TestCase.php` — `withPasswordConfirmed()` helper
+- `tests/Feature/AuditLogTest.php` — 11 nieuwe tests, bestaande tests bijgewerkt met `withPasswordConfirmed()`
+- `tests/Feature/AdminUserManagementTest.php` — 5 aanroepen bijgewerkt met `withPasswordConfirmed()`
+- `tests/Feature/QuestionnaireDraftAndConditionsTest.php` — test voor verlopen resume-token
+- `Project_Controle.txt` — pre-existing failures sectie toegevoegd
+
+### Teststatus
+
+- 407 tests, allemaal groen
+
+## Sessie-update 2026-05-08 — Beveiligings- & kwaliteitsaudit
+
+Deze sessie bevatte een volledige audit van controllers, modellen, policies, routes, middleware en migraties. Geen kritieke of hoge bevindingen. Alle MEDIUM- en LAAG-fixes zijn doorgevoerd.
+
+### Gewijzigde bestanden
+
+**`routes/web.php`**
+- `POST /questionnaires/{organizationQuestionnaire}` krijgt `throttle:60,1` — autosave/submit was de enige POST-route zonder rate limiting.
+
+**`app/Http/Controllers/BlogController.php`**
+- `tagCounts()` gebruikt nu `Cache::remember()` in combinatie met een expliciete `Cache::forget()` bij ongeldige gecachte waarden, zodat geen stampede optreedt en corrupte cachewaarden automatisch worden hersteld.
+
+**`app/Http/Controllers/Admin/UserController.php`**
+- `roleOptions()` voor niet-admin actors: `Beheerder` verwijderd. De UI toonde deze keuze terwijl de FormRequest-validatie hem altijd afwees — veroorzaakte onbegrijpelijke validatiefouten.
+
+**`app/Models/ForumReply.php`**
+- `forum_thread_id` verwijderd uit `#[Fillable]`. Deze kolom wordt uitsluitend via de Eloquent-relatie `$forumThread->replies()->make()` gezet.
+
+**`app/Policies/ForumReplyPolicy.php`**
+- `viewAny`, `view`, `create`: `$user !== null` vervangen door `true`. De non-nullable `User` type-hint garandeert al dat policies alleen voor geauthenticeerde gebruikers worden aangeroepen.
+
+**`app/Models/JournalEntry.php`**
+- `what_went_well` en `my_contribution` staan bewust **nog wel** in `#[Fillable]`. De DB-kolommen zijn NOT NULL en `UpsertJournalEntry::payload()` schrijft er nog actief naar als backward-compatible legacykolommen naast het nieuwe `content`-JSON-veld. Verwijderen uit fillable breekt de NOT NULL-constraint.
+
+### Nieuwe en gewijzigde tests
+
+**`tests/Feature/AdminUserManagementTest.php`**
+- Bestaande test `managers can only assign users inside their own organization` bijgewerkt: `assertSee('<option value="Beheerder"')` is gewijzigd naar `assertDontSee`.
+- Nieuw: `managers cannot assign the beheerder role when creating a user` — verifieert dat validatie `role=Beheerder` afwijst voor manager-actors.
+- Nieuw: `managers cannot assign the admin role when creating a user` — verifieert dat validatie `role=Admin` afwijst.
+
+**`tests/Feature/QuestionnaireResponseFlowTest.php`**
+- Nieuw: `questionnaire response store is rate limited to 60 requests per minute` — verifieert dat de 61e request binnen één minuut een 429 teruggeeft.
+
+### Autorisatieafspraken (aanvulling)
+
+- `Beheerder`-actors kunnen via het admin-portaal uitsluitend gebruikers aanmaken of bewerken met rollen `User` en `user_pro` — dit wordt zowel in de UI (dropdown) als in de FormRequest-validatie gehandhaafd
+- de `ForumReply::$fillable` bevat bewust **geen** `forum_thread_id` — gebruik altijd `$forumThread->replies()->make()` of `$forumThread->replies()->create()` in plaats van directe mass-assignment
+
 ## Belangrijke Routes
 
 Gebruikersroutes:
@@ -983,6 +1076,37 @@ Services en autorisatie:
 - `app/Services/SpotlightQuestionnaireService.php`
 - `app/Services/AuditLogger.php`
 - `app/Services/SuccessfulLoginSummary.php`
+
+## Sessie-update 2026-05-12
+
+Journal en compacte timeline bijgewerkt:
+
+- `resources/views/journal/timeline.blade.php` is nu de gedeelde compacte timeline-partial voor zowel `/journal` als `/timeline`
+- `resources/views/journal/timeline-page.blade.php` is toegevoegd als wrapper voor de standalone `/timeline` pagina
+- `/journal` toont de compacte timeline onder de schrijfsectie; de knop `Open compacte timeline` blijft bewust verwijzen naar de standalone `/timeline` pagina
+- de timeline ondersteunt inline bewerken door op titel of samenvatting van een entry te klikken
+- de actieknoppen in de inline editor zijn icon-only: annuleren, opslaan en verwijderen; opslaan gebruikt de groene Hermes-pallet (`#20453a` naar `#162d26`)
+- verwijderen opent eerst een bevestigingspopup
+- de lege maand-state is aangepast naar één zin: `In deze maand is je dagboek nog leeg.`
+- maandnavigatie springt naar de vorige/volgende maand met entries in plaats van blind naar de kalendermaand ervoor/erna; actieve typefilters worden meegenomen
+- toekomstige maanden zonder entries worden niet aangeboden; als er geen geldige vorige/volgende maand bestaat, wordt de betreffende pijl disabled
+- op `/journal` krijgen maandnavigatielinks het anker `#journal-compact-timeline`, zodat de pagina na herladen direct bij de timeline staat
+
+Belangrijke nieuwe/gewijzigde bestanden:
+
+- `app/Http/Controllers/JournalController.php`
+- `resources/views/journal/index.blade.php`
+- `resources/views/journal/timeline.blade.php`
+- `resources/views/journal/timeline-page.blade.php`
+- `tests/Feature/ThreeGoodThingsJournalTest.php`
+- `lang/nl/hermes.php`
+- `lang/en/hermes.php`
+- `lang/de/hermes.php`
+- `lang/fr/hermes.php`
+
+Gerichte teststatus uit deze sessie:
+
+- `tests/Feature/ThreeGoodThingsJournalTest.php` groen: `17 passed (133 assertions)`
 
 ## Sessie-update 2026-05-07
 
