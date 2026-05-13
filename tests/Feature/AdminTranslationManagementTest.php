@@ -94,13 +94,14 @@ test('admin can update a translation row from the overview flow', function () {
         'page_number' => 1,
     ]);
 
-    $response->assertRedirect(route('admin.translations.index', [
-        'locale' => 'nl',
-        'page' => 'home',
-        'element' => 'hero_title',
-        'search' => 'homepage vanuit het admin-portal',
-        'page_number' => 1,
-    ]));
+    $response->assertSessionHas('status', __('hermes.admin.translations.updated'))
+        ->assertRedirect(route('admin.translations.index', [
+            'locale' => 'nl',
+            'page' => 'home',
+            'element' => 'hero_title',
+            'search' => 'homepage vanuit het admin-portal',
+            'page_number' => 1,
+        ]));
 
     $overview = $this->actingAs($admin)->get(route('admin.translations.index', [
         'locale' => 'nl',

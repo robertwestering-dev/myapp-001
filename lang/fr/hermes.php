@@ -626,6 +626,9 @@ return [
             'uploaded' => 'Asset téléchargé avec succès.',
             'deleted' => 'Asset supprimé avec succès.',
         ],
+        'translations' => [
+            'updated' => 'Traduction mise à jour avec succès.',
+        ],
     ],
     'questionnaire' => [
         'eyebrow' => 'Questionnaire',

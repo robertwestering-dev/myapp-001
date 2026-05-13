@@ -196,3 +196,17 @@ test('thread author does not receive a notification when replying to their own t
 
     Notification::assertNothingSent();
 });
+
+test('forum reply update and delete routes are rate limited', function () {
+    $user = User::factory()->create();
+    $thread = ForumThread::factory()->create(['user_id' => $user->id]);
+    $reply = ForumReply::factory()->create(['user_id' => $user->id, 'forum_thread_id' => $thread->id]);
+
+    for ($i = 0; $i < 30; $i++) {
+        $this->actingAs($user)->put(route('forum-replies.update', [$thread, $reply]), ['body' => 'Update '.($i + 1)]);
+    }
+
+    $this->actingAs($user)
+        ->put(route('forum-replies.update', [$thread, $reply]), ['body' => 'Over het limiet'])
+        ->assertTooManyRequests();
+});

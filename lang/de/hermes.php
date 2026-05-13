@@ -942,6 +942,9 @@ return [
             'uploaded' => 'Asset erfolgreich hochgeladen.',
             'deleted' => 'Asset erfolgreich gelöscht.',
         ],
+        'translations' => [
+            'updated' => 'Übersetzung erfolgreich aktualisiert.',
+        ],
         'portal' => [
             'lead_admin' => 'Sie sind als Admin mit dem Konto :email angemeldet. In dieser Umgebung verwalten Sie Organisationen, Fragebögen und Berichte über alle Organisationen hinweg.',
             'lead_manager' => 'Sie sind als Verwalter mit dem Konto :email angemeldet. In dieser Umgebung verwalten Sie Ihre eigene Organisation, stellen Fragebögen zur Verfügung und sehen Antworten innerhalb Ihres Bereichs.',

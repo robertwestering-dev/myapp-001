@@ -11,6 +11,15 @@ test('manager cannot access academy course management', function () {
     $response->assertForbidden();
 });
 
+test('non-admin user is forbidden by policy even without middleware', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withoutMiddleware()
+        ->get(route('admin.academy-courses.index'))
+        ->assertForbidden();
+});
+
 test('admin can open academy course management overview', function () {
     $admin = User::factory()->admin()->create();
     $course = AcademyCourse::factory()->create([

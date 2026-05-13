@@ -1005,6 +1005,9 @@ return [
             'uploaded' => 'Asset succesvol geüpload.',
             'deleted' => 'Asset succesvol verwijderd.',
         ],
+        'translations' => [
+            'updated' => 'Vertaling succesvol bijgewerkt.',
+        ],
         'portal' => [
             'lead_admin' => 'U bent ingelogd als admin met het account :email. Vanuit deze omgeving beheer je organisaties, questionnaires en rapportage over alle organisaties heen.',
             'lead_manager' => 'U bent ingelogd als beheerder met het account :email. Vanuit deze omgeving beheert je jouw eigen organisatie, stelt je questionnaires beschikbaar en bekijk je responses binnen jouw scope.',

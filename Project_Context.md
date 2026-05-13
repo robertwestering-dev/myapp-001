@@ -1639,6 +1639,59 @@ Volledige beveiligings- en kwaliteitsaudit uitgevoerd. Bevindingen beoordeeld, a
 - `tests/Feature/ProUpgradeTest.php` — nieuw (7 tests)
 - `tests/Feature/AdminUserManagementTest.php` — auditlog-check op exporttest toegevoegd
 
+## Sessie-update 2026-05-13 — Beveiligings- & kwaliteitsaudit
+
+Volledige audit van controllers, modellen, middleware, routes, requests en policies. Geen kritieke of hoge bevindingen. Alle MEDIUM- en twee triviale LAAG-fixes zijn doorgevoerd.
+
+### MEDIUM-fixes
+
+**Race condition in `QuestionnaireResponseController::store()`**
+- Twee gelijktijdige final submissions van een non-pro gebruiker konden allebei de outer pro-gate passeren vóór de transactie startte.
+- Fix: inner `lockForUpdate()`-check toegevoegd binnen de `DB::transaction()` via reference-variabele `$proGateBlocked`; geeft dezelfde redirect/JSON-403 als de outer check maar serialiseert gelijktijdige verzoeken op rijniveau.
+
+**LIKE wildcard niet geëscaped in `UserController::usersQuery()`**
+- `"%{$search}%"` escapte `%` en `_` niet, terwijl `ForumThreadController` dit al wel deed. Maakte dure, onbedoelde LIKE-patronen mogelijk.
+- Fix: `str_replace(['%', '_'], ['\\%', '\\_'], $search)` toegevoegd, consistent met het forum.
+
+**Hardcoded Nederlandse flash-tekst in `TranslationController::update()`**
+- `'Vertaling succesvol bijgewerkt.'` was hardcoded in plaats van `__()`, violation van de admin-vertaalconventie.
+- Fix: sleutel `hermes.admin.translations.updated` toegevoegd aan nl/en/de/fr, controller gebruikt nu `__('hermes.admin.translations.updated')`.
+
+### LAAG-fixes (triviaal)
+
+**Rate limiting op forum-reply update en delete**
+- `PUT /forum/{forumThread}/replies/{forumReply}` en `DELETE ...` hadden geen rate limiting terwijl store `throttle:20,1` had.
+- Fix: `throttle:30,1` toegevoegd aan beide routes in `routes/web.php`.
+
+**Forum-stats gecached in `ForumThreadController`**
+- 3 losse COUNT-queries op elke forum-indexpaginalaad (threadCount, replyCount, questionCount) zonder caching.
+- Fix: nieuwe `forumStats()`-methode met `Cache::remember(..., 5 minuten)`, identiek aan het bestaande `tagCounts()`-patroon.
+
+### Open LAAG-bevinding (niet-triviaal, bevestiging gevraagd)
+
+**`AcademyCourseController` mist `$this->authorize()` calls**
+- `index`, `create`, `edit`, `confirmDestroy` hebben geen expliciete `$this->authorize()`, inconsistent met `BlogPostController`. Vereist nieuwe `AcademyCoursePolicy`. Routes zijn al beveiligd via `EnsureUserIsGlobalAdmin` middleware, dus geen security-risico.
+
+### Nieuwe en gewijzigde bestanden
+
+- `app/Http/Controllers/QuestionnaireResponseController.php` — inner lockForUpdate pro-gate
+- `app/Http/Controllers/Admin/UserController.php` — LIKE wildcard escaping
+- `app/Http/Controllers/Admin/TranslationController.php` — `__()` flash
+- `lang/nl/hermes.php` — `admin.translations.updated` key
+- `lang/en/hermes.php` — `admin.translations.updated` key
+- `lang/de/hermes.php` — `admin.translations.updated` key
+- `lang/fr/hermes.php` — `admin.translations.updated` key
+- `routes/web.php` — `throttle:30,1` op forum-reply update/delete
+- `app/Http/Controllers/ForumThreadController.php` — `forumStats()` met caching
+- `tests/Feature/QuestionnaireDraftAndConditionsTest.php` — test POST final submission blocking
+- `tests/Feature/AdminUserManagementTest.php` — test LIKE wildcard escaping
+- `tests/Feature/AdminTranslationManagementTest.php` — check translated flash
+- `tests/Feature/ForumTest.php` — rate limit test forum reply update
+
+### Teststatus
+
+- 412 tests, allemaal groen
+
 ## Gebruik Van Dit Bestand
 
 Gebruik dit document als startpunt voor vervolgopdrachten, tenzij nieuwe code of nieuwe deploys aantoonbaar actuelere informatie geven.

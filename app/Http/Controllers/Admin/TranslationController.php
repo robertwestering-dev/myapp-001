@@ -93,7 +93,7 @@ class TranslationController extends Controller
                 'search' => $attributes['filter_search'] ?: null,
                 'page_number' => $attributes['page_number'] ?: null,
             ])
-            ->with('status', 'Vertaling succesvol bijgewerkt.');
+            ->with('status', __('hermes.admin.translations.updated'));
     }
 
     protected function paginate(Collection $translations, Request $request): LengthAwarePaginator

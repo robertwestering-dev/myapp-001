@@ -981,6 +981,9 @@ return [
             'uploaded' => 'Asset successfully uploaded.',
             'deleted' => 'Asset successfully deleted.',
         ],
+        'translations' => [
+            'updated' => 'Translation successfully updated.',
+        ],
         'portal' => [
             'lead_admin' => 'You are logged in as admin with account :email. From this environment you manage organizations, questionnaires and reporting across all organizations.',
             'lead_manager' => 'You are logged in as manager with account :email. From this environment you manage your own organization, make questionnaires available and view responses within your scope.',

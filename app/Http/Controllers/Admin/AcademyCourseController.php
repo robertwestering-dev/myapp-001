@@ -21,6 +21,8 @@ class AcademyCourseController extends Controller
 
     public function index(): View
     {
+        $this->authorize('manage', AcademyCourse::class);
+
         $academyCourses = AcademyCourse::query()
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -33,6 +35,8 @@ class AcademyCourseController extends Controller
 
     public function create(): View
     {
+        $this->authorize('manage', AcademyCourse::class);
+
         return view('admin.academy-courses.form', [
             'title' => __('hermes.admin.form_titles.new_academy_course'),
             'intro' => 'Voeg een nieuwe e-learning toe aan de Academy-catalogus voor ingelogde gebruikers.',
@@ -62,6 +66,8 @@ class AcademyCourseController extends Controller
 
     public function edit(AcademyCourse $academyCourse): View
     {
+        $this->authorize('manage', AcademyCourse::class);
+
         return view('admin.academy-courses.form', [
             'title' => __('hermes.admin.form_titles.edit_academy_course'),
             'intro' => 'Werk metadata, vertalingen en publicatie-instellingen van deze e-learning bij.',
@@ -86,6 +92,8 @@ class AcademyCourseController extends Controller
 
     public function confirmDestroy(AcademyCourse $academyCourse): View
     {
+        $this->authorize('manage', AcademyCourse::class);
+
         return view('admin.academy-courses.confirm-delete', [
             'academyCourse' => $academyCourse,
         ]);
@@ -93,6 +101,8 @@ class AcademyCourseController extends Controller
 
     public function destroy(AcademyCourse $academyCourse): RedirectResponse
     {
+        $this->authorize('manage', AcademyCourse::class);
+
         $this->audit->log(AuditAction::AcademyCourseDeleted, "Academy-cursus verwijderd: {$academyCourse->slug}", $academyCourse);
 
         $academyCourse->delete();

@@ -561,3 +561,18 @@ test('managers cannot assign the admin role when creating a user', function () {
 
     $this->assertDatabaseMissing('users', ['email' => 'escalate-admin@example.com']);
 });
+
+test('user search with percent and underscore wildcards does not cause unexpected matches', function () {
+    $admin = User::factory()->admin()->create();
+    User::factory()->create(['name' => 'Jan de Vries', 'email' => 'jan@example.com']);
+    User::factory()->create(['name' => 'Piet Wildcard', 'email' => 'piet@example.com']);
+
+    // A search with '%' should match only users whose name/email literally contains '%',
+    // not all users (which would happen if % were treated as a SQL wildcard).
+    $this->actingAs($admin)
+        ->get(route('admin.users.index', ['search' => '%']))
+        ->assertOk()
+        ->assertViewHas('users', function ($users): bool {
+            return $users->total() === 0;
+        });
+});

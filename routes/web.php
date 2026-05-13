@@ -97,8 +97,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/forum/{forumThread}', [ForumThreadController::class, 'show'])->name('forum.show');
     Route::post('/forum', [ForumThreadController::class, 'store'])->middleware('throttle:10,1')->name('forum.store');
     Route::post('/forum/{forumThread}/replies', [ForumReplyController::class, 'store'])->middleware('throttle:20,1')->name('forum-replies.store');
-    Route::put('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'update'])->name('forum-replies.update');
-    Route::delete('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'destroy'])->name('forum-replies.destroy');
+    Route::put('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'update'])->middleware('throttle:30,1')->name('forum-replies.update');
+    Route::delete('/forum/{forumThread}/replies/{forumReply}', [ForumReplyController::class, 'destroy'])->middleware('throttle:30,1')->name('forum-replies.destroy');
     Route::get('/vragenlijsten', QuestionnaireLibraryController::class)->name('questionnaires.index');
 });
 

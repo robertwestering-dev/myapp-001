@@ -162,6 +162,8 @@ class QuestionnaireResponseController extends Controller
                 ->with('pro_required_modal', true);
         }
 
+        $proGateBlocked = false;
+
         $response = DB::transaction(function () use (
             $currentCategory,
             $existingResponse,
@@ -171,7 +173,25 @@ class QuestionnaireResponseController extends Controller
             $user,
             $validatedAnswers,
             $visibleQuestions,
-        ): QuestionnaireResponse {
+            &$proGateBlocked,
+        ): ?QuestionnaireResponse {
+            // Inner pro-gate check with a row-level lock to prevent concurrent final
+            // submissions from both passing the outer check before the transaction starts.
+            if (! $isDraft && $existingResponse === null && ! $user->isProUser()) {
+                $hasCompleted = QuestionnaireResponse::query()
+                    ->where('organization_questionnaire_id', $organizationQuestionnaire->id)
+                    ->where('user_id', $user->id)
+                    ->whereNotNull('submitted_at')
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($hasCompleted) {
+                    $proGateBlocked = true;
+
+                    return null;
+                }
+            }
+
             $response = $existingResponse ?? (new QuestionnaireResponse)->forceFill([
                 'organization_questionnaire_id' => $organizationQuestionnaire->id,
                 'user_id' => $user->id,
@@ -208,6 +228,18 @@ class QuestionnaireResponseController extends Controller
 
             return $response->fresh(['currentQuestionnaireCategory']);
         });
+
+        if ($proGateBlocked) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => __('hermes.questionnaires.pro_required_message'),
+                ], 403);
+            }
+
+            return redirect()
+                ->route('questionnaires.index')
+                ->with('pro_required_modal', true);
+        }
 
         if ($request->isAutosave()) {
             return response()->json([

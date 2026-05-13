@@ -37,6 +37,8 @@ class ForumThreadController extends Controller
             ->when($activeType !== '', fn ($query) => $query->where('discussion_type', $activeType))
             ->when($activeTag !== '', fn ($query) => $query->whereJsonContains('tags', $activeTag));
 
+        [$forumThreadCount, $forumReplyCount, $questionThreadCount] = $this->forumStats();
+
         return view('forum.index', [
             'forumThreads' => (clone $forumThreadsQuery)
                 ->recent()
@@ -45,11 +47,9 @@ class ForumThreadController extends Controller
             'search' => $search,
             'activeType' => $activeType,
             'activeTag' => $activeTag,
-            'forumThreadCount' => ForumThread::query()->count(),
-            'forumReplyCount' => ForumReply::query()->count(),
-            'questionThreadCount' => ForumThread::query()
-                ->where('discussion_type', ForumThread::TYPE_QUESTION)
-                ->count(),
+            'forumThreadCount' => $forumThreadCount,
+            'forumReplyCount' => $forumReplyCount,
+            'questionThreadCount' => $questionThreadCount,
             'tagCounts' => $this->tagCounts(),
         ]);
     }
@@ -81,6 +81,23 @@ class ForumThreadController extends Controller
         return redirect()
             ->route('forum.show', $forumThread)
             ->with('status', __('hermes.forum.status.thread_created'));
+    }
+
+    /**
+     * @return array{int, int, int}
+     */
+    protected function forumStats(): array
+    {
+        /** @var array{thread_count: int, reply_count: int, question_count: int} $cached */
+        $cached = Cache::remember('forum:stats', now()->addMinutes(5), function (): array {
+            return [
+                'thread_count' => ForumThread::query()->count(),
+                'reply_count' => ForumReply::query()->count(),
+                'question_count' => ForumThread::query()->where('discussion_type', ForumThread::TYPE_QUESTION)->count(),
+            ];
+        });
+
+        return [$cached['thread_count'], $cached['reply_count'], $cached['question_count']];
     }
 
     /**

@@ -239,10 +239,12 @@ class UserController extends Controller
                 $query->where('country', $country);
             })
             ->when($search !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
+                $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+
+                $query->where(function (Builder $query) use ($escaped): void {
                     $query
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%");
                 });
             })
             ->orderBy('name');

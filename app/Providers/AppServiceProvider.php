@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Listeners\LogFailedLogin;
+use App\Models\AcademyCourse;
 use App\Models\BlogPost;
 use App\Models\Questionnaire;
 use App\Models\User;
+use App\Policies\AcademyCoursePolicy;
 use App\Policies\BlogPostPolicy;
 use App\Policies\QuestionnairePolicy;
 use Carbon\CarbonImmutable;
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function registerPolicies(): void
     {
+        Gate::policy(AcademyCourse::class, AcademyCoursePolicy::class);
         Gate::policy(Questionnaire::class, QuestionnairePolicy::class);
         Gate::policy(BlogPost::class, BlogPostPolicy::class);
     }

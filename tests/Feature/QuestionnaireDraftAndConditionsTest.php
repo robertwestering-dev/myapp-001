@@ -384,6 +384,49 @@ test('regular users need pro to repeat a completed questionnaire', function () {
         ->count())->toBe(1);
 });
 
+test('regular user final submission via POST is blocked when a completed response already exists', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create(['org_id' => $organization->org_id]);
+    $questionnaire = Questionnaire::factory()->create(['title' => 'Blokkeringstest']);
+    $category = QuestionnaireCategory::factory()->create(['questionnaire_id' => $questionnaire->id]);
+    $question = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'prompt' => 'Wat is uw antwoord?',
+        'is_required' => true,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    QuestionnaireResponse::factory()->create([
+        'organization_questionnaire_id' => $availability->id,
+        'user_id' => $user->id,
+        'submitted_at' => now()->subDay(),
+    ])->answers()->create([
+        'questionnaire_question_id' => $question->id,
+        'answer' => 'Eerste definitieve inzending',
+    ]);
+
+    // POST intent=submit (final submission, non-JSON) must redirect with pro_required_modal
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [$question->id => 'Tweede poging'],
+        ])
+        ->assertRedirect(route('questionnaires.index'))
+        ->assertSessionHas('pro_required_modal');
+
+    // Only the original completed response must exist
+    expect(QuestionnaireResponse::query()
+        ->where('organization_questionnaire_id', $availability->id)
+        ->where('user_id', $user->id)
+        ->count())->toBe(1);
+});
+
 test('conditional questions only become required when their display rule matches', function () {
     $organization = Organization::factory()->create();
     $user = User::factory()->pro()->create([
