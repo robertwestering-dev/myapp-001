@@ -773,7 +773,7 @@ return [
     ],
     'academy' => [
         'title' => 'Academy',
-        'eyebrow' => 'Hermes Academy',
+        'eyebrow' => 'Academy',
         'heading' => 'E-learnings for adaptability and digital resilience',
         'intro' => 'This catalog is only visible to signed-in users and bundles trainings that help people navigate change and digital transformation with more confidence, calm, and direction.',
         'minutes' => ':count minutes',
@@ -792,7 +792,7 @@ return [
         'duration' => 'Average time',
         'goal' => 'Training goal',
         'format' => 'Format',
-        'web_export_format' => 'Web export in its own folder',
+        'web_export_format' => 'E-learning',
         'learning_goals' => 'Learning goals',
         'contents' => 'Contents',
         'more_info' => 'More info ...',

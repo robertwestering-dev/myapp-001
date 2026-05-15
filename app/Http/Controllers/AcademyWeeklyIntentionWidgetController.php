@@ -21,8 +21,12 @@ class AcademyWeeklyIntentionWidgetController extends Controller
 
     public function show(Request $request): View|RedirectResponse
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $request->user();
+
+        if ($user === null || ! $user->hasVerifiedEmail()) {
+            return view('academy.empty-widget');
+        }
 
         if (! $user->isProUser()) {
             return redirect()

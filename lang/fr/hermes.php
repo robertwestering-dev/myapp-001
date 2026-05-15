@@ -508,7 +508,7 @@ return [
     ],
     'academy' => [
         'title' => 'Academy',
-        'eyebrow' => 'Hermes Academy',
+        'eyebrow' => 'Academy',
         'heading' => 'E-learnings pour l adaptabilite et la resilience numerique',
         'intro' => 'Ce catalogue est visible uniquement pour les utilisateurs connectes et rassemble des formations qui aident a traverser le changement et la transformation numerique avec plus de calme, de confiance et de clarte.',
         'minutes' => ':count minutes',
@@ -524,7 +524,7 @@ return [
         'duration' => 'Temps moyen',
         'goal' => 'Objectif de la formation',
         'format' => 'Format',
-        'web_export_format' => 'Export web dans son propre dossier',
+        'web_export_format' => 'E-learning',
         'learning_goals' => 'Objectifs pedagogiques',
         'contents' => 'Contenu',
         'open_course' => 'Demarrer l e-learning',

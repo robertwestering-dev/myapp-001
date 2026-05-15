@@ -4,9 +4,11 @@ use App\Models\JournalEntry;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-test('guests are redirected when opening the three good things widget', function () {
+test('guests see an empty response when opening the three good things widget', function () {
     $this->get(route('academy.widgets.three-good-things'))
-        ->assertRedirect(route('login'));
+        ->assertOk()
+        ->assertSee('academy-empty-widget', false)
+        ->assertDontSee('academy-three-good-things-widget', false);
 });
 
 test('pro users can open the compact three good things widget', function () {
@@ -64,6 +66,17 @@ test('pro users can save their first three good things entry from the widget', f
         ->entry_date->toDateString()->toBe('2026-05-01')
         ->contentValue('what_went_well')->toBe('Ik maakte een heldere start met mijn e-learning.')
         ->contentValue('my_contribution')->toBe('Ik plande tijd in en begon direct.');
+});
+
+test('guests are redirected when storing three good things from the widget', function () {
+    $this->post(route('academy.widgets.three-good-things.store'), [
+        'entry_date' => '2026-05-01',
+        'entry_type' => JournalEntry::TYPE_THREE_GOOD_THINGS,
+        'content' => [
+            'what_went_well' => 'Dit wordt niet opgeslagen.',
+            'my_contribution' => 'Geen sessie.',
+        ],
+    ])->assertRedirect(route('login'));
 });
 
 test('the widget prefills todays existing three good things entry', function () {

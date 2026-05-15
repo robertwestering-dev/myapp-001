@@ -70,6 +70,10 @@ Route::get('/storage/media-assets/{mediaAssetPath}', [MediaAssetFileController::
     ->name('media-assets.legacy');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
+Route::get('/academy/widgets/perma-scores.html', AcademyPermaWidgetController::class)->name('academy.widgets.perma-scores');
+Route::get('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'show'])->name('academy.widgets.strengths');
+Route::get('/academy/widgets/three-good-things.html', [AcademyThreeGoodThingsWidgetController::class, 'show'])->name('academy.widgets.three-good-things');
+Route::get('/academy/widgets/weekly-intention.html', [AcademyWeeklyIntentionWidgetController::class, 'show'])->name('academy.widgets.weekly-intention');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
@@ -83,12 +87,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/journal', [JournalController::class, 'store'])->middleware('throttle:30,1')->name('journal.store');
     Route::put('/journal/{journalEntry}', [JournalController::class, 'update'])->middleware('throttle:30,1')->name('journal.update');
     Route::delete('/journal/{journalEntry}', [JournalController::class, 'destroy'])->middleware('throttle:30,1')->name('journal.destroy');
-    Route::get('/academy/widgets/perma-scores.html', AcademyPermaWidgetController::class)->name('academy.widgets.perma-scores');
-    Route::get('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'show'])->name('academy.widgets.strengths');
     Route::post('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'store'])->name('academy.widgets.strengths.store');
-    Route::get('/academy/widgets/three-good-things.html', [AcademyThreeGoodThingsWidgetController::class, 'show'])->name('academy.widgets.three-good-things');
     Route::post('/academy/widgets/three-good-things.html', [AcademyThreeGoodThingsWidgetController::class, 'store'])->middleware('throttle:30,1')->name('academy.widgets.three-good-things.store');
-    Route::get('/academy/widgets/weekly-intention.html', [AcademyWeeklyIntentionWidgetController::class, 'show'])->name('academy.widgets.weekly-intention');
     Route::post('/academy/widgets/weekly-intention.html', [AcademyWeeklyIntentionWidgetController::class, 'store'])->middleware('throttle:30,1')->name('academy.widgets.weekly-intention.store');
     Route::get('/academy-courses/{academyCoursePath}/{asset?}', AcademyCourseContentController::class)
         ->where('asset', '.*')

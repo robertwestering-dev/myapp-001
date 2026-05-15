@@ -798,7 +798,7 @@ return [
     ],
     'academy' => [
         'title' => 'Academy',
-        'eyebrow' => 'Hermes Academy',
+        'eyebrow' => 'Academy',
         'heading' => 'E-learnings voor digitale weerbaarheid',
         'intro' => 'Deze catalogus is exclusief zichtbaar voor ingelogde gebruikers en bundelt trainingen die helpen om sterker, rustiger en doelgerichter om te gaan met verandering en digitale transformatie.',
         'minutes' => ':count minuten',
@@ -817,7 +817,7 @@ return [
         'duration' => 'Gemiddelde tijd',
         'goal' => 'Doel van de training',
         'format' => 'Formaat',
-        'web_export_format' => 'Web-export in eigen map',
+        'web_export_format' => 'E-learning',
         'learning_goals' => 'Leerdoelen',
         'contents' => 'Inhoud',
         'more_info' => 'Meer info ...',

@@ -17,8 +17,12 @@ class AcademyStrengthsWidgetController extends Controller
 
     public function show(Request $request): View
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $request->user();
+
+        if ($user === null || ! $user->hasVerifiedEmail()) {
+            return view('academy.empty-widget');
+        }
 
         return view('academy.strengths-widget', [
             'strengthOptions' => $this->strengthCatalog->options(),

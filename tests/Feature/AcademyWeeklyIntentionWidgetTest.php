@@ -4,9 +4,11 @@ use App\Models\JournalEntry;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-test('guests are redirected when opening the weekly intention widget', function () {
+test('guests see an empty response when opening the weekly intention widget', function () {
     $this->get(route('academy.widgets.weekly-intention'))
-        ->assertRedirect(route('login'));
+        ->assertOk()
+        ->assertSee('academy-empty-widget', false)
+        ->assertDontSee('academy-weekly-intention-widget', false);
 });
 
 test('pro users can open the compact weekly intention widget', function () {
@@ -66,6 +68,17 @@ test('pro users can save their weekly intention entry from the widget', function
         ->entry_date->toDateString()->toBe('2026-05-02')
         ->contentValue('strength_key')->toBe('teamwerk')
         ->contentValue('planned_strength_use')->toBe('Ik plan elke dag een korte afstemming met mijn team.');
+});
+
+test('guests are redirected when storing weekly intention from the widget', function () {
+    $this->post(route('academy.widgets.weekly-intention.store'), [
+        'entry_date' => '2026-05-02',
+        'entry_type' => JournalEntry::TYPE_WEEKLY_INTENTION,
+        'content' => [
+            'strength_key' => 'teamwerk',
+            'planned_strength_use' => 'Dit wordt niet opgeslagen.',
+        ],
+    ])->assertRedirect(route('login'));
 });
 
 test('the widget prefills todays existing weekly intention entry', function () {

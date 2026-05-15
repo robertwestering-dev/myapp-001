@@ -17,8 +17,12 @@ class AcademyPermaWidgetController extends Controller
 
     public function __invoke(Request $request): View
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $request->user();
+
+        if ($user === null || ! $user->hasVerifiedEmail()) {
+            return view('academy.empty-widget');
+        }
 
         $latestResponse = QuestionnaireResponse::query()
             ->whereBelongsTo($user)

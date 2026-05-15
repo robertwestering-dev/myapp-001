@@ -232,9 +232,7 @@
                                     <div class="academy-card__details-body">
                                         <dl class="academy-card__meta">
                                             <x-user-meta-grid columns="2">
-                                                <x-user-meta-item :label="__('hermes.academy.audience')" :value="$course->audienceForLocale()" />
                                                 <x-user-meta-item :label="__('hermes.academy.duration')" :value="__('hermes.academy.minutes', ['count' => $course->estimated_minutes])" />
-                                                <x-user-meta-item :label="__('hermes.academy.goal')" :value="$course->goalForLocale()" />
                                                 <x-user-meta-item :label="__('hermes.academy.format')" :value="__('hermes.academy.web_export_format')" />
                                             </x-user-meta-grid>
                                         </dl>

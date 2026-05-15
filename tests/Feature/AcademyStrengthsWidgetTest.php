@@ -2,9 +2,11 @@
 
 use App\Models\User;
 
-test('guests are redirected when opening the academy strengths widget', function () {
+test('guests see an empty response when opening the academy strengths widget', function () {
     $this->get(route('academy.widgets.strengths'))
-        ->assertRedirect(route('login'));
+        ->assertOk()
+        ->assertSee('academy-empty-widget', false)
+        ->assertDontSee('academy-strengths-widget', false);
 });
 
 test('academy strengths widget shows the saved strengths for the authenticated user', function () {
@@ -44,6 +46,12 @@ test('academy strengths widget stores exactly three selected strengths', functio
         'vriendelijkheid',
         'zelfbeheersing',
     ]);
+});
+
+test('guests are redirected when storing academy strengths', function () {
+    $this->post(route('academy.widgets.strengths.store'), [
+        'selected_strengths' => ['nieuwsgierigheid', 'vriendelijkheid', 'zelfbeheersing'],
+    ])->assertRedirect(route('login'));
 });
 
 test('academy strengths widget rejects invalid selections', function () {

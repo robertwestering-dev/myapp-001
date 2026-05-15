@@ -4,7 +4,7 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-08`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-15`.
 
 ## Product In Het Kort
 
@@ -249,7 +249,10 @@ Praktische deployregels:
 - alleen Blade- of vertaalwijzigingen vragen meestal alleen upload plus `optimize:clear` en `view:cache`
 - wijzigingen in `resources/css`, `resources/js` of Vite-afhankelijke UI vragen ook upload van `public/build/`
 - `php artisan storage:link` moet aanwezig zijn voor asset-URLs onder `/storage/...`
+- iSpring/HTML5 e-learnings deploy je als complete exportmap naar `storage/app/private/academy-courses/<slug>/`, inclusief `index.html` en alle submappen/assets; het adminveld `Pad naar web-export` krijgt dan `academy-courses/<slug>`
+- zet iSpring-exports niet in `public/` of in de Hostnet webroot als ze achter login/pro-toegang moeten blijven
 - na elke deploy `composer install --no-dev --optimize-autoloader` draaien zodat dev-packages (zoals `laravel/boost`) uit de autoload-map worden verwijderd — anders geeft de server een `BoostServiceProvider not found` error
+- de optionele Academy-seeder in `deploy.sh` maakt geen nieuwe cursussen aan; `AcademyCourseSeeder` verwijdert alleen oude legacy-records met slugs `adaptability-foundations` en `digital-resilience-basics`
 - als de server een `Class "translator" does not exist` error gooit, is de oorzaak altijd een corrupte of verouderde bootstrap-cache; fix: `rm -f bootstrap/cache/*.php && php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache`
 - vóór een productie-`composer install` altijd verifiëren dat de web-PHP van `hermesresults.com` zelf voldoet aan de lockfile; Hostnet kan panel/CLI al op `8.4+` hebben terwijl de live FastCGI-handler nog op `8.2` staat
 - als productie ineens crasht met `Composer detected issues in your platform`, controleer direct `https://hermesresults.com/phpversion.php` vanuit een tijdelijk bestand in `/webroots/sites/hermesresults.com`; als die pagina nog `PHP 8.2.x` of `8.3.x` toont terwijl SSH `php -v` hoger is, ligt het probleem bij de Hostnet web-PHP-handler en niet bij Laravel-code of caches
@@ -583,13 +586,16 @@ Zie ook `QUESTIONNAIRE_IMPORT_EXPORT_HANDLEIDING.md`.
 
 ## Academy
 
-De Academy is alleen voor ingelogde gebruikers.
+De Academy-catalogus en cursuscontent zijn alleen voor ingelogde gebruikers. De losse Academy-widget-GET-routes zijn publiek bereikbaar zodat iSpring linktests geen login-redirect krijgen; zonder ingelogde en geverifieerde gebruiker tonen ze alleen een lege HTML-widget zonder data.
 
 Actuele status:
 
 - header en opbouw sluiten aan op de dashboardstijl
 - contentblokken gebruiken dezelfde kaart- en metadata-componenten als de rest van de gebruikersomgeving
 - donkere highlightblokken volgen dezelfde witte-tekstafspraak als dashboard en blog
+- de Academy-eyebrow toont `Academy`, niet meer `Hermes Academy`
+- per e-learning worden `Doelgroep` en `Doel van de training` niet meer getoond in de publieke Academy-card
+- het meta-item `Format` toont nu `E-learning` in plaats van `Web-export in eigen map`
 - Academy-cursussen worden niet meer als directe publieke bestanden uitgeserveerd maar via een beveiligde Laravel-route
 - alleen ingelogde gebruikers met rol `User` of `user_pro` mogen Academy-content openen
 - als een cursus `pro_only` is, wordt toegang extra beperkt tot `user_pro`
@@ -599,8 +605,8 @@ Actuele status:
 - Academy-content heeft in `AddSecurityHeaders.php` een eigen, bewust soepelere CSP dan de rest van de app, zodat statische e-learning exports met eigen JS/CSS correct kunnen draaien
 - `AcademyCourseContentController` zet expliciet het juiste `Content-Type` op uitgeserveerde exportbestanden; dit is nodig in combinatie met `X-Content-Type-Options: nosniff`
 - adminveld `Pad naar web-export` blijft functioneel leidend voor de mapstructuur; gebruik stabiele lowercase paden zonder spaties of wisselend hoofdlettergebruik
-- er is een aparte ingelogde widgetpagina voor e-learnings op `/academy/widgets/perma-scores.html` die compact de meest recente `Positief fundament`-PERMA-uitslag van de huidige gebruiker toont zonder header, footer of menu
-- deze widget is bedoeld voor embed-gebruik in iSpring/web objects en gebruikt dezelfde resultaatslogica als de gewone questionnaire-resultaatanalyse
+- er is een aparte widgetpagina voor e-learnings op `/academy/widgets/perma-scores.html` die compact de meest recente `Positief fundament`-PERMA-uitslag van de huidige ingelogde gebruiker toont zonder header, footer of menu
+- deze widget is bedoeld voor embed-gebruik in iSpring/web objects en gebruikt dezelfde resultaatslogica als de gewone questionnaire-resultaatanalyse; zonder geldige gebruiker rendert hij `resources/views/academy/empty-widget.blade.php`
 - in de PERMA-widget geldt de visuele statusafspraak: `Sterk fundament` = groen, `Gedeeltelijk fundament` = grijs, `Fragiel fundament` = oranje; de aanbevolen startlaag krijgt een aparte `Start here`-markering met icoon en niet langer een “goed”-kleur
 
 ## Forum
@@ -1386,6 +1392,7 @@ PERMA-widget voor Academy/iSpring:
 - nieuwe embed-URL: `/academy/widgets/perma-scores.html`
 - de widget toont de meest recente definitieve `Positief fundament`-inzending van de ingelogde gebruiker
 - de widget gebruikt geen standaard app-layout en bevat dus geen header, footer of menu
+- de GET-route is publiek bereikbaar voor iSpring-linkvalidatie; zonder ingelogde en geverifieerde gebruiker wordt de lege widgetview `resources/views/academy/empty-widget.blade.php` met HTTP 200 getoond
 - de visuele betekenis is aangepast zodat groen alleen nog “sterk” betekent; de aanbevolen startlaag wordt gemarkeerd met een aparte `Start here`-badge met icoon
 
 Questionnaire-CSP en stapnavigatie:
@@ -1523,6 +1530,8 @@ Compacte Academy/iSpring-widgets:
   - `/academy/widgets/weekly-intention.html`
 - beide journal-widgets gebruiken geen standaard app-layout en bevatten dus geen header, footer of menu
 - de journal-widgets zijn bewust geoptimaliseerd voor 16:9 PowerPoint/iSpring web objects: compacte spacing, brede horizontale layout en minimale hulpteksten
+- alle Academy-widget-GET-routes staan buiten `auth`/`verified` en geven zonder geldige gebruiker een lege widget met HTTP 200, zodat iSpring-linktests slagen zonder loginfout
+- alle Academy-widget-POST-routes blijven achter `auth` + `verified`; opslag van sterke kanten en journaldata blijft dus beschermd
 - de `three-good-things`-widget bevat alleen datum, `Wat goed ging` en `Mijn aandeel hierin`
 - de `weekly-intention`-widget bevat alleen datum, `Sterke kant` en `Hoe ik deze sterke kant komende week bewust inzet`; het algemenere weekvoornemen is **bewust alleen op de gewone journal-pagina zichtbaar**
 - de `weekly-intention`-widget gebruikt nog steeds een verborgen `content[general_intention]` om bestaande data bij een update niet weg te schrijven, maar toont dit veld niet meer in de widget-UI
@@ -1691,6 +1700,42 @@ Volledige audit van controllers, modellen, middleware, routes, requests en polic
 ### Teststatus
 
 - 412 tests, allemaal groen
+
+## Sessie-update 2026-05-15 — Academy en iSpring
+
+### Academy UI
+
+- publieke Academy-eyebrow aangepast van `Hermes Academy` naar `Academy`
+- in de e-learning detailmeta worden `Doelgroep` en `Doel van de training` niet meer getoond
+- `Format` toont nu `E-learning` in plaats van `Web-export in eigen map`
+- vertalingen aangepast in `lang/nl/hermes.php`, `lang/en/hermes.php`, `lang/de/hermes.php` en het voorbereide `lang/fr/hermes.php`
+
+### iSpring/HTML5 deploy
+
+- iSpring HTML5-exports horen als complete map naar `storage/app/private/academy-courses/<slug>/`
+- de databasekolom `academy_courses.path` bevat dan `academy-courses/<slug>`
+- de exportmap moet `index.html` en alle iSpring-submappen/assets bevatten
+- zet afgeschermde e-learnings niet in `public/` of de Hostnet webroot, want dan omzeil je Laravel-auth/pro-toegang
+- `deploy.sh` vraagt optioneel om `AcademyCourseSeeder`; deze seeder maakt geen cursussen aan en verwijdert alleen de twee oude seeded records `adaptability-foundations` en `digital-resilience-basics`
+
+### Academy widgets
+
+- GET-routes voor Academy-widgets zijn publiek bereikbaar zodat iSpring linkvalidatie niet strandt op een login-redirect:
+  - `/academy/widgets/perma-scores.html`
+  - `/academy/widgets/strengths.html`
+  - `/academy/widgets/three-good-things.html`
+  - `/academy/widgets/weekly-intention.html`
+- zonder ingelogde en geverifieerde gebruiker tonen deze GET-routes `resources/views/academy/empty-widget.blade.php` met HTTP 200 en zonder gebruikersdata
+- POST-routes voor widget-opslag blijven achter `auth` + `verified`; journal- en strengths-data blijven beschermd
+
+### Ontwikkelomgeving
+
+- de lokale ontwikkeltabel `academy_courses` is op verzoek geleegd; teller na leegmaken: `0` records
+
+### Teststatus
+
+- `tests/Feature/AcademyTest.php` groen na de Academy UI-tekstwijziging
+- 22 gerichte widget/security-tests groen na het publiek maken van widget-GET-routes: `AcademyPermaWidgetTest`, `AcademyStrengthsWidgetTest`, `AcademyThreeGoodThingsWidgetTest`, `AcademyWeeklyIntentionWidgetTest`, `SecurityHeadersTest`
 
 ## Gebruik Van Dit Bestand
 

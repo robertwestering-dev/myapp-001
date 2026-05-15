@@ -734,7 +734,7 @@ return [
     ],
     'academy' => [
         'title' => 'Academy',
-        'eyebrow' => 'Hermes Academy',
+        'eyebrow' => 'Academy',
         'heading' => 'E-Learnings fur Anpassungsfahigkeit und digitale Resilienz',
         'intro' => 'Dieser Katalog ist nur fur angemeldete Benutzer sichtbar und bundelt Trainings, die helfen, Veranderung und digitale Transformation ruhiger, sicherer und zielgerichteter zu bewaltigen.',
         'minutes' => ':count Minuten',
@@ -753,7 +753,7 @@ return [
         'duration' => 'Durchschnittliche Dauer',
         'goal' => 'Trainingsziel',
         'format' => 'Format',
-        'web_export_format' => 'Web-Export im eigenen Ordner',
+        'web_export_format' => 'E-Learning',
         'learning_goals' => 'Lernziele',
         'contents' => 'Inhalte',
         'more_info' => 'Mehr Infos ...',

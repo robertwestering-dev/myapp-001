@@ -8,9 +8,11 @@ use App\Models\QuestionnaireResponse;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-test('guests are redirected when opening the academy perma widget', function () {
+test('guests see an empty response when opening the academy perma widget', function () {
     $this->get(route('academy.widgets.perma-scores'))
-        ->assertRedirect(route('login'));
+        ->assertOk()
+        ->assertSee('academy-empty-widget', false)
+        ->assertDontSee('compact-perma-widget', false);
 });
 
 test('academy perma widget shows the latest positive foundation result for the authenticated user', function () {
