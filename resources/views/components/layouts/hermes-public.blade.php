@@ -253,6 +253,50 @@
             background: linear-gradient(180deg, rgba(30, 71, 61, 0.96), rgba(16, 42, 35, 0.98));
         }
 
+        .linkedin-profile-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: fit-content;
+            color: var(--muted);
+            text-decoration: none;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            justify-self: start;
+            line-height: 1.6;
+        }
+
+        .linkedin-profile-link:hover,
+        .linkedin-profile-link:focus-visible {
+            color: var(--ink);
+            outline: none;
+        }
+
+        .linkedin-profile-link__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: #0a66c2;
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1;
+            box-shadow: 0 10px 24px rgba(10, 102, 194, 0.22);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .linkedin-profile-link:hover .linkedin-profile-link__icon,
+        .linkedin-profile-link:focus-visible .linkedin-profile-link__icon {
+            background: #084f96;
+            box-shadow: 0 14px 30px rgba(10, 102, 194, 0.28);
+            transform: translateY(-1px);
+        }
+
         .user-guidance-card {
             display: grid;
             gap: 16px;

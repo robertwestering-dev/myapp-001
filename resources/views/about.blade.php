@@ -169,6 +169,8 @@
                 @foreach (__('hermes.about_page.story_paragraphs') as $paragraph)
                     <p>{{ $paragraph }}</p>
                 @endforeach
+
+                <x-linkedin-profile-link />
             </article>
 
             <article class="about-story__card about-story__card--accent">

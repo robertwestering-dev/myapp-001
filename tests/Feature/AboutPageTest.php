@@ -9,6 +9,8 @@ test('about page can be rendered with the visitor submenu link', function () {
         ->assertSee('ruim 35 jaar')
         ->assertDontSee('bijna 40 jaar')
         ->assertSee(__('hermes.about_page.mission_title'))
+        ->assertSee('href="https://www.linkedin.com/in/robertwestering/"', false)
+        ->assertSee('Zie mijn profiel op LinkedIn')
         ->assertSee(route('about.show', absolute: false), false)
         ->assertSee('Over ons')
         ->assertSee('"@type": "AboutPage"', false);

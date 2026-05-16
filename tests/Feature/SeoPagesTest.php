@@ -23,6 +23,8 @@ test('home page exposes seo metadata and structured data', function () {
         ])
         ->assertSee('images/6lagen-model.png', false)
         ->assertSee('<section class="home-section about-story-section">', false)
+        ->assertSee('href="https://www.linkedin.com/in/robertwestering/"', false)
+        ->assertSee('Zie mijn profiel op LinkedIn')
         ->assertSee(route('organizations.landing', absolute: false), false)
         ->assertSee('Organisaties')
         ->assertSee('"@type": "WebSite"', false)
