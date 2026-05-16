@@ -46,6 +46,10 @@ test('admin can create an academy course', function () {
         'slug' => 'academy-admin-course',
         'theme' => AcademyCourse::THEME_ADAPTABILITY,
         'path' => 'academy-courses/academy-admin-course',
+        'localized_paths' => [
+            'en' => 'EN',
+            'de' => 'DE',
+        ],
         'estimated_minutes' => 50,
         'sort_order' => 30,
         'is_active' => '1',
@@ -60,6 +64,11 @@ test('admin can create an academy course', function () {
     $response->assertRedirect();
 
     expect(AcademyCourse::query()->where('slug', 'academy-admin-course')->exists())->toBeTrue();
+    expect(AcademyCourse::query()->where('slug', 'academy-admin-course')->first()->localized_paths)
+        ->toBe([
+            'en' => 'EN',
+            'de' => 'DE',
+        ]);
 });
 
 function translatedPayload(string $value): array

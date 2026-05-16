@@ -990,6 +990,12 @@ return [
             'saved' => 'Beschikbaarheid succesvol opgeslagen.',
             'updated' => 'Beschikbaarheid succesvol bijgewerkt.',
             'deleted' => 'Beschikbaarheid succesvol verwijderd.',
+            'validation' => [
+                'choose_org' => 'Kies een organisatie.',
+                'min_one_org' => 'Kies minimaal één organisatie.',
+                'until_after_from' => 'De einddatum moet gelijk zijn aan of na de begindatum.',
+                'already_exists' => 'Voor deze organisatie bestaat al een beschikbaarheid.',
+            ],
         ],
         'blog_posts' => [
             'created' => 'Blogpost succesvol toegevoegd.',
@@ -1076,6 +1082,7 @@ return [
             'single_choice' => 'Kies een geldige optie.',
             'multiple_choice' => 'Kies een of meer geldige opties.',
             'multiple_choice_invalid' => 'Kies alleen opties uit de vragenlijst.',
+            'too_long' => 'Je antwoord is te lang.',
         ],
     ],
     'admin_menu' => [

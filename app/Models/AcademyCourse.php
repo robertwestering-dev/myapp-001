@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
     'slug',
     'theme',
     'path',
+    'localized_paths',
     'estimated_minutes',
     'sort_order',
     'is_active',
@@ -53,6 +54,7 @@ class AcademyCourse extends Model
             'sort_order' => 'integer',
             'is_active' => 'boolean',
             'pro_only' => 'boolean',
+            'localized_paths' => 'array',
             'title' => 'array',
             'audience' => 'array',
             'goal' => 'array',
@@ -103,23 +105,23 @@ class AcademyCourse extends Model
         return $this->translatedList('contents', $locale);
     }
 
-    public function launchUrl(): ?string
+    public function launchUrl(?string $locale = null): ?string
     {
-        if (! $this->isAvailable()) {
+        if (! $this->isAvailable($locale)) {
             return null;
         }
 
         return Route::has('academy-courses.show')
             ? route('academy-courses.show', [
                 'academyCoursePath' => $this->contentRouteSegment(),
-                'asset' => 'index.html',
+                'asset' => $this->launchAssetPath($locale),
             ])
             : null;
     }
 
-    public function isAvailable(): bool
+    public function isAvailable(?string $locale = null): bool
     {
-        return is_file($this->contentPath());
+        return is_file($this->contentPath(locale: $locale ?? app()->getLocale()));
     }
 
     public function canBeLaunchedBy(User $user): bool
@@ -135,14 +137,26 @@ class AcademyCourse extends Model
         return true;
     }
 
-    public function contentDirectory(): string
+    public function contentDirectory(?string $locale = null): string
     {
-        return storage_path('app/private/'.$this->normalizedPath());
+        $directory = storage_path('app/private/'.$this->normalizedPath());
+
+        if ($locale === null) {
+            return $directory;
+        }
+
+        $localizedPath = $this->localizedPathForLocale($locale);
+
+        if ($localizedPath === null) {
+            return $directory;
+        }
+
+        return $directory.'/'.$localizedPath;
     }
 
-    public function contentPath(?string $relativePath = null): string
+    public function contentPath(?string $relativePath = null, ?string $locale = null): string
     {
-        $courseDirectory = $this->contentDirectory();
+        $courseDirectory = $this->contentDirectory($locale);
 
         if ($relativePath === null) {
             return $courseDirectory.'/index.html';
@@ -154,6 +168,29 @@ class AcademyCourse extends Model
     public function contentRouteSegment(): string
     {
         return Str::after($this->normalizedPath(), 'academy-courses/');
+    }
+
+    public function localizedPathForLocale(?string $locale = null): ?string
+    {
+        $locale ??= app()->getLocale();
+        $localizedPath = $this->localized_paths[$locale] ?? null;
+
+        if (! is_string($localizedPath) || trim($localizedPath, '/') === '') {
+            return null;
+        }
+
+        return trim(str_replace('\\', '/', $localizedPath), '/');
+    }
+
+    public function launchAssetPath(?string $locale = null): string
+    {
+        $localizedPath = $this->localizedPathForLocale($locale);
+
+        if ($localizedPath === null) {
+            return 'index.html';
+        }
+
+        return $localizedPath.'/index.html';
     }
 
     /**

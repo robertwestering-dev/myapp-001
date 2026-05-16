@@ -78,8 +78,15 @@
             font-size: 0.92rem;
         }
 
+        .locale-path-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
         @media (max-width: 860px) {
-            .field-grid {
+            .field-grid,
+            .locale-path-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -124,7 +131,7 @@
                 <label>
                     <span>Pad naar web-export</span>
                     <input type="text" name="path" value="{{ old('path', $academyCourse->path) }}" required>
-                    <span class="helper">Bijvoorbeeld `academy-courses/adaptability-foundations`.</span>
+                    <span class="helper">Basismap, bijvoorbeeld `academy-courses/adaptability-foundations`.</span>
                 </label>
 
                 <label>
@@ -147,6 +154,25 @@
                     <span>Alleen toegankelijk voor PRO-gebruikers</span>
                 </label>
             </div>
+
+            <section class="locale-panel">
+                <strong>Web-export per taal</strong>
+                <p class="helper">Laat leeg om de basismap te gebruiken. Vul bijvoorbeeld `EN` of `DE` in wanneer de export in een submap van de basismap staat.</p>
+
+                <div class="locale-path-grid">
+                    @foreach ($supportedLocales as $localeCode => $localeLabel)
+                        <label>
+                            <span>{{ $localeLabel }} submap</span>
+                            <input
+                                type="text"
+                                name="localized_paths[{{ $localeCode }}]"
+                                value="{{ old("localized_paths.$localeCode", $academyCourse->localized_paths[$localeCode] ?? '') }}"
+                                placeholder="{{ $localeCode === config('locales.primary') ? 'Basismap' : strtoupper($localeCode) }}"
+                            >
+                        </label>
+                    @endforeach
+                </div>
+            </section>
 
             <div class="locale-grid">
                 @foreach ($supportedLocales as $localeCode => $localeLabel)

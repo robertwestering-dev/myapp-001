@@ -4,6 +4,7 @@ namespace App\Actions\Journal;
 
 use App\Models\JournalEntry;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class UpsertJournalEntry
 {
@@ -23,10 +24,23 @@ class UpsertJournalEntry
             return $entry->fresh() ?? $entry;
         }
 
-        /** @var JournalEntry $entry */
-        $entry = $user->journalEntries()->create($this->payload($validated));
+        try {
+            /** @var JournalEntry $entry */
+            $entry = $user->journalEntries()->create($this->payload($validated));
 
-        return $entry;
+            return $entry;
+        } catch (UniqueConstraintViolationException) {
+            // A concurrent request created the same entry between our first() and create() calls.
+            // Re-fetch and update so the user sees their latest content.
+            $entry = $user->journalEntries()
+                ->whereDate('entry_date', $validated['entry_date'])
+                ->where('entry_type', $validated['entry_type'])
+                ->firstOrFail();
+
+            $entry->update($this->payload($validated));
+
+            return $entry->fresh() ?? $entry;
+        }
     }
 
     /**

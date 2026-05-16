@@ -669,3 +669,55 @@ test('expired resume token returns 404', function () {
         ->get(route('questionnaire-responses.resume', $response->resume_token))
         ->assertNotFound();
 });
+
+test('short text answers over 255 characters are rejected', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create(['org_id' => $organization->org_id]);
+    $questionnaire = Questionnaire::factory()->create();
+    $category = QuestionnaireCategory::factory()->create(['questionnaire_id' => $questionnaire->id]);
+    $question = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'type' => QuestionnaireQuestion::TYPE_SHORT_TEXT,
+        'is_required' => false,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [$question->id => str_repeat('a', 256)],
+        ])
+        ->assertSessionHasErrors("answers.{$question->id}");
+});
+
+test('long text answers over 10000 characters are rejected', function () {
+    $organization = Organization::factory()->create();
+    $user = User::factory()->create(['org_id' => $organization->org_id]);
+    $questionnaire = Questionnaire::factory()->create();
+    $category = QuestionnaireCategory::factory()->create(['questionnaire_id' => $questionnaire->id]);
+    $question = QuestionnaireQuestion::factory()->create([
+        'questionnaire_category_id' => $category->id,
+        'type' => QuestionnaireQuestion::TYPE_LONG_TEXT,
+        'is_required' => false,
+    ]);
+    $availability = OrganizationQuestionnaire::factory()->create([
+        'questionnaire_id' => $questionnaire->id,
+        'org_id' => $organization->org_id,
+        'available_from' => Carbon::today()->subDay()->toDateString(),
+        'available_until' => Carbon::today()->addDay()->toDateString(),
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('questionnaire-responses.store', $availability), [
+            'intent' => 'submit',
+            'answers' => [$question->id => str_repeat('a', 10001)],
+        ])
+        ->assertSessionHasErrors("answers.{$question->id}");
+});

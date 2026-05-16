@@ -118,6 +118,14 @@ class SubmitQuestionnaireResponseRequest extends FormRequest
             return;
         }
 
+        if ($question->type === QuestionnaireQuestion::TYPE_SHORT_TEXT && mb_strlen((string) $value) > 255) {
+            $validator->errors()->add($key, __('hermes.questionnaire.validation.too_long'));
+        }
+
+        if ($question->type === QuestionnaireQuestion::TYPE_LONG_TEXT && mb_strlen((string) $value) > 10000) {
+            $validator->errors()->add($key, __('hermes.questionnaire.validation.too_long'));
+        }
+
         if ($question->type === QuestionnaireQuestion::TYPE_NUMBER && ! is_numeric($value)) {
             $validator->errors()->add($key, __('hermes.questionnaire.validation.number'));
         }

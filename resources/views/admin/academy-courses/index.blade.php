@@ -67,6 +67,11 @@
             margin-top: 22px;
         }
 
+        .path-list {
+            display: grid;
+            gap: 6px;
+        }
+
         .pagination {
             display: flex;
             align-items: center;
@@ -135,8 +140,15 @@
                                 />
                             </td>
                             <td>
-                                <div>{{ $academyCourse->path }}</div>
-                                <div class="muted">{{ $academyCourse->isAvailable() ? 'Web-export gevonden' : 'Nog geen exportbestand gevonden' }}</div>
+                                <div class="path-list">
+                                    @foreach (config('locales.supported', []) as $localeCode => $localeLabel)
+                                        <div>
+                                            <strong>{{ $localeLabel }}</strong>
+                                            {{ $academyCourse->localizedPathForLocale($localeCode) ? $academyCourse->path.'/'.$academyCourse->localizedPathForLocale($localeCode) : $academyCourse->path }}
+                                            <div class="muted">{{ $academyCourse->isAvailable($localeCode) ? 'Web-export gevonden' : 'Nog geen exportbestand gevonden' }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </td>
                             <td>{{ $academyCourse->estimated_minutes }} minuten</td>
                             <td>

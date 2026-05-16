@@ -6,6 +6,32 @@ Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, o
 
 Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-15`.
 
+## Sessie-update `2026-05-15` — beveiligings- & kwaliteitsaudit
+
+Volledige audit uitgevoerd op controllers, models, middleware, form requests, policies, actions en routes. Bevindingen per ernst:
+
+**KRITIEK:** geen
+
+**HOOG:** geen
+
+**MEDIUM (2 gefixte bevindingen):**
+
+- **`UpsertJournalEntry` race condition** (`app/Actions/Journal/UpsertJournalEntry.php`): Concurrent submits voor dezelfde `(user_id, entry_date, entry_type)` konden een onafgehandelde `UniqueConstraintViolationException` veroorzaken. Fix: `UniqueConstraintViolationException` wordt nu gevangen; de action herschrijft via `update()` naar de inmiddels bestaande entry. Test toegevoegd in `ThreeGoodThingsJournalTest`.
+
+- **Geen max-length op vrije tekst questionnaire-antwoorden** (`app/Http/Requests/SubmitQuestionnaireResponseRequest.php`): `TYPE_SHORT_TEXT` (max 255) en `TYPE_LONG_TEXT` (max 10 000) antwoorden hadden geen lengtelimiet. Fix: limiet toegevoegd in `validateAnswerValue()` met vertaalsleutel `hermes.questionnaire.validation.too_long` in nl/en/de/fr. Tests toegevoegd in `QuestionnaireDraftAndConditionsTest`.
+
+**LAAG (1 gefixte bevinding):**
+
+- **Hardcoded Nederlandse validatiestrings in `StoreOrganizationQuestionnaireRequest`** (`app/Http/Requests/Admin/StoreOrganizationQuestionnaireRequest.php`): 4 inline Dutch strings vervangen door `__()` met nieuwe sleutels `hermes.admin.organization_questionnaires.validation.*` (choose_org, min_one_org, until_after_from, already_exists) in nl/en/de/fr.
+
+**LAAG (1 bevinding teruggedraaid):**
+
+- `BlogController::tagCounts()` `Cache::forget()` — leek overbodig maar is functioneel noodzakelijk: verwijdert een corrupt (niet-array) gecachede waarde vóór `Cache::remember()` een nieuwe waarde opslaat. Originele code hersteld na falende test.
+
+**Gecontroleerd en correct bevonden (geen wijzigingen nodig):** authenticatie & middleware-chain, mass assignment, SQL injection, XSS, path traversal, open redirect, CSRF, rate limiting, HTTP security headers (CSP-nonce, HSTS, X-Frame etc.), N+1 queries, race conditions (ProUpgrade, ForumThread slug, QuestionnaireResponse pro-gate), DB-constraints, audit logging, 2FA-handhaving, session/cookie-beveiliging, SVG-upload geblokkeerd, resume token beveiliging, media URL-validatie, CSS dimension sanitizing.
+
+**Testresultaat:** 419 tests pass (416 pre-existing + 3 nieuw), 0 failures.
+
 ## Product In Het Kort
 
 Hermes Results is een Laravel 13-platform voor organisaties en individuele gebruikers met focus op:

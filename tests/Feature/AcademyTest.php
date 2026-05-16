@@ -23,6 +23,18 @@ test('authenticated users can visit the academy catalog', function () {
             'de' => 'Adaptability Fundamentals',
             'fr' => 'Adaptability Fundamentals',
         ],
+        'learning_goals' => [
+            'nl' => ['Herken je adaptieve patronen'],
+            'en' => ['Recognize your adaptive patterns'],
+            'de' => ['Erkenne deine adaptiven Muster'],
+            'fr' => ['Reconnaissez vos schemas adaptatifs'],
+        ],
+        'contents' => [
+            'nl' => ['Deze inhoud mag niet zichtbaar zijn'],
+            'en' => ['This content should not be visible'],
+            'de' => ['Dieser Inhalt sollte nicht sichtbar sein'],
+            'fr' => ['Ce contenu ne doit pas etre visible'],
+        ],
     ]);
     File::ensureDirectoryExists(dirname($course->contentPath()));
     File::put($course->contentPath(), '<html><body>Adaptability Fundamentals</body></html>');
@@ -39,6 +51,10 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertSee('user-panel', false)
         ->assertSee('user-section-heading', false)
         ->assertSee('user-action-row', false)
+        ->assertSee('.academy-card__details', false)
+        ->assertSee('.academy-card__details[open] ~ .academy-card__details-body', false)
+        ->assertSee('grid-template-columns: max-content max-content minmax(0, 1fr)', false)
+        ->assertSee('grid-row: 1', false)
         ->assertSee('user-meta-grid', false)
         ->assertSee('user-meta-item', false)
         ->assertSee('academy-content', false)
@@ -51,6 +67,10 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertSee(__('hermes.academy.duration'))
         ->assertSee(__('hermes.academy.format'))
         ->assertSee(__('hermes.academy.web_export_format'))
+        ->assertSee(__('hermes.academy.learning_goals'))
+        ->assertSee('Herken je adaptieve patronen')
+        ->assertDontSee(__('hermes.academy.contents'))
+        ->assertDontSee('Deze inhoud mag niet zichtbaar zijn')
         ->assertDontSee(__('hermes.academy.audience'))
         ->assertDontSee(__('hermes.academy.goal'))
         ->assertSee(__('hermes.academy.open_course'))
@@ -62,6 +82,48 @@ test('authenticated users can visit the academy catalog', function () {
             'academyCoursePath' => $course->contentRouteSegment(),
             'asset' => 'index.html',
         ], absolute: false), false);
+});
+
+test('academy opens the export submap for the active locale', function () {
+    $user = User::factory()->create([
+        'locale' => 'en',
+        'role' => User::ROLE_USER,
+    ]);
+    $course = AcademyCourse::factory()->create([
+        'path' => 'academy-courses/multilingual-course',
+        'localized_paths' => [
+            'en' => 'EN',
+            'de' => 'DE',
+        ],
+        'title' => [
+            'nl' => 'Meertalige cursus',
+            'en' => 'Multilingual course',
+            'de' => 'Mehrsprachiger Kurs',
+        ],
+    ]);
+
+    $englishIndex = $course->contentPath(locale: 'en');
+
+    File::ensureDirectoryExists(dirname($englishIndex));
+    File::put($englishIndex, '<html><body>English course</body></html>');
+
+    $this->actingAs($user)
+        ->get(route('academy.index'))
+        ->assertOk()
+        ->assertSee('Multilingual course')
+        ->assertSee(route('academy-courses.show', [
+            'academyCoursePath' => $course->contentRouteSegment(),
+            'asset' => 'EN/index.html',
+        ], absolute: false), false);
+
+    $response = $this->actingAs($user)
+        ->get(route('academy-courses.show', [
+            'academyCoursePath' => $course->contentRouteSegment(),
+            'asset' => 'EN/index.html',
+        ]))
+        ->assertOk();
+
+    expect($response->baseResponse->getFile()->getPathname())->toBe($englishIndex);
 });
 
 test('dashboard links authenticated users to the academy catalog', function () {

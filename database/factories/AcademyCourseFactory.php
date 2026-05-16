@@ -21,6 +21,7 @@ class AcademyCourseFactory extends Factory
             'slug' => fake()->unique()->slug(),
             'theme' => fake()->randomElement(array_keys(AcademyCourse::themes())),
             'path' => 'academy-courses/'.fake()->unique()->slug(),
+            'localized_paths' => [],
             'estimated_minutes' => fake()->numberBetween(20, 60),
             'sort_order' => fake()->numberBetween(1, 100),
             'is_active' => true,

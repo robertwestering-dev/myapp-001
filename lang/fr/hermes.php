@@ -611,6 +611,12 @@ return [
             'saved' => 'Disponibilité enregistrée avec succès.',
             'updated' => 'Disponibilité mise à jour avec succès.',
             'deleted' => 'Disponibilité supprimée avec succès.',
+            'validation' => [
+                'choose_org' => 'Choisissez une organisation.',
+                'min_one_org' => 'Choisissez au moins une organisation.',
+                'until_after_from' => 'La date de fin doit être égale ou postérieure à la date de début.',
+                'already_exists' => 'Une disponibilité existe déjà pour cette organisation.',
+            ],
         ],
         'blog_posts' => [
             'created' => 'Article de blog ajouté avec succès.',
@@ -655,6 +661,7 @@ return [
             'single_choice' => 'Choisissez une option valide.',
             'multiple_choice' => 'Choisissez une ou plusieurs options valides.',
             'multiple_choice_invalid' => 'Choisissez uniquement des options du questionnaire.',
+            'too_long' => 'Votre réponse est trop longue.',
         ],
     ],
     'admin_menu' => [

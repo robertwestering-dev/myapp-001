@@ -575,3 +575,47 @@ test('pro users can delete their own journal entries', function () {
         'id' => $entry->getKey(),
     ]);
 });
+
+test('concurrent journal store requests for the same date and type result in a single updated entry', function () {
+    $user = User::factory()->pro()->create();
+
+    // First request creates the entry.
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-05-01',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'content' => [
+                'title' => 'Eerste versie',
+                'body' => 'Eerste inhoud.',
+            ],
+        ])
+        ->assertRedirect();
+
+    // Second request with the same date+type (simulates a concurrent submit that wins the race
+    // and triggers the UniqueConstraintViolationException fallback path) updates the entry.
+    $this->actingAs($user)
+        ->post(route('journal.store'), [
+            'entry_date' => '2026-05-01',
+            'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+            'content' => [
+                'title' => 'Bijgewerkte versie',
+                'body' => 'Bijgewerkte inhoud.',
+            ],
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseCount('three_good_things_entries', 1);
+
+    $this->assertDatabaseHas('three_good_things_entries', [
+        'user_id' => $user->getKey(),
+        'entry_type' => JournalEntry::TYPE_DAILY_NOTE,
+    ]);
+
+    $entry = JournalEntry::query()
+        ->where('user_id', $user->getKey())
+        ->where('entry_type', JournalEntry::TYPE_DAILY_NOTE)
+        ->first();
+
+    expect($entry->contentValue('title'))->toBe('Bijgewerkte versie')
+        ->and($entry->contentValue('body'))->toBe('Bijgewerkte inhoud.');
+});

@@ -966,6 +966,12 @@ return [
             'saved' => 'Availability successfully saved.',
             'updated' => 'Availability successfully updated.',
             'deleted' => 'Availability successfully deleted.',
+            'validation' => [
+                'choose_org' => 'Choose an organisation.',
+                'min_one_org' => 'Choose at least one organisation.',
+                'until_after_from' => 'The end date must be on or after the start date.',
+                'already_exists' => 'An availability record already exists for this organisation.',
+            ],
         ],
         'blog_posts' => [
             'created' => 'Blog post successfully added.',
@@ -1052,6 +1058,7 @@ return [
             'single_choice' => 'Choose a valid option.',
             'multiple_choice' => 'Choose one or more valid options.',
             'multiple_choice_invalid' => 'Choose only options from the questionnaire.',
+            'too_long' => 'Your answer is too long.',
         ],
     ],
     'admin_menu' => [

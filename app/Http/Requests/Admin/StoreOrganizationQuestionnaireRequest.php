@@ -83,7 +83,7 @@ class StoreOrganizationQuestionnaireRequest extends FormRequest
 
                 if (! $actor?->isAdmin()) {
                     if ($actor->org_id === null) {
-                        $validator->errors()->add('org_id', 'Kies een organisatie.');
+                        $validator->errors()->add('org_id', __('hermes.admin.organization_questionnaires.validation.choose_org'));
                     }
 
                     return;
@@ -95,7 +95,7 @@ class StoreOrganizationQuestionnaireRequest extends FormRequest
                     ->values();
 
                 if ($organizationIds->isEmpty()) {
-                    $validator->errors()->add('org_ids', 'Kies minimaal één organisatie.');
+                    $validator->errors()->add('org_ids', __('hermes.admin.organization_questionnaires.validation.min_one_org'));
 
                     return;
                 }
@@ -111,7 +111,7 @@ class StoreOrganizationQuestionnaireRequest extends FormRequest
                         if ($availableUntilDate->isBefore($availableFromDate)) {
                             $validator->errors()->add(
                                 "available_until_by_org.{$configuration['org_id']}",
-                                'De einddatum moet gelijk zijn aan of na de begindatum.'
+                                __('hermes.admin.organization_questionnaires.validation.until_after_from')
                             );
                         }
                     }
@@ -124,7 +124,7 @@ class StoreOrganizationQuestionnaireRequest extends FormRequest
                     if ($existingAvailability) {
                         $validator->errors()->add(
                             "org_ids.{$configuration['org_id']}",
-                            'Voor deze organisatie bestaat al een beschikbaarheid.'
+                            __('hermes.admin.organization_questionnaires.validation.already_exists')
                         );
                     }
                 }

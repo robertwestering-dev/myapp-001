@@ -52,22 +52,32 @@
                 align-items: start;
             }
 
-            .academy-card__lists {
+            .academy-card__learning-goals {
                 display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 16px;
+                gap: 10px;
+            }
+
+            .academy-card__learning-goals-label {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #2f5f52;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
             }
 
             .academy-card__actions {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 12px;
-                align-items: end;
+                display: grid;
+                grid-template-columns: max-content max-content minmax(0, 1fr);
+                column-gap: 12px;
+                row-gap: 18px;
+                align-items: start;
             }
 
             .academy-card__details {
                 display: block;
-                align-self: end;
+                grid-column: 1;
+                grid-row: 1;
             }
 
             .academy-card__details[open] .academy-card__toggle::after {
@@ -79,6 +89,8 @@
             }
 
             .academy-card__toggle {
+                grid-column: 1;
+                grid-row: 1;
                 list-style: none;
                 display: inline-flex;
                 align-items: center;
@@ -101,14 +113,26 @@
                 min-height: 44px;
             }
 
+            .academy-card__actions .pill {
+                grid-column: 2;
+                grid-row: 1;
+                position: relative;
+                z-index: 1;
+            }
+
             .academy-card__toggle::-webkit-details-marker {
                 display: none;
             }
 
             .academy-card__details-body {
-                display: grid;
+                grid-column: 1 / -1;
+                grid-row: 2;
+                display: none;
                 gap: 18px;
-                padding-top: 6px;
+            }
+
+            .academy-card__details[open] ~ .academy-card__details-body {
+                display: grid;
             }
 
             .academy-sidebar,
@@ -162,8 +186,7 @@
 
             @media (max-width: 920px) {
                 .academy-content,
-                .academy-grid__cards,
-                .academy-card__lists {
+                .academy-grid__cards {
                     grid-template-columns: 1fr;
                 }
 
@@ -176,6 +199,29 @@
             @media (max-width: 720px) {
                 .academy-card__title-row {
                     flex-direction: column;
+                }
+
+                .academy-card__actions {
+                    grid-template-columns: 1fr;
+                }
+
+                .academy-card__toggle,
+                .academy-card__details,
+                .academy-card__actions .pill,
+                .academy-card__details-body {
+                    grid-column: 1;
+                }
+
+                .academy-card__details {
+                    grid-row: 1;
+                }
+
+                .academy-card__actions .pill {
+                    grid-row: 2;
+                }
+
+                .academy-card__details-body {
+                    grid-row: 3;
                 }
             }
 
@@ -198,6 +244,7 @@
                 <div class="academy-grid__cards">
                     @forelse ($courses as $course)
                         @php($canLaunchCourse = $course->canBeLaunchedBy($user))
+                        @php($courseLaunchUrl = $course->launchUrl())
                         @php($isLockedForUser = $course->isAvailable() && ! $canLaunchCourse)
                         <x-user-surface-card
                             variant="soft"
@@ -228,46 +275,35 @@
                             <x-user-action-row class="academy-card__actions">
                                 <details class="academy-card__details">
                                     <summary class="academy-card__toggle">{{ __('hermes.academy.more_info') }}</summary>
-
-                                    <div class="academy-card__details-body">
-                                        <dl class="academy-card__meta">
-                                            <x-user-meta-grid columns="2">
-                                                <x-user-meta-item :label="__('hermes.academy.duration')" :value="__('hermes.academy.minutes', ['count' => $course->estimated_minutes])" />
-                                                <x-user-meta-item :label="__('hermes.academy.format')" :value="__('hermes.academy.web_export_format')" />
-                                            </x-user-meta-grid>
-                                        </dl>
-
-                                        <div class="academy-card__lists">
-                                            <div>
-                                                <strong>{{ __('hermes.academy.learning_goals') }}</strong>
-                                                <ul>
-                                                    @foreach ($course->learningGoalsForLocale() as $learningGoal)
-                                                        <li>{{ $learningGoal }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <strong>{{ __('hermes.academy.contents') }}</strong>
-                                                <ul>
-                                                    @foreach ($course->contentsForLocale() as $contentItem)
-                                                        <li>{{ $contentItem }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        </div>
-
-                                        @unless ($course->launchUrl())
-                                            <span>{{ __('hermes.academy.pending_copy') }}</span>
-                                        @endunless
-                                    </div>
                                 </details>
 
-                                @if ($course->launchUrl() && $canLaunchCourse)
-                                    <a href="{{ $course->launchUrl() }}" class="pill" target="_blank" rel="noopener noreferrer">
+                                @if ($courseLaunchUrl && $canLaunchCourse)
+                                    <a href="{{ $courseLaunchUrl }}" class="pill" target="_blank" rel="noopener noreferrer">
                                         {{ __('hermes.academy.open_course') }}
                                     </a>
                                 @endif
+
+                                <div class="academy-card__details-body">
+                                    <dl class="academy-card__meta">
+                                        <x-user-meta-grid columns="2">
+                                            <x-user-meta-item :label="__('hermes.academy.duration')" :value="__('hermes.academy.minutes', ['count' => $course->estimated_minutes])" />
+                                            <x-user-meta-item :label="__('hermes.academy.format')" :value="__('hermes.academy.web_export_format')" />
+                                        </x-user-meta-grid>
+                                    </dl>
+
+                                    <div class="academy-card__learning-goals">
+                                        <strong class="academy-card__learning-goals-label">{{ __('hermes.academy.learning_goals') }}</strong>
+                                        <ul>
+                                            @foreach ($course->learningGoalsForLocale() as $learningGoal)
+                                                <li>{{ $learningGoal }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+
+                                    @unless ($courseLaunchUrl)
+                                        <span>{{ __('hermes.academy.pending_copy') }}</span>
+                                    @endunless
+                                </div>
                             </x-user-action-row>
                         </x-user-surface-card>
                     @empty

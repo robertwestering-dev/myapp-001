@@ -123,6 +123,7 @@ class AcademyCourseController extends Controller
             'slug' => $attributes['slug'],
             'theme' => $attributes['theme'],
             'path' => trim($attributes['path'], '/'),
+            'localized_paths' => $this->localizedPathPayload($attributes['localized_paths'] ?? []),
             'estimated_minutes' => $attributes['estimated_minutes'],
             'sort_order' => $attributes['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active'),
@@ -134,5 +135,24 @@ class AcademyCourseController extends Controller
             'learning_goals' => $this->localizedListPayload($attributes['learning_goals']),
             'contents' => $this->localizedListPayload($attributes['contents']),
         ];
+    }
+
+    /**
+     * @param  array<string, string|null>  $localizedPaths
+     * @return array<string, string>
+     */
+    protected function localizedPathPayload(array $localizedPaths): array
+    {
+        return collect(array_keys(config('locales.supported', [])))
+            ->mapWithKeys(function (string $locale) use ($localizedPaths): array {
+                $path = $localizedPaths[$locale] ?? null;
+
+                if (! is_string($path) || trim($path, '/') === '') {
+                    return [];
+                }
+
+                return [$locale => trim(str_replace('\\', '/', $path), '/')];
+            })
+            ->all();
     }
 }

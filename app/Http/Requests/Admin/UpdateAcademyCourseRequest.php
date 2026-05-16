@@ -21,6 +21,8 @@ class UpdateAcademyCourseRequest extends BaseLocalizedRequest
             'slug' => ['required', 'string', 'max:120', 'alpha_dash', Rule::unique(AcademyCourse::class, 'slug')->ignore($academyCourse)],
             'theme' => ['required', 'string', Rule::in(array_keys(AcademyCourse::themes()))],
             'path' => ['required', 'string', 'max:255', Rule::unique(AcademyCourse::class, 'path')->ignore($academyCourse)],
+            'localized_paths' => ['nullable', 'array'],
+            'localized_paths.*' => ['nullable', 'string', 'max:120', 'regex:/^(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9._\/-]+$/'],
             'estimated_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
