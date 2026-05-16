@@ -607,16 +607,11 @@
             @endisset
         </x-slot:menu>
 
-        <div class="nav-actions">
-            @if (auth()->check() && ! $forceGuestNavigation)
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="pill pill--neutral">{{ __('hermes.dashboard.logout') }}</button>
-                </form>
-            @else
+        @unless (auth()->check() && ! $forceGuestNavigation)
+            <div class="nav-actions">
                 <a class="pill pill--strong" href="{{ route('login') }}">{{ __('hermes.nav.login') }}</a>
-            @endif
-        </div>
+            </div>
+        @endunless
     </x-hermes-header>
 
     <main>

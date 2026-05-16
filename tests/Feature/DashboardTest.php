@@ -120,14 +120,18 @@ test('authenticated dashboard header shows the account hover menu links', functi
         ->assertSee(route('dashboard', absolute: false), false)
         ->assertSee(route('journal.timeline', absolute: false), false)
         ->assertSee(route('profile.edit', absolute: false), false)
-        ->assertSee(route('blog.index', absolute: false), false)
         ->assertSee(route('contact.show', absolute: false), false)
         ->assertSee('<a class="user-menu__item" href="'.route('profile.edit').'"', false)
-        ->assertSee('<a class="user-menu__item" href="'.route('blog.index').'"', false)
+        ->assertDontSee('<a class="user-menu__item" href="'.route('blog.index').'"', false)
+        ->assertSee('<form method="POST" action="'.route('logout').'" class="user-menu__form">', false)
+        ->assertSee('.user-menu__form .user-menu__item', false)
+        ->assertSee('font-size: 1.02rem;', false)
+        ->assertSee('font-weight: 600;', false)
+        ->assertDontSee('<button type="submit" class="pill pill--neutral">'.__('hermes.dashboard.logout').'</button>', false)
         ->assertSee(__('hermes.dashboard.title'))
         ->assertSee(__('hermes.journal.timeline_page_title'))
         ->assertSee(__('hermes.nav.profile'))
-        ->assertSee(__('hermes.nav.blog'))
+        ->assertSee(__('hermes.dashboard.logout'))
         ->assertSee(__('hermes.nav.contact'));
 });
 
@@ -157,12 +161,13 @@ test('authenticated mobile header includes the account submenu links inside the 
         ->assertSee('<a class="mobile-menu__account-link" href="'.route('dashboard').'"', false)
         ->assertSee('<a class="mobile-menu__account-link" href="'.route('journal.timeline').'"', false)
         ->assertSee('<a class="mobile-menu__account-link" href="'.route('profile.edit').'"', false)
-        ->assertSee('<a class="mobile-menu__account-link" href="'.route('blog.index').'"', false)
+        ->assertDontSee('<a class="mobile-menu__account-link" href="'.route('blog.index').'"', false)
         ->assertSee('<a class="mobile-menu__account-link" href="'.route('contact.show', absolute: false).'"', false)
+        ->assertSee('<form method="POST" action="'.route('logout').'" class="mobile-menu__account-form">', false)
         ->assertDontSee('class="mobile-menu__link"', false)
         ->assertSee(__('hermes.journal.timeline_page_title'))
         ->assertSee(__('hermes.nav.profile'))
-        ->assertSee(__('hermes.nav.blog'))
+        ->assertSee(__('hermes.dashboard.logout'))
         ->assertSee(__('hermes.nav.contact'));
 });
 

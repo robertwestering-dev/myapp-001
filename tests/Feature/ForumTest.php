@@ -34,8 +34,10 @@ test('authenticated users can browse the forum overview and see the shared navig
         ->assertSee(__('hermes.nav.questionnaires'))
         ->assertSee(__('hermes.nav.academy'))
         ->assertSee(__('hermes.nav.forum'))
-        ->assertSee(__('hermes.nav.blog'))
         ->assertSee(__('hermes.nav.profile'))
+        ->assertDontSee('<a class="user-menu__item" href="'.route('blog.index').'"', false)
+        ->assertSee('<form method="POST" action="'.route('logout').'" class="user-menu__form">', false)
+        ->assertDontSee('<button type="submit" class="pill pill--neutral">'.__('hermes.dashboard.logout').'</button>', false)
         ->assertSee('Hoe pakken jullie AI adoptie aan?')
         ->assertSee('AI adoptie')
         ->assertSee(route('forum.show', $thread), false);

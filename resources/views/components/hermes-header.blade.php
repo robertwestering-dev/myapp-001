@@ -142,6 +142,26 @@
         background: rgba(188, 91, 44, 0.1);
     }
 
+    .user-menu__form {
+        margin: 6px 0 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .user-menu__form .user-menu__item {
+        appearance: none;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        color: var(--ink, #16211d);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 1.02rem;
+        font-weight: 600;
+        line-height: normal;
+        text-align: left;
+    }
+
     .user-menu__item svg {
         width: 21px;
         height: 21px;
@@ -279,6 +299,7 @@
     }
 
     .mobile-menu__nav a,
+    .mobile-menu__nav button.mobile-menu__account-link,
     .mobile-menu__nav .home-menu-trigger,
     .mobile-menu__locale-item {
         width: 100%;
@@ -299,6 +320,8 @@
 
     .mobile-menu__nav a:hover,
     .mobile-menu__nav a:focus-visible,
+    .mobile-menu__nav button.mobile-menu__account-link:hover,
+    .mobile-menu__nav button.mobile-menu__account-link:focus-visible,
     .mobile-menu__nav .home-menu-trigger:hover,
     .mobile-menu__nav .home-menu-trigger:focus-visible,
     .mobile-menu__locale-item:hover,
@@ -354,6 +377,17 @@
     .mobile-menu__account-list {
         display: grid;
         gap: 8px;
+    }
+
+    .mobile-menu__account-form {
+        margin: 0;
+    }
+
+    .mobile-menu__account-form button.mobile-menu__account-link {
+        width: 100%;
+        border: 1px solid rgba(22, 33, 29, 0.08);
+        cursor: pointer;
+        justify-content: space-between;
     }
 
     .mobile-menu__locale-form {
@@ -489,8 +523,11 @@
                                     <a class="mobile-menu__account-link" href="{{ route('dashboard') }}" @if (request()->routeIs('dashboard')) aria-current="page" @endif>{{ __('hermes.dashboard.title') }}</a>
                                     <a class="mobile-menu__account-link" href="{{ route('journal.timeline') }}" @if (request()->routeIs('journal.timeline')) aria-current="page" @endif>{{ __('hermes.journal.timeline_page_title') }}</a>
                                     <a class="mobile-menu__account-link" href="{{ route('profile.edit') }}" @if (request()->routeIs('profile.edit')) aria-current="page" @endif>{{ __('hermes.nav.profile') }}</a>
-                                    <a class="mobile-menu__account-link" href="{{ route('blog.index') }}" @if (request()->routeIs('blog.*')) aria-current="page" @endif>{{ __('hermes.nav.blog') }}</a>
                                     <a class="mobile-menu__account-link" href="{{ $contactHref }}">{{ __('hermes.nav.contact') }}</a>
+                                    <form method="POST" action="{{ route('logout') }}" class="mobile-menu__account-form">
+                                        @csrf
+                                        <button type="submit" class="mobile-menu__account-link">{{ __('hermes.dashboard.logout') }}</button>
+                                    </form>
                                 </nav>
                             </details>
                         </section>
@@ -600,14 +637,6 @@
                             </svg>
                             <span>{{ __('hermes.nav.profile') }}</span>
                         </a>
-                        <a class="user-menu__item" href="{{ route('blog.index') }}" @if (request()->routeIs('blog.*')) aria-current="page" @endif>
-                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M6.25 4.75h8.5L18.75 9v10.25H6.25V4.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                                <path d="M14.75 4.75V9h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                                <path d="M9 13h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                            </svg>
-                            <span>{{ __('hermes.nav.blog') }}</span>
-                        </a>
                         <a class="user-menu__item" href="{{ $contactHref }}">
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M5 6.75h14A1.75 1.75 0 0 1 20.75 8.5v7A2.75 2.75 0 0 1 18 18.25H6A2.75 2.75 0 0 1 3.25 15.5v-7A1.75 1.75 0 0 1 5 6.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
@@ -615,6 +644,17 @@
                             </svg>
                             <span>{{ __('hermes.nav.contact') }}</span>
                         </a>
+                        <form method="POST" action="{{ route('logout') }}" class="user-menu__form">
+                            @csrf
+                            <button type="submit" class="user-menu__item">
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M9.75 5.25H6.5A1.75 1.75 0 0 0 4.75 7v10A1.75 1.75 0 0 0 6.5 18.75h3.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M13 8.25 16.75 12 13 15.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16.5 12H8.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                </svg>
+                                <span>{{ __('hermes.dashboard.logout') }}</span>
+                            </button>
+                        </form>
                     </nav>
                 </div>
             @elseif ($showContactLink)

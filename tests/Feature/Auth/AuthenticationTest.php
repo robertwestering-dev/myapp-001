@@ -11,29 +11,30 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $announcement = __('hermes.auth.announcement', locale: 'nl');
-
     $response->assertOk()
         ->assertSee('Hermes Results')
         ->assertSee('Secure Access')
         ->assertSee('Log in')
-        ->assertSeeText($announcement)
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'nl'))
         ->assertSee(__('hermes.auth.login.hero_register'))
         ->assertDontSee(__('hermes.auth.login.hero_back'))
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
-test('login screen shows the localized announcement in english and german', function () {
+test('login screen does not show the localized announcement banner', function () {
     $this->withSession(['locale' => 'en'])
         ->get(route('login'))
         ->assertOk()
-        ->assertSeeText(__('hermes.auth.announcement', locale: 'en'));
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'en'));
 
     $this->withSession(['locale' => 'de'])
         ->get(route('login'))
         ->assertOk()
-        ->assertSeeText(__('hermes.auth.announcement', locale: 'de'));
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'de'));
 });
 
 test('users can authenticate using the login screen', function () {

@@ -17,27 +17,28 @@ beforeEach(function () {
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
-    $announcement = __('hermes.auth.announcement', locale: 'nl');
-
     $response->assertOk()
         ->assertSee('Hermes Results')
         ->assertSee('Create Access')
         ->assertSee('Create account')
-        ->assertSeeText($announcement)
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'nl'))
         ->assertSee('/images/hermes-results-logo.png')
         ->assertSee('(c) Copyright 2026 by Hermes Results');
 });
 
-test('registration screen shows the localized announcement in english and german', function () {
+test('registration screen does not show the localized announcement banner', function () {
     $this->withSession(['locale' => 'en'])
         ->get(route('register'))
         ->assertOk()
-        ->assertSeeText(__('hermes.auth.announcement', locale: 'en'));
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'en'));
 
     $this->withSession(['locale' => 'de'])
         ->get(route('register'))
         ->assertOk()
-        ->assertSeeText(__('hermes.auth.announcement', locale: 'de'));
+        ->assertDontSee('<div class="announcement-bar"', false)
+        ->assertDontSeeText(__('hermes.auth.announcement', locale: 'de'));
 });
 
 test('new users can register', function () {

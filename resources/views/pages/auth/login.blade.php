@@ -6,7 +6,6 @@
     :heading="__('hermes.auth.login.heading')"
     :lead="__('hermes.auth.login.lead')"
     :form-title="__('hermes.auth.login.form_title')"
-    :announcement="__('hermes.auth.announcement')"
     helper=""
     :points="[
         __('hermes.auth.login.point_1'),

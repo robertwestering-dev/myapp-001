@@ -4,7 +4,29 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-15`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-16`.
+
+## Sessie-update `2026-05-16` — Academy meertalige exports, UI en auth-banner
+
+Academy:
+
+- `academy_courses` ondersteunt nu optionele locale-specifieke exportsubmappen via `localized_paths` (JSON). `path` blijft de basismap, bijvoorbeeld `academy-courses/adaptability-foundations`; per taal kan bijvoorbeeld `en => EN` en `de => DE` worden opgeslagen.
+- `AcademyCourse::launchUrl()`, `isAvailable()`, `contentDirectory()`, `contentPath()`, `localizedPathForLocale()` en `launchAssetPath()` zijn locale-aware. Een Engelstalige gebruiker opent bij `localized_paths.en = EN` dus `academy-courses/<slug>/EN/index.html`; ontbreekt een submap, dan valt de cursus terug op de basismap.
+- Adminbeheer toont en bewaart per ondersteunde locale optioneel een web-exportsubmap. Submappen worden genormaliseerd en gevalideerd zonder `..` path traversal.
+- De publieke Academy-card toont in `Meer info` alleen nog `Gemiddelde tijd`, `Format` en `Leerdoelen`; `Inhoud`, `Doelgroep` en `Doel van de training` worden niet getoond.
+- De knoppen `Meer info` en `Start e-learning` staan naast elkaar op een eigen regel direct onder de samenvatting. Het uitgeklapte `Meer info`-blok verschijnt daaronder over de volledige breedte.
+- Het label `Leerdoelen` gebruikt dezelfde metadata-labeltypografie als `Gemiddelde tijd` en `Format`.
+
+Auth:
+
+- De groene announcement-banner boven `/login` en `/register` is verwijderd door de `announcement` prop op deze twee Fortify-views niet meer mee te geven. Het gedeelde `hermes-auth` layoutcomponent ondersteunt de banner nog voor andere auth-schermen, zoals de 2FA-challenge.
+
+Testresultaat:
+
+- `php artisan test --compact tests/Feature/AcademyTest.php`
+- `php artisan test --compact tests/Feature/AcademyAdminManagementTest.php tests/Feature/ProOnlyAccessTest.php` tijdens de Academy-exportwijziging
+- `php artisan test --compact tests/Feature/Auth/AuthenticationTest.php tests/Feature/Auth/RegistrationTest.php`
+- `vendor/bin/pint --dirty --format agent`
 
 ## Sessie-update `2026-05-15` — beveiligings- & kwaliteitsaudit
 
@@ -276,6 +298,7 @@ Praktische deployregels:
 - wijzigingen in `resources/css`, `resources/js` of Vite-afhankelijke UI vragen ook upload van `public/build/`
 - `php artisan storage:link` moet aanwezig zijn voor asset-URLs onder `/storage/...`
 - iSpring/HTML5 e-learnings deploy je als complete exportmap naar `storage/app/private/academy-courses/<slug>/`, inclusief `index.html` en alle submappen/assets; het adminveld `Pad naar web-export` krijgt dan `academy-courses/<slug>`
+- voor meertalige e-learning exports kun je locale-submappen binnen dezelfde basismap gebruiken, bijvoorbeeld `storage/app/private/academy-courses/<slug>/EN/index.html` en `.../<slug>/DE/index.html`; vul in admin bij `Web-export per taal` dan respectievelijk `EN` en `DE` in
 - zet iSpring-exports niet in `public/` of in de Hostnet webroot als ze achter login/pro-toegang moeten blijven
 - na elke deploy `composer install --no-dev --optimize-autoloader` draaien zodat dev-packages (zoals `laravel/boost`) uit de autoload-map worden verwijderd — anders geeft de server een `BoostServiceProvider not found` error
 - de optionele Academy-seeder in `deploy.sh` maakt geen nieuwe cursussen aan; `AcademyCourseSeeder` verwijdert alleen oude legacy-records met slugs `adaptability-foundations` en `digital-resilience-basics`
@@ -621,6 +644,8 @@ Actuele status:
 - donkere highlightblokken volgen dezelfde witte-tekstafspraak als dashboard en blog
 - de Academy-eyebrow toont `Academy`, niet meer `Hermes Academy`
 - per e-learning worden `Doelgroep` en `Doel van de training` niet meer getoond in de publieke Academy-card
+- per e-learning wordt `Inhoud` niet meer getoond in de publieke Academy-card; `Meer info` toont alleen metadata en `Leerdoelen`
+- de actieknoppen `Meer info` en `Start e-learning` staan naast elkaar op een eigen regel direct onder de samenvatting; het uitgeklapte blok staat daaronder over de volle breedte
 - het meta-item `Format` toont nu `E-learning` in plaats van `Web-export in eigen map`
 - Academy-cursussen worden niet meer als directe publieke bestanden uitgeserveerd maar via een beveiligde Laravel-route
 - alleen ingelogde gebruikers met rol `User` of `user_pro` mogen Academy-content openen
@@ -631,6 +656,8 @@ Actuele status:
 - Academy-content heeft in `AddSecurityHeaders.php` een eigen, bewust soepelere CSP dan de rest van de app, zodat statische e-learning exports met eigen JS/CSS correct kunnen draaien
 - `AcademyCourseContentController` zet expliciet het juiste `Content-Type` op uitgeserveerde exportbestanden; dit is nodig in combinatie met `X-Content-Type-Options: nosniff`
 - adminveld `Pad naar web-export` blijft functioneel leidend voor de mapstructuur; gebruik stabiele lowercase paden zonder spaties of wisselend hoofdlettergebruik
+- `academy_courses.localized_paths` bevat optionele submappen per locale; gebruik dit voor aparte web-exports per taal, bijvoorbeeld `EN` of `DE` binnen de basismap uit `path`
+- `AcademyCourse::launchUrl()` en `isAvailable()` kiezen automatisch de export voor de actieve app-locale en vallen terug op de basismap als er geen locale-submap is ingesteld
 - er is een aparte widgetpagina voor e-learnings op `/academy/widgets/perma-scores.html` die compact de meest recente `Positief fundament`-PERMA-uitslag van de huidige ingelogde gebruiker toont zonder header, footer of menu
 - deze widget is bedoeld voor embed-gebruik in iSpring/web objects en gebruikt dezelfde resultaatslogica als de gewone questionnaire-resultaatanalyse; zonder geldige gebruiker rendert hij `resources/views/academy/empty-widget.blade.php`
 - in de PERMA-widget geldt de visuele statusafspraak: `Sterk fundament` = groen, `Gedeeltelijk fundament` = grijs, `Fragiel fundament` = oranje; de aanbevolen startlaag krijgt een aparte `Start here`-markering met icoon en niet langer een “goed”-kleur
@@ -751,6 +778,16 @@ Actuele status:
 - de pagina toont het contactformulier uit het `Call to action`-blok van `/voor-organisaties`; de linker CTA-tekst en Calendly-knop zijn op de contactpagina verwijderd
 - het contactformulier gebruikt dezelfde `POST /contact` flow als het bestaande organisatieformulier
 - na versturen keert de gebruiker terug naar de pagina waar het formulier stond, met fragment `#contact`
+
+## Authenticatie
+
+Fortify verzorgt login, registratie, wachtwoord reset, e-mailverificatie, password confirmation en 2FA-challenge.
+
+Actuele auth-UI-afspraken:
+
+- `/login` en `/register` gebruiken `resources/views/components/layouts/hermes-auth.blade.php`, maar geven geen `announcement` prop meer mee; daardoor tonen deze twee pagina's geen groene announcement-banner bovenaan
+- het gedeelde auth-layoutcomponent ondersteunt de announcement-banner nog wel voor andere auth-schermen die expliciet `announcement` meegeven, zoals `/two-factor-challenge`
+- login en register behouden de hero-panel, form-panel, header en terugknop uit de Hermes-auth layout
 
 ## Profiel
 

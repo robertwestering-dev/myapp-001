@@ -632,10 +632,6 @@
             @endif
         </x-slot:menu>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="pill pill--neutral">{{ __('hermes.dashboard.logout') }}</button>
-        </form>
     </x-hermes-header>
 
     <main>
