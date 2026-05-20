@@ -520,6 +520,8 @@ return [
         'course_label' => 'E-learning',
         'status_available' => 'Disponible',
         'status_pending' => 'Bientot disponible',
+        'status_in_progress' => 'En cours',
+        'status_completed' => 'Termine',
         'audience' => 'Public cible',
         'duration' => 'Temps moyen',
         'goal' => 'Objectif de la formation',
@@ -528,6 +530,7 @@ return [
         'learning_goals' => 'Objectifs pedagogiques',
         'contents' => 'Contenu',
         'open_course' => 'Demarrer l e-learning',
+        'back_to_academy' => 'Retour a l Academy',
         'pending_copy' => 'Placez l export web dans le dossier associe pour rendre cette formation accessible.',
         'empty_title' => 'Aucun e-learning n est encore present dans l Academy.',
         'empty_text' => 'Ajoutez une formation a la configuration de l Academy pour afficher ici la premiere tuile.',
@@ -540,6 +543,15 @@ return [
             'empty_text' => 'Remplissez d abord le questionnaire Fondement positif pour afficher ici votre apercu PERMA compact.',
             'dimensions_unavailable_title' => 'Niveau de detail limite.',
             'dimensions_unavailable_text' => 'Ce resultat affiche actuellement uniquement votre score total et votre profil.',
+        ],
+        'course_completion_widget' => [
+            'eyebrow' => 'Finalisation',
+            'title' => 'E-learning termine',
+            'intro' => 'Enregistrez que vous avez termine ":course".',
+            'saved' => 'Votre finalisation a ete enregistree.',
+            'submit' => 'Enregistrer la finalisation',
+            'completed_badge' => 'Finalisation enregistree',
+            'completed_text' => 'Votre finalisation est deja enregistree.',
         ],
         'catalog' => [
             'adaptability-foundations' => [

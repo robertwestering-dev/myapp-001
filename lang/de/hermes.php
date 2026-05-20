@@ -749,6 +749,8 @@ return [
         'course_label' => 'E-Learning',
         'status_available' => 'Verfugbar',
         'status_pending' => 'Demnachst verfugbar',
+        'status_in_progress' => 'Laufend',
+        'status_completed' => 'Abgeschlossen',
         'audience' => 'Zielgruppe',
         'duration' => 'Durchschnittliche Dauer',
         'goal' => 'Trainingsziel',
@@ -758,6 +760,7 @@ return [
         'contents' => 'Inhalte',
         'more_info' => 'Mehr Infos ...',
         'open_course' => 'E-Learning starten',
+        'back_to_academy' => 'Zuruck zur Academy',
         'pending_copy' => 'Legen Sie den Web-Export im verknupften Ordner ab, um dieses Training live zu schalten.',
         'empty_title' => 'Es sind noch keine E-Learnings in der Academy vorhanden.',
         'empty_text' => 'Fugen Sie der Academy-Konfiguration ein Training hinzu, um hier die erste Kachel anzuzeigen.',
@@ -832,6 +835,15 @@ return [
                 'planned_strength_use' => 'Beschreiben Sie konkret, wie Sie diese Starke kommende Woche bewusst einsetzen werden.',
                 'general_intention' => 'Beschreiben Sie Ihr allgemeineres Vorhaben oder Ihren Fokus fur die kommende Woche.',
             ],
+        ],
+        'course_completion_widget' => [
+            'eyebrow' => 'Abschluss',
+            'title' => 'E-Learning abgeschlossen',
+            'intro' => 'Registrieren Sie, dass Sie ":course" abgeschlossen haben.',
+            'saved' => 'Ihr Abschluss wurde registriert.',
+            'submit' => 'Abschluss registrieren',
+            'completed_badge' => 'Abschluss registriert',
+            'completed_text' => 'Ihr Abschluss wurde bereits registriert.',
         ],
         'catalog' => [
             'adaptability-foundations' => [

@@ -6,7 +6,7 @@
     $activeMenu = match (true) {
         request()->routeIs('dashboard') => 'dashboard',
         request()->routeIs('questionnaires.index'), request()->routeIs('questionnaire-responses.*') => 'questionnaires',
-        request()->routeIs('academy.index') => 'academy',
+        request()->routeIs('academy.*') => 'academy',
         request()->routeIs('journal.*') => 'journal',
         request()->routeIs('forum.*'), request()->routeIs('forum-replies.*') => 'forum',
         request()->routeIs('blog.*') => 'blog',

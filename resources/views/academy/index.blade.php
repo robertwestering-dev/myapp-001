@@ -244,7 +244,8 @@
                 <div class="academy-grid__cards">
                     @forelse ($courses as $course)
                         @php($canLaunchCourse = $course->canBeLaunchedBy($user))
-                        @php($courseLaunchUrl = $course->launchUrl())
+                        @php($courseLaunchUrl = $course->launchPageUrl())
+                        @php($courseProgress = $progressByCourseId->get($course->id))
                         @php($isLockedForUser = $course->isAvailable() && ! $canLaunchCourse)
                         <x-user-surface-card
                             variant="soft"
@@ -267,6 +268,11 @@
                                         :label="$course->isAvailable() ? __('hermes.academy.status_available') : __('hermes.academy.status_pending')"
                                         :tone="$course->isAvailable() ? 'default' : 'warning'"
                                     />
+                                    @if ($courseProgress?->isCompleted())
+                                        <x-admin-status-badge :label="__('hermes.academy.status_completed')" />
+                                    @elseif ($courseProgress)
+                                        <x-admin-status-badge :label="__('hermes.academy.status_in_progress')" tone="default" />
+                                    @endif
                                 </div>
                             </div>
 

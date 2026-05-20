@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\ContactFormSubmitted;
+use App\Models\ContactFormSubmission;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
@@ -138,7 +139,9 @@ test('authenticated users can still open the homepage when the contact parameter
 test('guests can submit the contact form', function () {
     Mail::fake();
 
-    $this->from(route('contact.show').'#contact')->post(route('contact.store'), [
+    $this->from(route('contact.show').'#contact')->withHeaders([
+        'User-Agent' => 'Hermes Browser',
+    ])->post(route('contact.store'), [
         'name' => 'Ada Lovelace',
         'email' => 'ada@example.com',
         'message' => 'Ik wil meer weten over de quick scan adaptability.',
@@ -147,10 +150,10 @@ test('guests can submit the contact form', function () {
         ->assertRedirect(route('contact.show').'#contact')
         ->assertSessionHas('status', __('hermes.home.contact_success'));
 
-    Mail::assertQueued(ContactFormSubmitted::class, 'robert.van.westering@outlook.com');
+    Mail::assertSent(ContactFormSubmitted::class, 'robert.van.westering@outlook.com');
 
     /** @var ContactFormSubmitted $mail */
-    $mail = Mail::queued(ContactFormSubmitted::class)->first();
+    $mail = Mail::sent(ContactFormSubmitted::class)->first();
     $replyTo = $mail->replyTo[0] ?? null;
 
     expect($replyTo['address'] ?? null)->toBe('ada@example.com');
@@ -159,6 +162,56 @@ test('guests can submit the contact form', function () {
     expect($mail->email)->toBe('ada@example.com');
     expect($mail->messageBody)->toBe('Ik wil meer weten over de quick scan adaptability.');
     expect($mail->consentGiven)->toBeTrue();
+
+    $submission = ContactFormSubmission::query()->sole();
+
+    expect($submission->user_id)->toBeNull()
+        ->and($submission->name)->toBe('Ada Lovelace')
+        ->and($submission->email)->toBe('ada@example.com')
+        ->and($submission->message)->toBe('Ik wil meer weten over de quick scan adaptability.')
+        ->and($submission->privacy_consent)->toBeTrue()
+        ->and($submission->user_agent)->toBe('Hermes Browser')
+        ->and($submission->referrer)->toBe(route('contact.show').'#contact')
+        ->and($submission->mail_sent_at)->not->toBeNull()
+        ->and($submission->mail_failed_at)->toBeNull();
+});
+
+test('contact form honeypot blocks bot submissions before logging or mailing', function () {
+    Mail::fake();
+
+    $this->from(route('contact.show').'#contact')->post(route('contact.store'), [
+        'name' => 'Spammer',
+        'email' => 'spam@example.com',
+        'message' => 'Buy suspicious things.',
+        'privacy_consent' => '1',
+        'website' => 'https://spam.example',
+    ])
+        ->assertRedirect(route('contact.show').'#contact')
+        ->assertSessionHasErrors('website');
+
+    $this->assertDatabaseCount('contact_form_submissions', 0);
+    Mail::assertNothingSent();
+});
+
+test('contact form submission limits stored request metadata', function () {
+    Mail::fake();
+
+    $longUserAgent = str_repeat('A', 1200);
+    $longReferrer = route('contact.show').'?source='.str_repeat('b', 1200);
+
+    $this->from($longReferrer)->withHeaders([
+        'User-Agent' => $longUserAgent,
+    ])->post(route('contact.store'), [
+        'name' => 'Grace Hopper',
+        'email' => 'grace@example.com',
+        'message' => 'Ik wil graag contact.',
+        'privacy_consent' => '1',
+    ])->assertRedirect(strtok($longReferrer, '#').'#contact');
+
+    $submission = ContactFormSubmission::query()->sole();
+
+    expect(strlen((string) $submission->user_agent))->toBe(1000)
+        ->and(strlen((string) $submission->referrer))->toBe(1000);
 });
 
 test('contact form validates required fields', function () {

@@ -797,6 +797,10 @@
 
                     <form method="POST" action="{{ route('contact.store') }}">
                         @csrf
+                        <div aria-hidden="true" style="position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden;">
+                            <label for="organization-contact-website">Website</label>
+                            <input id="organization-contact-website" type="text" name="website" value="" tabindex="-1" autocomplete="off">
+                        </div>
 
                         <label for="contact-name">
                             <span>{{ __('hermes.home.contact_name') }}</span>

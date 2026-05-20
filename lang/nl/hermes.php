@@ -813,6 +813,8 @@ return [
         'course_label' => 'E-learning',
         'status_available' => 'Beschikbaar',
         'status_pending' => 'Binnenkort beschikbaar',
+        'status_in_progress' => 'Lopend',
+        'status_completed' => 'Afgerond',
         'audience' => 'Doelgroep',
         'duration' => 'Gemiddelde tijd',
         'goal' => 'Doel van de training',
@@ -822,6 +824,7 @@ return [
         'contents' => 'Inhoud',
         'more_info' => 'Meer info ...',
         'open_course' => 'Start e-learning',
+        'back_to_academy' => 'Terug naar Academy',
         'pending_copy' => 'Plaats de web-export in de gekoppelde map om deze training live te zetten.',
         'empty_title' => 'Er staan nog geen e-learnings in de Academy.',
         'empty_text' => 'Voeg een training toe aan de Academy-configuratie om hier de eerste tegel te tonen.',
@@ -895,6 +898,15 @@ return [
                 'planned_strength_use' => 'Beschrijf concreet hoe je deze sterke kant komende week bewust gaat inzetten.',
                 'general_intention' => 'Beschrijf je algemene voornemen of focus voor de komende week.',
             ],
+        ],
+        'course_completion_widget' => [
+            'eyebrow' => 'Afronding',
+            'title' => 'E-learning afgerond',
+            'intro' => 'Registreer dat je ":course" hebt afgerond.',
+            'saved' => 'Je afronding is geregistreerd.',
+            'submit' => 'Registreer afronding',
+            'completed_badge' => 'Afronding geregistreerd',
+            'completed_text' => 'Je afronding is al geregistreerd.',
         ],
         'catalog' => [
             'adaptability-foundations' => [

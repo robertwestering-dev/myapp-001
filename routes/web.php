@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\AcademyController;
+use App\Http\Controllers\AcademyCourseCompletionWidgetController;
 use App\Http\Controllers\AcademyCourseContentController;
+use App\Http\Controllers\AcademyCourseLaunchController;
+use App\Http\Controllers\AcademyCourseProgressController;
 use App\Http\Controllers\AcademyPermaWidgetController;
 use App\Http\Controllers\AcademyStrengthsWidgetController;
 use App\Http\Controllers\AcademyThreeGoodThingsWidgetController;
@@ -74,6 +77,7 @@ Route::get('/academy/widgets/perma-scores.html', AcademyPermaWidgetController::c
 Route::get('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'show'])->name('academy.widgets.strengths');
 Route::get('/academy/widgets/three-good-things.html', [AcademyThreeGoodThingsWidgetController::class, 'show'])->name('academy.widgets.three-good-things');
 Route::get('/academy/widgets/weekly-intention.html', [AcademyWeeklyIntentionWidgetController::class, 'show'])->name('academy.widgets.weekly-intention');
+Route::get('/academy/widgets/course-completion/{academyCourse:slug}.html', [AcademyCourseCompletionWidgetController::class, 'show'])->name('academy.widgets.course-completion');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
@@ -81,6 +85,10 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/academy', [AcademyController::class, 'index'])->name('academy.index');
+    Route::get('/academy/courses/{academyCourse:slug}/launch', AcademyCourseLaunchController::class)->name('academy.courses.launch');
+    Route::post('/academy/courses/{academyCourse:slug}/complete', [AcademyCourseProgressController::class, 'complete'])
+        ->middleware('throttle:30,1')
+        ->name('academy.courses.complete');
     Route::redirect('/three-good-things', '/journal');
     Route::get('/journal', [JournalController::class, 'index'])->name('journal.index');
     Route::get('/timeline', [JournalController::class, 'timeline'])->name('journal.timeline');
@@ -90,6 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/academy/widgets/strengths.html', [AcademyStrengthsWidgetController::class, 'store'])->name('academy.widgets.strengths.store');
     Route::post('/academy/widgets/three-good-things.html', [AcademyThreeGoodThingsWidgetController::class, 'store'])->middleware('throttle:30,1')->name('academy.widgets.three-good-things.store');
     Route::post('/academy/widgets/weekly-intention.html', [AcademyWeeklyIntentionWidgetController::class, 'store'])->middleware('throttle:30,1')->name('academy.widgets.weekly-intention.store');
+    Route::post('/academy/widgets/course-completion/{academyCourse:slug}.html', [AcademyCourseCompletionWidgetController::class, 'store'])->middleware('throttle:30,1')->name('academy.widgets.course-completion.store');
     Route::get('/academy-courses/{academyCoursePath}/{asset?}', AcademyCourseContentController::class)
         ->where('asset', '.*')
         ->name('academy-courses.show');

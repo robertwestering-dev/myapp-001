@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -119,6 +120,17 @@ class AcademyCourse extends Model
             : null;
     }
 
+    public function launchPageUrl(?string $locale = null): ?string
+    {
+        if (! $this->isAvailable($locale)) {
+            return null;
+        }
+
+        return Route::has('academy.courses.launch')
+            ? route('academy.courses.launch', $this->slug)
+            : null;
+    }
+
     public function isAvailable(?string $locale = null): bool
     {
         return is_file($this->contentPath(locale: $locale ?? app()->getLocale()));
@@ -168,6 +180,11 @@ class AcademyCourse extends Model
     public function contentRouteSegment(): string
     {
         return Str::after($this->normalizedPath(), 'academy-courses/');
+    }
+
+    public function progressRecords(): HasMany
+    {
+        return $this->hasMany(AcademyCourseProgress::class);
     }
 
     public function localizedPathForLocale(?string $locale = null): ?string

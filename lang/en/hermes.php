@@ -788,6 +788,8 @@ return [
         'course_label' => 'E-learning',
         'status_available' => 'Available',
         'status_pending' => 'Coming soon',
+        'status_in_progress' => 'In progress',
+        'status_completed' => 'Completed',
         'audience' => 'Audience',
         'duration' => 'Average time',
         'goal' => 'Training goal',
@@ -797,6 +799,7 @@ return [
         'contents' => 'Contents',
         'more_info' => 'More info ...',
         'open_course' => 'Start e-learning',
+        'back_to_academy' => 'Back to Academy',
         'pending_copy' => 'Place the web export in the linked folder to make this training live.',
         'empty_title' => 'There are no e-learnings in the Academy yet.',
         'empty_text' => 'Add a training to the Academy configuration to show the first tile here.',
@@ -871,6 +874,15 @@ return [
                 'planned_strength_use' => 'Describe concretely how you will consciously use this strength next week.',
                 'general_intention' => 'Describe your broader intention or focus for the coming week.',
             ],
+        ],
+        'course_completion_widget' => [
+            'eyebrow' => 'Completion',
+            'title' => 'E-learning completed',
+            'intro' => 'Register that you have completed ":course".',
+            'saved' => 'Your completion has been registered.',
+            'submit' => 'Register completion',
+            'completed_badge' => 'Completion registered',
+            'completed_text' => 'Your completion has already been registered.',
         ],
         'catalog' => [
             'adaptability-foundations' => [

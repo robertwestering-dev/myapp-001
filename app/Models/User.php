@@ -176,6 +176,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(JournalEntry::class);
     }
 
+    public function academyCourseProgress(): HasMany
+    {
+        return $this->hasMany(AcademyCourseProgress::class);
+    }
+
     public function threeGoodThingsEntries(): HasMany
     {
         return $this->journalEntries()->where('entry_type', JournalEntry::TYPE_THREE_GOOD_THINGS);

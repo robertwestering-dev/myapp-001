@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademyCourse;
+use App\Models\AcademyCourseProgress;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -12,12 +13,19 @@ class AcademyController extends Controller
     {
         $user = $request->user();
 
+        $courses = AcademyCourse::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
         return view('academy.index', [
-            'courses' => AcademyCourse::query()
-                ->active()
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get(),
+            'courses' => $courses,
+            'progressByCourseId' => AcademyCourseProgress::query()
+                ->where('user_id', $user?->id)
+                ->whereIn('academy_course_id', $courses->pluck('id'))
+                ->get()
+                ->keyBy('academy_course_id'),
             'user' => $user,
         ]);
     }

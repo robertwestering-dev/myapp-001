@@ -4,7 +4,41 @@
 
 Gebruik dit document als actuele baseline van Hermes Results voor vervolgwerk, onboarding, deploys, bugfixes en context-herstel na een pauze.
 
-Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-16`.
+Deze samenvatting beschrijft de actuele functionele en technische status van de codebase per `2026-04-19` (sessie 3), aangevuld met sessie-updates t/m `2026-05-19`.
+
+## Sessie-update `2026-05-19` — Academy completion-widget
+
+Academy-progress:
+
+- `academy_course_progress` registreert Academy-voortgang per `(user_id, academy_course_id)` met `status`, `locale`, `started_at`, `last_seen_at`, `completed_at` en optionele `metadata`.
+- Het openen van een cursus via de launch-wrapper zet of actualiseert voortgang als `in_progress`.
+- De bestaande JSON-completion-route `POST /academy/courses/{academyCourse:slug}/complete` markeert een cursus als `completed`; dit wordt gebruikt door de launch-wrapper wanneer een e-learning via `postMessage` een completion-event stuurt.
+- De completion-logica is gecentraliseerd in `App\Actions\Academy\MarkAcademyCourseCompleted`, zodat de JSON-route en widgets dezelfde opslag gebruiken.
+
+Academy completion-widget:
+
+- Nieuwe HTML-widget: `GET /academy/widgets/course-completion/{academyCourse:slug}.html`.
+- Nieuwe opslagroute: `POST /academy/widgets/course-completion/{academyCourse:slug}.html`.
+- De widget is bedoeld om als webobject/iframe op de laatste pagina van een e-learning te plaatsen, bijvoorbeeld `/academy/widgets/course-completion/adaptability-foundations.html`.
+- Alleen ingelogde en geverifieerde gebruikers kunnen via de widget afronding registreren; gasten krijgen de bestaande lege widget-response.
+- De widget controleert dat de cursus actief is en dat de gebruiker de cursus mag starten (`AcademyCourse::canBeLaunchedBy()`), inclusief `pro_only`-gedrag.
+- Na registratie wordt `academy_course_progress.status = completed`; `started_at`, `last_seen_at`, `completed_at`, `locale` en `metadata.source = academy-completion-widget` worden gezet.
+- Als de cursus al afgerond is, toont de widget een afgeronde status in plaats van de knop.
+- Meertalige widgetteksten toegevoegd in nl/en/de/fr onder `hermes.academy.course_completion_widget.*`.
+
+Testresultaat:
+
+- `php artisan test --compact tests/Feature/AcademyCourseCompletionWidgetTest.php tests/Feature/AcademyCourseProgressTest.php`
+- `vendor/bin/pint --dirty --format agent`
+
+## Sessie-update `2026-05-17` — deploy via `deploy.sh`
+
+Deploy:
+
+- De live deploy gebeurt voortaan via `deploy.sh`, niet meer via handmatige Cyberduck-upload als standaardroute.
+- `deploy.sh` voert de serverdeploy uit met onder meer onderhoudsmodus, `git pull`, `composer install --no-dev --optimize-autoloader`, `php artisan migrate --force`, optionele `AcademyCourseSeeder`, storage-link herstel en Laravel-cache-opbouw.
+- `php artisan migrate --force` zit standaard in `deploy.sh`; nieuwe productiemigraties, zoals Academy-progress, worden dus bij een normale scriptdeploy uitgevoerd.
+- Cyberduck is alleen nog een uitzonderingsroute voor losse handmatige uploads of noodsituaties, niet de reguliere deploybaseline.
 
 ## Sessie-update `2026-05-16` — Academy meertalige exports, UI en auth-banner
 
@@ -278,24 +312,30 @@ Belangrijke noot:
 
 ## Deploy Baseline
 
-De live deploy gebeurt via upload, niet via `git pull` op de server.
+De live deploy gebeurt via `deploy.sh` op de server. Handmatige Cyberduck-upload is niet meer de standaardroute.
 
 Standaard werkwijze:
 
 1. Lokaal builden met `npm run build` als Vite-assets zijn gewijzigd.
-2. Gewijzigde bestanden uploaden via Cyberduck naar `/webroots/sites/hermesresults.com/hermesresults-app`.
-3. Op de server runnen:
-   - `composer install --no-dev --optimize-autoloader`
-   - `php artisan migrate --force`
-   - `php artisan optimize:clear`
-   - `php artisan config:cache`
-   - `php artisan route:cache`
-   - `php artisan view:cache`
+2. Wijzigingen committen/pushen naar de branch die productie gebruikt.
+3. Op de server in `/webroots/sites/hermesresults.com/hermesresults-app` `./deploy.sh` draaien.
+4. De optionele Academy-seeder alleen bevestigen als het opruimen van legacy Academy-records gewenst is.
+
+`deploy.sh` voert standaard uit:
+
+- onderhoudsmodus aan
+- `git pull`
+- `composer install --no-dev --optimize-autoloader`
+- `php artisan migrate --force`
+- optioneel `php artisan db:seed --class=AcademyCourseSeeder --force`
+- publieke storage-link herstellen
+- Laravel-caches legen en opnieuw opbouwen
+- onderhoudsmodus uit
 
 Praktische deployregels:
 
-- alleen Blade- of vertaalwijzigingen vragen meestal alleen upload plus `optimize:clear` en `view:cache`
-- wijzigingen in `resources/css`, `resources/js` of Vite-afhankelijke UI vragen ook upload van `public/build/`
+- alleen Blade- of vertaalwijzigingen kunnen via dezelfde `deploy.sh`-flow; het script bouwt caches opnieuw op
+- wijzigingen in `resources/css`, `resources/js` of Vite-afhankelijke UI vragen vooraf lokaal `npm run build` en een commit/push van de gewijzigde build-assets
 - `php artisan storage:link` moet aanwezig zijn voor asset-URLs onder `/storage/...`
 - iSpring/HTML5 e-learnings deploy je als complete exportmap naar `storage/app/private/academy-courses/<slug>/`, inclusief `index.html` en alle submappen/assets; het adminveld `Pad naar web-export` krijgt dan `academy-courses/<slug>`
 - voor meertalige e-learning exports kun je locale-submappen binnen dezelfde basismap gebruiken, bijvoorbeeld `storage/app/private/academy-courses/<slug>/EN/index.html` en `.../<slug>/DE/index.html`; vul in admin bij `Web-export per taal` dan respectievelijk `EN` en `DE` in

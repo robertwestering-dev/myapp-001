@@ -80,10 +80,7 @@ test('authenticated users can visit the academy catalog', function () {
         ->assertDontSee('Robert')
         ->assertDontSee($user->email)
         ->assertSee('#academy-course-'.$course->slug, false)
-        ->assertSee(route('academy-courses.show', [
-            'academyCoursePath' => $course->contentRouteSegment(),
-            'asset' => 'index.html',
-        ], absolute: false), false);
+        ->assertSee(route('academy.courses.launch', $course->slug, absolute: false), false);
 });
 
 test('academy opens the export submap for the active locale', function () {
@@ -113,10 +110,7 @@ test('academy opens the export submap for the active locale', function () {
         ->get(route('academy.index'))
         ->assertOk()
         ->assertSee('Multilingual course')
-        ->assertSee(route('academy-courses.show', [
-            'academyCoursePath' => $course->contentRouteSegment(),
-            'asset' => 'EN/index.html',
-        ], absolute: false), false);
+        ->assertSee(route('academy.courses.launch', $course->slug, absolute: false), false);
 
     $response = $this->actingAs($user)
         ->get(route('academy-courses.show', [
